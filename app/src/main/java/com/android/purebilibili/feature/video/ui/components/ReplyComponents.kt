@@ -1371,7 +1371,6 @@ fun ReplyItemView(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 32.dp)
                                     .testTag("$COMMENT_VIEW_ALL_REPLIES_TAG_PREFIX${item.rpid}")
                                     .clickable { onSubClick(item) },
                                 contentAlignment = Alignment.CenterStart
@@ -1380,8 +1379,7 @@ fun ReplyItemView(
                                     text = subReplySummaryLabel,
                                     fontSize = 13.sp,
                                     color = appearance.accentColor,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(vertical = 6.dp)
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
