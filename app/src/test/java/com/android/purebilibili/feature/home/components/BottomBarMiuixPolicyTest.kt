@@ -120,7 +120,7 @@ class BottomBarMiuixPolicyTest {
         // 明亮的玻璃高光边。
         assertTrue(source.contains("highlightAlpha = 0.8f"))
         assertTrue(source.contains("shadowAlpha = 0.045f"))
-        // 面板渲染成玻璃材质：轻度模糊 + vibrancy。
+        // 面板保留极轻微模糊 + vibrancy，主要液态感交给 Nagram 折射。
         assertTrue(transparentPresetSource.contains("vibrancy()"))
         assertTrue(transparentPresetSource.contains("blur("))
         // 折射交给双矩形着色器，面板不再叠加 AndroidLiquidGlass lens。

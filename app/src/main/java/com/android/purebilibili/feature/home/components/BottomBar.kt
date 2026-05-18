@@ -60,7 +60,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -149,7 +148,6 @@ import com.kyant.backdrop.shadow.Shadow
 import androidx.compose.foundation.shape.RoundedCornerShape as RoundedCornerShapeAlias
 import androidx.compose.ui.Modifier.Companion.then
 import dev.chrisbanes.haze.hazeSource
-import com.android.purebilibili.core.ui.effect.CapsuleGlassRect
 import com.android.purebilibili.core.ui.effect.nagramLiquidGlass
 import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
@@ -616,11 +614,10 @@ internal fun shouldUseBottomBarIndicatorLens(
     preset: BottomBarLiquidGlassPreset
 ): Boolean {
     return when (preset) {
-        // BILIPAI_TUNED 仍用旧的 AndroidLiquidGlass lens 折射指示器。
-        BottomBarLiquidGlassPreset.BILIPAI_TUNED -> true
-        // BACKDROP_NATIVE（通透玻璃）改由双矩形着色器的滑动胶囊矩形折射，
-        // 指示器自身不再叠加 lens 折射，避免重复折射。
-        BottomBarLiquidGlassPreset.BACKDROP_NATIVE -> false
+        // 两个预设的指示器都走 BiliPai 调教的独立指示器层，
+        // 只折射底栏捕获内容，避免把 feed 视频画面折进选中胶囊。
+        BottomBarLiquidGlassPreset.BILIPAI_TUNED,
+        BottomBarLiquidGlassPreset.BACKDROP_NATIVE -> true
     }
 }
 
@@ -727,7 +724,6 @@ internal fun Modifier.kernelSuFloatingDockSurface(
     motionTier: MotionTier,
     isTransitionRunning: Boolean,
     forceLowBlurBudget: Boolean,
-    capsuleProvider: (Size) -> CapsuleGlassRect? = { null }
 ): Modifier = composed {
     val isDarkTheme = isSystemInDarkTheme()
     val useHazeBlur = shouldUseAndroidNativeFloatingHazeBlur(
@@ -802,10 +798,9 @@ internal fun Modifier.kernelSuFloatingDockSurface(
                     ).nagramLiquidGlass(
                         radius = 28.dp,
                         refractIndex = 1.5f,
-                        refractIntensity = 1.05f,
-                        thickness = 16.dp,
-                        foregroundColor = Color.Transparent,
-                        capsuleProvider = capsuleProvider
+                        refractIntensity = 1.45f,
+                        thickness = 22.dp,
+                        foregroundColor = Color.Transparent
                     )
                     BottomBarLiquidGlassPreset.BILIPAI_TUNED -> drawBackdrop(
                         backdrop = backdrop,
@@ -904,19 +899,6 @@ internal fun resolveBottomBarTransparentGlassContentColor(
         stop = selectedColor,
         fraction = themeWeight.coerceIn(0f, 1f)
     )
-}
-
-internal fun resolveBottomBarTransparentGlassCapsuleTint(
-    darkTheme: Boolean,
-    verticalProgress: Float
-): Color {
-    val progress = verticalProgress.coerceIn(0f, 1f)
-    val base = if (darkTheme) {
-        Color(0xFFE7ECF2)
-    } else {
-        Color(0xFFF2F4F7)
-    }
-    return base.copy(alpha = lerp(0.16f, 0.34f, progress))
 }
 
 internal fun resolveBottomBarGlassExportContentColor(
@@ -1236,31 +1218,6 @@ internal fun resolveBottomBarInteractiveHighlightCenterX(
     panelOffsetPx: Float
 ): Float {
     return indicatorTranslationXPx + itemWidthPx * 0.5f + panelOffsetPx
-}
-
-/**
- * 把选中指示器的屏幕几何换算成双矩形着色器的滑动胶囊矩形（矩形 2）。
- *
- * 胶囊横向跟随指示器中心，纵向居中于底栏图层；圆角取高度一半成胶囊形。
- * 指示器滑动时由此函数每帧产出，喂给 [nagramLiquidGlass] 的 capsuleProvider。
- */
-internal fun resolveBottomBarCapsuleGlassRect(
-    indicatorCenterXPx: Float,
-    layerHeightPx: Float,
-    indicatorWidthPx: Float,
-    indicatorHeightPx: Float,
-    thicknessPx: Float,
-    refractIntensity: Float,
-    foregroundColor: Color = Color.Transparent
-): CapsuleGlassRect {
-    return CapsuleGlassRect(
-        center = Offset(indicatorCenterXPx, layerHeightPx / 2f),
-        size = Size(indicatorWidthPx, indicatorHeightPx),
-        cornerRadius = indicatorHeightPx / 2f,
-        thickness = thicknessPx,
-        refractIntensity = refractIntensity,
-        foregroundColor = foregroundColor
-    )
 }
 
 private fun Modifier.bottomBarInteractiveHighlight(
@@ -1672,8 +1629,9 @@ internal fun resolveBottomBarBackdropNativeSurfaceSpec(
     verticalProgress: Float = 0f
 ): BottomBarBackdropNativeSurfaceSpec {
     return BottomBarBackdropNativeSurfaceSpec(
-        // 通透玻璃也是玻璃：保留一层轻度模糊，让底栏成为有体量的材质而非透明窗口。
-        blurRadiusDp = 10f,
+        // 通透玻璃只保留极轻微模糊，主要视觉由 Nagram 折射承担，
+        // 避免退化成单纯磨砂模糊。
+        blurRadiusDp = 2.5f,
         // refraction* 字段已不再使用——面板折射全部交给 nagramLiquidGlass 双矩形着色器，
         // 这里不再叠加 AndroidLiquidGlass lens，避免双重折射把背景扭花。
         refractionHeightDp = 0f,
@@ -3068,28 +3026,7 @@ private fun KernelSuAlignedBottomBar(
                             hazeState = hazeState,
                             motionTier = motionTier,
                             isTransitionRunning = isTransitionRunning,
-                            forceLowBlurBudget = forceLowBlurBudget,
-                            capsuleProvider = { layerSize ->
-                                // 通透玻璃预设下，把滑动选中胶囊喂给双矩形着色器的矩形 2。
-                                if (transparentGlassPreset && glassEnabled &&
-                                    selectedIndex in visibleItems.indices
-                                ) {
-                                    resolveBottomBarCapsuleGlassRect(
-                                        indicatorCenterXPx = interactiveHighlightCenterXPx,
-                                        layerHeightPx = layerSize.height,
-                                        indicatorWidthPx = itemWidthPx,
-                                        indicatorHeightPx = with(density) { 56.dp.toPx() },
-                                        thicknessPx = with(density) { 17.dp.toPx() },
-                                        refractIntensity = 1.18f,
-                                        foregroundColor = resolveBottomBarTransparentGlassCapsuleTint(
-                                            darkTheme = isDarkTheme,
-                                            verticalProgress = verticalGlassProfile.progress
-                                        )
-                                    )
-                                } else {
-                                    null
-                                }
-                            }
+                            forceLowBlurBudget = forceLowBlurBudget
                         )
                         .bottomBarInteractiveHighlight(
                             enabled = glassEnabled && interactiveHighlightEnabled,

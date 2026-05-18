@@ -275,9 +275,9 @@ class BottomBarIndicatorPolicyTest {
     }
 
     @Test
-    fun `transparent glass preset drops indicator lens in favor of dual-rect capsule`() {
-        // 通透玻璃改由双矩形着色器的滑动胶囊矩形折射，指示器不再叠加 lens。
-        assertFalse(
+    fun `transparent glass preset keeps indicator lens like tuned preset`() {
+        // 指示器保持 BiliPai 调教的独立层，只折射底栏捕获内容，不折射 feed 视频。
+        assertTrue(
             shouldUseBottomBarIndicatorLens(
                 preset = BottomBarLiquidGlassPreset.BACKDROP_NATIVE
             )
@@ -305,27 +305,6 @@ class BottomBarIndicatorPolicyTest {
         assertTrue(color.green > color.red)
         assertTrue(color.green > color.blue)
         assertTrue(color.green >= theme.green * 0.72f)
-    }
-
-    @Test
-    fun `transparent glass capsule tint stays gray-white instead of theme colored`() {
-        val darkTint = resolveBottomBarTransparentGlassCapsuleTint(
-            darkTheme = true,
-            verticalProgress = 1f
-        )
-        val lightTint = resolveBottomBarTransparentGlassCapsuleTint(
-            darkTheme = false,
-            verticalProgress = 1f
-        )
-
-        assertTrue(darkTint.alpha > 0.3f)
-        assertTrue(darkTint.red > 0.85f)
-        assertTrue(darkTint.green > 0.85f)
-        assertTrue(darkTint.blue > 0.85f)
-        assertTrue(lightTint.alpha > 0.3f)
-        assertTrue(lightTint.red > 0.9f)
-        assertTrue(lightTint.green > 0.9f)
-        assertTrue(lightTint.blue > 0.9f)
     }
 
     @Test
@@ -708,7 +687,7 @@ class BottomBarIndicatorPolicyTest {
     }
 
     @Test
-    fun `transparent glass surface renders as a material with light blur and visible highlight`() {
+    fun `transparent glass surface reduces blur so nagram refraction remains visible`() {
         val idle = resolveBottomBarBackdropNativeSurfaceSpec(
             blurRadiusDp = 18f,
             verticalProgress = 0f
@@ -718,9 +697,9 @@ class BottomBarIndicatorPolicyTest {
             verticalProgress = 1f
         )
 
-        // 轻度模糊：底栏是有体量的玻璃材质，不是透明窗口。
-        assertEquals(10f, idle.blurRadiusDp, 0.001f)
-        assertEquals(10f, scrolled.blurRadiusDp, 0.001f)
+        // 极轻微模糊：主要视觉由 Nagram 折射承担，避免退化成磨砂模糊。
+        assertEquals(2.5f, idle.blurRadiusDp, 0.001f)
+        assertEquals(2.5f, scrolled.blurRadiusDp, 0.001f)
         // 折射交给双矩形着色器，面板不再用 AndroidLiquidGlass lens。
         assertEquals(0f, idle.refractionHeightDp, 0.001f)
         assertEquals(0f, scrolled.refractionHeightDp, 0.001f)
