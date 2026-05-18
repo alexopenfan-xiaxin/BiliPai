@@ -46,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +80,7 @@ import com.android.purebilibili.core.ui.animation.MaybeDissolvableVideoCard
 import com.android.purebilibili.core.ui.common.rememberClipboardCopyHandler
 import com.android.purebilibili.core.ui.rememberAppLikeFilledIcon
 import com.android.purebilibili.core.ui.rememberAppLikeIcon
+import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.feature.video.viewmodel.CommentUiState
 import com.android.purebilibili.feature.video.viewmodel.SubReplyUiState
 import io.github.alexzhirkevich.cupertino.CupertinoActivityIndicator
@@ -153,11 +155,14 @@ internal fun resolveSubReplyDetailRevealDelayMillis(levelIndex: Int): Int {
     return (40 + levelIndex.coerceAtLeast(0) * 55).coerceAtMost(360)
 }
 
-internal fun resolveSubReplyDetailRevealSpec(levelIndex: Int): SubReplyDetailRevealSpec {
+internal fun resolveSubReplyDetailRevealSpec(
+    levelIndex: Int,
+    blurEnabled: Boolean = true
+): SubReplyDetailRevealSpec {
     return SubReplyDetailRevealSpec(
         delayMillis = resolveSubReplyDetailRevealDelayMillis(levelIndex),
         durationMillis = 300,
-        initialBlurRadiusDp = 10f,
+        initialBlurRadiusDp = if (blurEnabled) 10f else 0f,
         initialOffsetDp = 14
     )
 }
@@ -373,6 +378,10 @@ internal fun SubReplyDetailContent(
         resolveSubReplyDetailLayoutPolicy(showRootCommentEntry = false)
     }
     val appearance = rememberVideoCommentAppearance()
+    val context = LocalContext.current
+    val revealBlurEnabled by SettingsManager
+        .getCommentSubReplyRevealBlurEnabled(context)
+        .collectAsState(initial = SettingsManager.DEFAULT_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED)
     val unusedShowUpFlag = showUpFlag
     val listState = rememberLazyListState()
     var conversationAnchor by remember(rootReply.rpid) { mutableStateOf<ReplyItem?>(null) }
@@ -468,7 +477,8 @@ internal fun SubReplyDetailContent(
             item(key = "root_reply") {
                 SubReplyDetailStaggeredReveal(
                     revealKey = "root_${listScrollResetKey}",
-                    levelIndex = 0
+                    levelIndex = 0,
+                    blurEnabled = revealBlurEnabled
                 ) {
                     Box(modifier = Modifier.testTag(SUB_REPLY_DETAIL_ROOT_TAG)) {
                         SubReplyDetailItem(
@@ -499,7 +509,8 @@ internal fun SubReplyDetailContent(
                 }
                 SubReplyDetailStaggeredReveal(
                     revealKey = "section_${listScrollResetKey}",
-                    levelIndex = 1
+                    levelIndex = 1,
+                    blurEnabled = revealBlurEnabled
                 ) {
                     Column {
                         HorizontalDivider(thickness = 8.dp, color = appearance.sectionDividerColor)
@@ -572,7 +583,8 @@ internal fun SubReplyDetailContent(
             ) { index, item ->
                 SubReplyDetailStaggeredReveal(
                     revealKey = "reply_${listScrollResetKey}_${item.rpid}",
-                    levelIndex = index + 2
+                    levelIndex = index + 2,
+                    blurEnabled = revealBlurEnabled
                 ) {
                     MaybeDissolvableVideoCard(
                         isDissolving = item.rpid in dissolvingIds,
@@ -1006,9 +1018,12 @@ private fun SubReplyDetailStaggeredReveal(
     revealKey: Any,
     levelIndex: Int,
     modifier: Modifier = Modifier,
+    blurEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val spec = remember(levelIndex) { resolveSubReplyDetailRevealSpec(levelIndex) }
+    val spec = remember(levelIndex, blurEnabled) {
+        resolveSubReplyDetailRevealSpec(levelIndex, blurEnabled)
+    }
     var visible by remember(revealKey) { mutableStateOf(false) }
     var blurSettled by remember(revealKey) { mutableStateOf(false) }
     val density = LocalDensity.current

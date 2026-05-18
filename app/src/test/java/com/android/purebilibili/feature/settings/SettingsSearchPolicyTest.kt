@@ -175,6 +175,18 @@ class SettingsSearchPolicyTest {
     }
 
     @Test
+    fun queryBySubReplyBlur_hitsInteractionCommentEntry() {
+        val results = resolveSettingsSearchResults("楼中楼模糊")
+
+        assertTrue(
+            results.any {
+                it.target == SettingsSearchTarget.INTERACTION_COMMENT ||
+                    it.target == SettingsSearchTarget.PLAYBACK
+            }
+        )
+    }
+
+    @Test
     fun queryByDoubleTapSeek_hitsPlaybackInteractionEntry() {
         val results = resolveSettingsSearchResults("取消双击跳转")
 

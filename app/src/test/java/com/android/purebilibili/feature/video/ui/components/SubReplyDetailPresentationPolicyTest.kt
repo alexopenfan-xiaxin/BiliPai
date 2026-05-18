@@ -43,6 +43,16 @@ class SubReplyDetailPresentationPolicyTest {
     }
 
     @Test
+    fun `sub reply detail reveal motion can disable blur only`() {
+        val spec = resolveSubReplyDetailRevealSpec(levelIndex = 2, blurEnabled = false)
+
+        assertEquals(150, spec.delayMillis)
+        assertEquals(300, spec.durationMillis)
+        assertEquals(0f, spec.initialBlurRadiusDp)
+        assertEquals(14, spec.initialOffsetDp)
+    }
+
+    @Test
     fun `sub reply detail display count keeps root declared total when page only loaded partially`() {
         assertEquals(
             8,

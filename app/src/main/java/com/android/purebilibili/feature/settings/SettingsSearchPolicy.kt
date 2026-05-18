@@ -94,9 +94,9 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
     SettingsSearchEntry(
         target = SettingsSearchTarget.INTERACTION_COMMENT,
         title = "互动与评论",
-        subtitle = "评论发送检测、评论装扮、AI 总结、双击点赞与视频简介",
+        subtitle = "评论发送检测、评论楼中楼动效、评论装扮、AI 总结、双击点赞与视频简介",
         section = "设置",
-        aliases = listOf("互动", "评论", "评论检测", "发评反诈", "评论发送检测", "评论装扮", "个性装扮", "ai总结", "视频总结", "双击点赞", "视频简介", "简介默认展开")
+        aliases = listOf("互动", "评论", "楼中楼", "评论楼中楼", "楼中楼模糊", "评论模糊", "评论检测", "发评反诈", "评论发送检测", "评论装扮", "个性装扮", "ai总结", "视频总结", "双击点赞", "视频简介", "简介默认展开")
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.DATA_BACKUP,
@@ -247,6 +247,10 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
             "横屏适配",
             "平板评论区宽度",
             "评论区宽度",
+            "楼中楼",
+            "评论楼中楼",
+            "楼中楼模糊",
+            "评论模糊",
             "评论检测",
             "发评反诈",
             "评论发送检测",
@@ -569,7 +573,7 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
         title = "自动横竖屏 / 全屏方向 / 平板布局",
         subtitle = "交互",
         section = "播放设置",
-        aliases = listOf("自动横竖屏", "自动旋转", "全屏方向", "固定全屏比例", "全屏手势反向", "自动进入全屏", "自动退出全屏", "横屏适配", "平板评论区宽度", "评论区宽度", "评论折叠数量", "评论回复预览", "评论预览数量", "评论检测", "发评反诈", "评论发送检测", "评论装扮", "个性装扮", "评论区个性装扮", "图片长按保存", "长按保存图片", "查看图片保存", "播放页隐藏状态栏", "隐藏状态栏", "状态栏"),
+        aliases = listOf("自动横竖屏", "自动旋转", "全屏方向", "固定全屏比例", "全屏手势反向", "自动进入全屏", "自动退出全屏", "横屏适配", "平板评论区宽度", "评论区宽度", "评论折叠数量", "评论回复预览", "评论预览数量", "楼中楼", "评论楼中楼", "楼中楼模糊", "评论模糊", "评论检测", "发评反诈", "评论发送检测", "评论装扮", "个性装扮", "评论区个性装扮", "图片长按保存", "长按保存图片", "查看图片保存", "播放页隐藏状态栏", "隐藏状态栏", "状态栏"),
         focusId = SettingsSearchFocusIds.PLAYBACK_FULLSCREEN
     ),
     SettingsSearchEntry(

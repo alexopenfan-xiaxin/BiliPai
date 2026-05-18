@@ -904,12 +904,15 @@ object SettingsManager {
     private val KEY_BOTTOM_BAR_ITEM_COLORS = stringPreferencesKey("bottom_bar_item_colors")  //  格式: HOME:0,DYNAMIC:1,...
     private const val DEFAULT_BOTTOM_BAR_ORDER = "HOME,DYNAMIC,HISTORY,PROFILE"
     private const val DEFAULT_BOTTOM_BAR_VISIBLE_TABS = "HOME,DYNAMIC,HISTORY,PROFILE"
+    const val DEFAULT_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED = true
     //  [新增] 评论默认排序（1=回复,2=最新,3=最热,4=点赞）
     private val KEY_COMMENT_DEFAULT_SORT_MODE = intPreferencesKey("comment_default_sort_mode")
     private val KEY_COMMENT_FRAUD_DETECTION_ENABLED =
         booleanPreferencesKey("comment_fraud_detection_enabled")
     private val KEY_COMMENT_MEMBER_DECORATIONS_ENABLED =
         booleanPreferencesKey("comment_member_decorations_enabled")
+    private val KEY_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED =
+        booleanPreferencesKey("comment_sub_reply_reveal_blur_enabled")
     private val KEY_IMAGE_PREVIEW_LONG_PRESS_SAVE_ENABLED =
         booleanPreferencesKey("image_preview_long_press_save_enabled")
     //  [新增] 离开播放页后停止播放（优先于小窗/画中画模式）
@@ -3700,6 +3703,19 @@ object SettingsManager {
         }
     }
 
+    fun getCommentSubReplyRevealBlurEnabled(context: Context): Flow<Boolean> =
+        context.settingsDataStore.data
+            .map { preferences ->
+                preferences[KEY_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED]
+                    ?: DEFAULT_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED
+            }
+
+    suspend fun setCommentSubReplyRevealBlurEnabled(context: Context, enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED] = enabled
+        }
+    }
+
     fun getImagePreviewLongPressSaveEnabled(context: Context): Flow<Boolean> =
         context.settingsDataStore.data
             .map { preferences -> preferences[KEY_IMAGE_PREVIEW_LONG_PRESS_SAVE_ENABLED] ?: true }
@@ -4910,6 +4926,7 @@ object SettingsManager {
             IntShareablePreferenceDefinition(KEY_COMMENT_DEFAULT_SORT_MODE, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_COMMENT_FRAUD_DETECTION_ENABLED, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_COMMENT_MEMBER_DECORATIONS_ENABLED, SettingsShareSection.PLAYBACK),
+            BooleanShareablePreferenceDefinition(KEY_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_IMAGE_PREVIEW_LONG_PRESS_SAVE_ENABLED, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_STOP_PLAYBACK_ON_EXIT, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_BACKGROUND_PLAYBACK_ENABLED, SettingsShareSection.PLAYBACK),

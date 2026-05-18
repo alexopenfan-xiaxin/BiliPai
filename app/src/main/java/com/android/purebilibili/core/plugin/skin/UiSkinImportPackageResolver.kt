@@ -18,7 +18,7 @@ private const val BILIBILI_SKIN_LICENSE_NOTE =
     "由用户本地 KimmyXYC/bilibili-skin 主题目录转换，输出包包含原存档/官方装扮素材；" +
         "仅供本地私用或在已获得授权时分享，不要将官方付费主题原图、角色立绘、图标原件或动效资源作为社区包分发。"
 private const val MAX_THEME_ENTRY_COUNT = 256
-private const val MAX_THEME_TOTAL_BYTES = 32 * 1024 * 1024
+private const val MAX_THEME_TOTAL_BYTES = 128 * 1024 * 1024
 
 enum class UiSkinImportSource {
     BP_SKIN,

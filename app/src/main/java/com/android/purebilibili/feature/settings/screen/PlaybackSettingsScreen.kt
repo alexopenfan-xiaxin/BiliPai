@@ -995,6 +995,12 @@ private fun PlaybackInteractionSettingsSection(
             initial = com.android.purebilibili.core.store.SettingsManager
                 .DEFAULT_COMMENT_COLLAPSED_REPLY_PREVIEW_LIMIT
         )
+    val commentSubReplyRevealBlurEnabled by com.android.purebilibili.core.store.SettingsManager
+        .getCommentSubReplyRevealBlurEnabled(context)
+        .collectAsState(
+            initial = com.android.purebilibili.core.store.SettingsManager
+                .DEFAULT_COMMENT_SUB_REPLY_REVEAL_BLUR_ENABLED
+        )
     val subtitlePreferenceDescription = when (subtitleAutoPreference) {
         SubtitleAutoPreference.OFF -> "默认关闭字幕"
         SubtitleAutoPreference.ON -> "默认开启（优先当前可用轨道）"
@@ -1196,6 +1202,24 @@ private fun PlaybackInteractionSettingsSection(
                         .setCommentCollapsedReplyPreviewLimit(context, limit)
                 }
             }
+        )
+        IOSDivider()
+        IOSSwitchItem(
+            icon = CupertinoIcons.Default.Sparkles,
+            title = "评论楼中楼动效模糊",
+            subtitle = if (commentSubReplyRevealBlurEnabled) {
+                "打开楼中楼详情时保留柔和模糊过渡"
+            } else {
+                "关闭后楼中楼详情只保留淡入和位移动效"
+            },
+            checked = commentSubReplyRevealBlurEnabled,
+            onCheckedChange = { enabled ->
+                scope.launch {
+                    com.android.purebilibili.core.store.SettingsManager
+                        .setCommentSubReplyRevealBlurEnabled(context, enabled)
+                }
+            },
+            iconTint = com.android.purebilibili.core.theme.iOSPurple
         )
         IOSDivider()
         IOSSwitchItem(

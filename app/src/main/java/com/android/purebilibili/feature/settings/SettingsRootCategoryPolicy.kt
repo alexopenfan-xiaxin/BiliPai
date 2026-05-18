@@ -58,6 +58,7 @@ internal enum class SettingsRootCategory(
 }
 
 internal fun resolveSettingsRootCategoryOrder(): List<SettingsRootCategory> = listOf(
+    SettingsRootCategory.ABOUT_SUPPORT,
     SettingsRootCategory.INTERFACE_THEME,
     SettingsRootCategory.HOME_FEED,
     SettingsRootCategory.NAVIGATION_LABELS,
@@ -66,8 +67,7 @@ internal fun resolveSettingsRootCategoryOrder(): List<SettingsRootCategory> = li
     SettingsRootCategory.INTERACTION_COMMENT,
     SettingsRootCategory.DATA_BACKUP,
     SettingsRootCategory.PRIVACY_PERMISSION,
-    SettingsRootCategory.DIAGNOSTICS_DEVELOPER,
-    SettingsRootCategory.ABOUT_SUPPORT
+    SettingsRootCategory.DIAGNOSTICS_DEVELOPER
 )
 
 internal fun resolveTabletSettingsRootCategoryOrder(): List<SettingsRootCategory> =

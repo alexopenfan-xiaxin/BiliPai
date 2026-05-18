@@ -89,6 +89,14 @@ internal fun downloadUiSkinRemotePackage(url: String): ByteArray {
     }
 }
 
+internal fun resolveUiSkinImportErrorMessage(rawMessage: String?): String {
+    val message = rawMessage?.takeIf { it.isNotBlank() } ?: return "皮肤包导入失败"
+    if (message.contains("装扮存档解压后内容超过 33554432 字节")) {
+        return "装扮存档资源较大，已放宽导入限制；请重新选择该装扮包导入"
+    }
+    return message
+}
+
 /**
  *  插件中心页面
  * 
@@ -231,7 +239,7 @@ fun PluginsContent(
                 uiSkinPreview = preview
                 uiSkinPackageBytes = bytes
             }.onFailure { error ->
-                uiSkinImportError = error.message ?: "皮肤包导入失败"
+                uiSkinImportError = resolveUiSkinImportErrorMessage(error.message)
             }
         }
     }

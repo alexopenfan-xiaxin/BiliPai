@@ -226,4 +226,12 @@ class PluginsScreenPolicyTest {
             buildInstalledUiSkinSubtitle(manifest)
         )
     }
+
+    @Test
+    fun uiSkinImportError_hidesRawByteLimitFromUserMessage() {
+        assertEquals(
+            "装扮存档资源较大，已放宽导入限制；请重新选择该装扮包导入",
+            resolveUiSkinImportErrorMessage("装扮存档解压后内容超过 33554432 字节")
+        )
+    }
 }
