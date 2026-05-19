@@ -43,6 +43,31 @@ class DynamicCardClickPolicyTest {
     }
 
     @Test
+    fun resolveDynamicCardPrimaryAction_opensDynamicDetailForArticleOpusJumpUrl() {
+        val item = DynamicItem(
+            id_str = "1200069469486972932",
+            type = "DYNAMIC_TYPE_ARTICLE",
+            modules = DynamicModules(
+                module_dynamic = DynamicContentModule(
+                    major = DynamicMajor(
+                        type = "MAJOR_TYPE_ARTICLE",
+                        article = ArticleMajor(
+                            id = 1200069469486972932L,
+                            title = "长图文标题",
+                            jump_url = "https://www.bilibili.com/opus/1200069469486972932"
+                        )
+                    )
+                )
+            )
+        )
+
+        val action = resolveDynamicCardPrimaryAction(item)
+
+        assertTrue(action is DynamicCardPrimaryAction.OpenDynamicDetail)
+        assertEquals("1200069469486972932", (action as DynamicCardPrimaryAction.OpenDynamicDetail).dynamicId)
+    }
+
+    @Test
     fun resolveDynamicCardPrimaryAction_returnsNoneWhenNoVideoAndNoId() {
         val item = DynamicItem(id_str = "  ")
 

@@ -138,6 +138,18 @@ internal fun resolveDynamicCardPrimaryAction(item: DynamicItem): DynamicCardPrim
     major?.article
         ?.takeIf { it.id > 0L }
         ?.let { article ->
+            when (val target = BilibiliNavigationTargetParser.parse(article.jump_url)) {
+                is BilibiliNavigationTarget.Dynamic -> {
+                    return DynamicCardPrimaryAction.OpenDynamicDetail(target.dynamicId)
+                }
+                is BilibiliNavigationTarget.Article -> {
+                    return DynamicCardPrimaryAction.OpenArticle(
+                        articleId = target.articleId,
+                        title = article.title.ifBlank { article.desc }
+                    )
+                }
+                else -> Unit
+            }
             return DynamicCardPrimaryAction.OpenArticle(
                 articleId = article.id,
                 title = article.title.ifBlank { article.desc }

@@ -268,6 +268,57 @@ class SpaceModelsParsingTest {
     }
 
     @Test
+    fun decodeSpaceDynamicResponse_acceptsOpusPicUrlAlias() {
+        val payload = """
+            {
+              "code": 0,
+              "message": "0",
+              "data": {
+                "items": [
+                  {
+                    "id_str": "1200069469486972932",
+                    "type": "DYNAMIC_TYPE_ARTICLE",
+                    "modules": {
+                      "module_dynamic": {
+                        "major": {
+                          "type": "MAJOR_TYPE_OPUS",
+                          "opus": {
+                            "title": "TDS REVIEW",
+                            "summary": {
+                              "text": "左宫羽 聆川 混合单元入耳耳机体验"
+                            },
+                            "pics": [
+                              {
+                                "url": "https://i0.hdslb.com/bfs/new_dyn/tds-opus.jpg",
+                                "width": 1200,
+                                "height": 800
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val response = json.decodeFromString<SpaceDynamicResponse>(payload)
+        val pic = response.data?.items?.single()
+            ?.modules
+            ?.module_dynamic
+            ?.major
+            ?.opus
+            ?.pics
+            ?.single()
+
+        assertEquals("https://i0.hdslb.com/bfs/new_dyn/tds-opus.jpg", pic?.src)
+        assertEquals(1200, pic?.width)
+        assertEquals(800, pic?.height)
+    }
+
+    @Test
     fun decodeSpaceDynamicResponse_acceptsArchiveChargeBadge() {
         val payload = """
             {
