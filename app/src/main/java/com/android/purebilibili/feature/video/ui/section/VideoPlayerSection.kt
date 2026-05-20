@@ -1086,7 +1086,7 @@ fun VideoPlayerSection(
     if (bvid.isNotEmpty() && livePlayerSharedElementEnabled) {
          with(requireNotNull(sharedTransitionScope)) {
              rootModifier = rootModifier.sharedElement(
-                 sharedContentState = rememberSharedContentState(key = "video-$bvid"),
+                 sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoPlayerSharedElementKey(bvid)),
                  animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                  boundsTransform = { _, _ ->
                      com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -2530,7 +2530,7 @@ fun VideoPlayerSection(
         val forcedReturnCoverModifier = if (forceReturnCoverSharedBoundsEnabled) {
             with(requireNotNull(sharedTransitionScope)) {
                 Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "video_cover_$bvid"),
+                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(bvid)),
                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                     boundsTransform = { _, _ -> com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec },
                     clipInOverlayDuringTransition = OverlayClip(coverCardShape)

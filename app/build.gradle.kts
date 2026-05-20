@@ -321,9 +321,9 @@ dependencies {
     // 🍎 800+ iOS SF Symbols 风格图标
     implementation("io.github.alexzhirkevich:cupertino-icons-extended:0.1.0-alpha04")
     
-    // --- 3.6 Orbital (iOS 风格共享元素动画) ---
-    // 提供流畅的共享元素过渡、尺寸变换、位置移动动画
-    implementation("com.github.skydoves:orbital:0.4.0")
+    // --- 3.6 Navigation3 (Compose 自有返回栈与预测性返回迁移层) ---
+    implementation("androidx.navigation3:navigation3-runtime:1.1.1")
+    implementation("androidx.navigation3:navigation3-ui:1.1.1")
     
     // --- 3.7 Startup (应用初始化) ---
     implementation("androidx.startup:startup-runtime:1.2.0")

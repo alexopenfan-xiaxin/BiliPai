@@ -178,7 +178,7 @@ fun GlassVideoCard(
         with(sharedTransitionScope) {
             Modifier
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "video_cover_${video.bvid}"),
+                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(video.bvid)),
                     animatedVisibilityScope = animatedVisibilityScope,
                     boundsTransform = { _, _ -> com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec },
                     clipInOverlayDuringTransition = OverlayClip(

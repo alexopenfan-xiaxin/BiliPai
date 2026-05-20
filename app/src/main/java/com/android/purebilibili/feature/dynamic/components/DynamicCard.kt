@@ -266,7 +266,7 @@ fun DynamicCardV2(
                     playableBvid?.let(onVideoClick)
                         ?: onDynamicDetailClick?.invoke(item.id_str)
                 },
-                transitionName = "video-${archive.bvid}" // [新增] 共享元素过渡名称
+                sharedElementKey = com.android.purebilibili.core.ui.transition.videoPlayerSharedElementKey(archive.bvid)
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -281,7 +281,9 @@ fun DynamicCardV2(
                     bangumiTarget?.let { onBangumiClick(it.seasonId, it.epId) }
                         ?: onDynamicDetailClick?.invoke(item.id_str)
                 },
-                transitionName = "video-${pgc.bvid.ifBlank { item.id_str }}"
+                sharedElementKey = com.android.purebilibili.core.ui.transition.videoPlayerSharedElementKey(
+                    pgc.bvid.ifBlank { item.id_str }
+                )
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -465,7 +467,9 @@ fun DynamicCardV2(
                     },
                     isCollection = true,
                     collectionTitle = season.title,
-                    transitionName = "video-${seasonArchive.bvid}" // [新增] 共享元素过渡名称
+                    sharedElementKey = com.android.purebilibili.core.ui.transition.videoPlayerSharedElementKey(
+                        seasonArchive.bvid
+                    )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             } else {

@@ -121,6 +121,15 @@ import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.resolveEffectiveHomeSettings
 import com.android.purebilibili.core.theme.LocalUiPreset
 import com.android.purebilibili.core.util.NetworkUtils
+import com.android.purebilibili.navigation3.BiliPaiNavKey
+import com.android.purebilibili.navigation3.BiliPaiNavRouteTransition
+import com.android.purebilibili.navigation3.legacyRouteToBiliPaiNavKey
+import com.android.purebilibili.navigation3.popBiliPaiNavKey
+import com.android.purebilibili.navigation3.pushBiliPaiNavKey
+import com.android.purebilibili.navigation3.resolveBiliPaiNavMotionDecision
+import com.android.purebilibili.navigation3.resolveBiliPaiNavMotionMode
+import com.android.purebilibili.navigation3.resolveInitialBiliPaiBackStack
+import com.android.purebilibili.navigation3.shouldInterceptSystemBackForNavigation3
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier // 确保 Modifier 被导入
 import androidx.compose.foundation.layout.Box // 确保 Box 被导入
@@ -206,6 +215,28 @@ internal fun resolveStandardVideoRoute(
         resumePositionMs = resumePositionMs,
         commentRootRpid = commentRootRpid
     )
+}
+
+private fun resolveBiliPaiNavKeyForLegacyBackStackEntry(
+    entry: NavBackStackEntry?,
+    currentRoute: String?
+): BiliPaiNavKey {
+    val route = entry?.destination?.route ?: currentRoute
+    val arguments = entry?.arguments
+    if (route == VideoRoute.route && arguments != null) {
+        return BiliPaiNavKey.VideoDetail(
+            bvid = arguments.getString("bvid").orEmpty(),
+            cid = arguments.getLong("cid"),
+            coverUrl = arguments.getString("cover").orEmpty(),
+            startAudio = arguments.getBoolean("startAudio"),
+            autoPortrait = arguments.getBoolean("autoPortrait"),
+            fullscreen = arguments.getBoolean("fullscreen"),
+            resumePositionMs = arguments.getLong("resumePositionMs"),
+            commentRootRpid = arguments.getLong("commentRootRpid"),
+            sourceRoute = CardPositionManager.lastVideoSourceRoute
+        )
+    }
+    return legacyRouteToBiliPaiNavKey(route)
 }
 
 @androidx.media3.common.util.UnstableApi
@@ -584,6 +615,26 @@ fun AppNavigation(
         // [新增] 全局底栏状态管理
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+        var navigation3BackStack by remember(startDestination) {
+            mutableStateOf(
+                resolveInitialBiliPaiBackStack(
+                    firstRoute = startDestination,
+                    onboardingRequired = !firstLaunchShown
+                )
+            )
+        }
+        val currentNavigation3Key = remember(navBackStackEntry, currentRoute) {
+            resolveBiliPaiNavKeyForLegacyBackStackEntry(
+                entry = navBackStackEntry,
+                currentRoute = currentRoute
+            )
+        }
+        LaunchedEffect(currentNavigation3Key) {
+            navigation3BackStack = pushBiliPaiNavKey(
+                currentStack = navigation3BackStack,
+                key = currentNavigation3Key
+            )
+        }
         val configuredHomeWallpaperUri by SettingsManager.getHomeWallpaperUri(context).collectAsState(initial = "")
         val splashWallpaperUri by SettingsManager.getSplashWallpaperUri(context).collectAsState(initial = "")
         val globalHomeWallpaperUri = remember(configuredHomeWallpaperUri, splashWallpaperUri) {
@@ -761,11 +812,17 @@ fun AppNavigation(
         }
         val shouldInterceptSystemBack = remember(
             predictiveBackAnimationEnabled,
+            cardTransitionEnabled,
             systemBackAction
         ) {
-            shouldInterceptSystemBackForAppAction(
-                predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
-                action = systemBackAction
+            shouldInterceptSystemBackForNavigation3(
+                mode = resolveBiliPaiNavMotionMode(
+                    predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
+                    cardTransitionEnabled = cardTransitionEnabled
+                ),
+                appBackActionRequiresInterception =
+                    systemBackAction == AppSystemBackAction.RETURN_TO_HOME_TAB ||
+                        (!predictiveBackAnimationEnabled && systemBackAction == AppSystemBackAction.NAVIGATE_UP)
             )
         }
         val activeBottomTabRoute = if (currentRoute?.substringBefore("?") == ScreenRoutes.Home.route) {
@@ -887,7 +944,10 @@ fun AppNavigation(
             val performSystemBackAction = {
                 when (systemBackAction) {
                     AppSystemBackAction.RETURN_TO_HOME_TAB -> navigateToBottomPagerItem(BottomNavItem.HOME)
-                    AppSystemBackAction.NAVIGATE_UP -> navController.navigateUp()
+                    AppSystemBackAction.NAVIGATE_UP -> {
+                        navigation3BackStack = popBiliPaiNavKey(navigation3BackStack)
+                        navController.navigateUp()
+                    }
                     AppSystemBackAction.FINISH_ACTIVITY -> context.findActivity()?.finish()
                 }
             }
@@ -1076,18 +1136,31 @@ fun AppNavigation(
                 val fromSettings = fromRoute == ScreenRoutes.Settings.route
                 val sharedTransitionReady = CardPositionManager.lastClickedCardBounds != null &&
                     CardPositionManager.isCardFullyVisible
-                val action = resolveVideoCardReturnEnterAction(
-                    fromRoute = fromRoute,
-                    targetRoute = ScreenRoutes.Home.route,
-                    cardTransitionEnabled = cardTransitionEnabled,
+                val navigation3MotionDecision = resolveBiliPaiNavMotionDecision(
+                    fromKey = legacyRouteToBiliPaiNavKey(fromRoute),
+                    toKey = BiliPaiNavKey.Home,
                     predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
-                    isQuickReturnFromDetail = CardPositionManager.isQuickReturnFromDetail,
-                    sharedTransitionReady = sharedTransitionReady,
-                    isTabletLayout = isTabletLayout,
-                    allowNoOpSharedElement = true,
-                    lastClickedCardCenterX = CardPositionManager.lastClickedCardCenter?.x,
-                    noCardTransitionAction = VideoCardReturnEnterAction.SOFT_FADE
+                    cardTransitionEnabled = cardTransitionEnabled,
+                    sharedTransitionReady = sharedTransitionReady
                 )
+                val action = if (
+                    navigation3MotionDecision.routeTransition == BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
+                ) {
+                    VideoCardReturnEnterAction.NO_OP
+                } else {
+                    resolveVideoCardReturnEnterAction(
+                        fromRoute = fromRoute,
+                        targetRoute = ScreenRoutes.Home.route,
+                        cardTransitionEnabled = cardTransitionEnabled,
+                        predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
+                        isQuickReturnFromDetail = CardPositionManager.isQuickReturnFromDetail,
+                        sharedTransitionReady = sharedTransitionReady,
+                        isTabletLayout = isTabletLayout,
+                        allowNoOpSharedElement = true,
+                        lastClickedCardCenterX = CardPositionManager.lastClickedCardCenter?.x,
+                        noCardTransitionAction = VideoCardReturnEnterAction.SOFT_FADE
+                    )
+                }
                 if (fromSettings) {
                     slideEnterRight(navMotionSpec)
                 } else {
@@ -1581,17 +1654,30 @@ fun AppNavigation(
                 val targetRoute = targetState.destination.route
                 val sharedTransitionReady = CardPositionManager.lastClickedCardBounds != null &&
                     CardPositionManager.isCardFullyVisible
-                val decision = resolveVideoPopExitAction(
-                    cardTransitionEnabled = cardTransitionEnabled,
+                val navigation3MotionDecision = resolveBiliPaiNavMotionDecision(
+                    fromKey = legacyRouteToBiliPaiNavKey(fromRoute),
+                    toKey = legacyRouteToBiliPaiNavKey(targetRoute),
                     predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
-                    isTabletLayout = isTabletLayout,
-                    fromRoute = fromRoute,
-                    targetRoute = targetRoute,
-                    isQuickReturnFromDetail = CardPositionManager.isQuickReturnFromDetail,
-                    sharedTransitionReady = sharedTransitionReady,
-                    isSingleColumnCard = CardPositionManager.isSingleColumnCard,
-                    lastClickedCardCenterX = CardPositionManager.lastClickedCardCenter?.x
+                    cardTransitionEnabled = cardTransitionEnabled,
+                    sharedTransitionReady = sharedTransitionReady
                 )
+                val decision = if (
+                    navigation3MotionDecision.routeTransition == BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
+                ) {
+                    VideoPopExitDecision(action = VideoPopExitAction.NO_OP)
+                } else {
+                    resolveVideoPopExitAction(
+                        cardTransitionEnabled = cardTransitionEnabled,
+                        predictiveBackAnimationEnabled = predictiveBackAnimationEnabled,
+                        isTabletLayout = isTabletLayout,
+                        fromRoute = fromRoute,
+                        targetRoute = targetRoute,
+                        isQuickReturnFromDetail = CardPositionManager.isQuickReturnFromDetail,
+                        sharedTransitionReady = sharedTransitionReady,
+                        isSingleColumnCard = CardPositionManager.isSingleColumnCard,
+                        lastClickedCardCenterX = CardPositionManager.lastClickedCardCenter?.x
+                    )
+                }
                 val targetIsCardReturnTarget = isVideoCardReturnTargetRoute(targetRoute)
                 when (decision.action) {
                     VideoPopExitAction.NO_OP -> ExitTransition.None

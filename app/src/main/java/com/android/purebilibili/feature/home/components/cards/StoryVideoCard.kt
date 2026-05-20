@@ -187,7 +187,7 @@ fun StoryVideoCard(
         with(requireNotNull(sharedTransitionScope)) {
             Modifier
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "video_cover_${video.bvid}"),
+                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(video.bvid)),
                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                     boundsTransform = { _, _ -> com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec },
                     clipInOverlayDuringTransition = OverlayClip(
@@ -360,7 +360,7 @@ fun StoryVideoCard(
         if (metadataSharedEnabled) {
             with(requireNotNull(sharedTransitionScope)) {
                 titleModifier = titleModifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "video_title_${video.bvid}"),
+                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoTitleSharedElementKey(video.bvid)),
                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                     boundsTransform = { _, _ ->
                         spring(dampingRatio = 0.8f, stiffness = 200f)
@@ -421,7 +421,7 @@ fun StoryVideoCard(
             if (metadataSharedEnabled) {
                 with(requireNotNull(sharedTransitionScope)) {
                     upNameModifier = upNameModifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "video_up_${video.bvid}"),
+                        sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoUpNameSharedElementKey(video.bvid)),
                         animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                         boundsTransform = { _, _ ->
                             spring(dampingRatio = 0.8f, stiffness = 200f)
@@ -445,7 +445,7 @@ fun StoryVideoCard(
                         if (metadataSharedEnabled) {
                             with(requireNotNull(sharedTransitionScope)) {
                                 avatarModifier = avatarModifier.sharedBounds(
-                                    sharedContentState = rememberSharedContentState(key = "video_avatar_${video.bvid}"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoAvatarSharedElementKey(video.bvid)),
                                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                     boundsTransform = { _, _ ->
                                         spring(dampingRatio = 0.8f, stiffness = 200f)
@@ -493,7 +493,7 @@ fun StoryVideoCard(
                         if (metadataSharedEnabled) {
                             with(requireNotNull(sharedTransitionScope)) {
                                 viewsModifier = viewsModifier.sharedBounds(
-                                    sharedContentState = rememberSharedContentState(key = "video_views_${video.bvid}"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoViewsSharedElementKey(video.bvid)),
                                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                     boundsTransform = { _, _ ->
                                         spring(dampingRatio = 0.8f, stiffness = 200f)
@@ -530,7 +530,7 @@ fun StoryVideoCard(
                          if (metadataSharedEnabled) {
                              with(requireNotNull(sharedTransitionScope)) {
                                  danmakuModifier = danmakuModifier.sharedBounds(
-                                     sharedContentState = rememberSharedContentState(key = "video_danmaku_${video.bvid}"),
+                                     sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoDanmakuSharedElementKey(video.bvid)),
                                      animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                      boundsTransform = { _, _ ->
                                          spring(dampingRatio = 0.8f, stiffness = 200f)

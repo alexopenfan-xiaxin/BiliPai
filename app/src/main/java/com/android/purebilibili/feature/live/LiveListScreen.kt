@@ -849,7 +849,7 @@ private fun LiveRoomCard(
                         if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                             with(sharedTransitionScope) {
                                 Modifier.sharedElement(
-                                    sharedContentState = rememberSharedContentState(key = "live_cover_${item.roomId}"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(item.roomId)),
                                     animatedVisibilityScope = animatedVisibilityScope
                                 )
                             }

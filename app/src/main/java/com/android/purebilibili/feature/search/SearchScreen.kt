@@ -2628,7 +2628,7 @@ internal fun UpSearchResultCard(
             val avatarModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                 with(sharedTransitionScope) {
                     Modifier.sharedBounds(
-                        rememberSharedContentState(key = "up_avatar_${cleanedItem.mid}"),
+                        rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.avatarSharedElementKey(cleanedItem.mid)),
                         animatedVisibilityScope = animatedVisibilityScope,
                         clipInOverlayDuringTransition = OverlayClip(CircleShape)
                     )

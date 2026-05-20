@@ -426,7 +426,7 @@ fun ElegantVideoCard(
             with(requireNotNull(sharedTransitionScope)) {
                 Modifier
                     .sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "video_cover_${video.bvid}"),
+                        sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(video.bvid)),
                         animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                         //  添加回弹效果的 spring 动画
                         boundsTransform = { _, _ ->
@@ -605,7 +605,7 @@ fun ElegantVideoCard(
                         if (metadataSharedEnabled) {
                             with(requireNotNull(sharedTransitionScope)) {
                                 viewsOnCoverModifier = viewsOnCoverModifier.sharedBounds(
-                                    sharedContentState = rememberSharedContentState(key = "video_views_${video.bvid}"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoViewsSharedElementKey(video.bvid)),
                                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                     boundsTransform = { _, _ ->
                                         com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -836,7 +836,7 @@ fun ElegantVideoCard(
             if (metadataSharedEnabled) {
                 with(requireNotNull(sharedTransitionScope)) {
                     titleModifier = titleModifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "video_title_${video.bvid}"),
+                        sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoTitleSharedElementKey(video.bvid)),
                         animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                         boundsTransform = { _, _ ->
                             com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -959,7 +959,7 @@ fun ElegantVideoCard(
             if (metadataSharedEnabled) {
                 with(requireNotNull(sharedTransitionScope)) {
                     upNameModifier = upNameModifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "video_up_${video.bvid}"),
+                        sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoUpNameSharedElementKey(video.bvid)),
                         animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                         boundsTransform = { _, _ ->
                             com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -971,7 +971,7 @@ fun ElegantVideoCard(
             if (metadataSharedEnabled) {
                 with(requireNotNull(sharedTransitionScope)) {
                     followBadgeModifier = followBadgeModifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "video_up_action_${video.bvid}"),
+                        sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoUpActionSharedElementKey(video.bvid)),
                         animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                         boundsTransform = { _, _ ->
                             com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -1024,7 +1024,7 @@ fun ElegantVideoCard(
                         if (metadataSharedEnabled) {
                             with(requireNotNull(sharedTransitionScope)) {
                                 avatarModifier = avatarModifier.sharedBounds(
-                                    sharedContentState = rememberSharedContentState(key = "video_avatar_${video.bvid}"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoAvatarSharedElementKey(video.bvid)),
                                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                     boundsTransform = { _, _ ->
                                         com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -1100,7 +1100,7 @@ fun ElegantVideoCard(
                 if (metadataSharedEnabled) {
                     with(requireNotNull(sharedTransitionScope)) {
                         viewsRowModifier = viewsRowModifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "video_views_${video.bvid}"),
+                            sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoViewsSharedElementKey(video.bvid)),
                             animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                             boundsTransform = { _, _ ->
                                 com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec

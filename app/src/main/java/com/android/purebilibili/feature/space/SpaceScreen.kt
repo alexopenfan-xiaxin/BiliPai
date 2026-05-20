@@ -1712,7 +1712,7 @@ private fun SpaceHeader(
                     val avatarModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                         with(sharedTransitionScope) {
                             Modifier.sharedBounds(
-                                rememberSharedContentState(key = "up_avatar_${userInfo.mid}"),
+                                rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.avatarSharedElementKey(userInfo.mid)),
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 clipInOverlayDuringTransition = OverlayClip(CircleShape)
                             )
@@ -2725,7 +2725,11 @@ private fun SpaceArchiveListItemRow(
     val coverModifier = if (sharedTransitionReady) {
         with(requireNotNull(sharedTransitionScope)) {
             Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "video_cover_$sharedTransitionKey"),
+                sharedContentState = rememberSharedContentState(
+                    key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(
+                        requireNotNull(sharedTransitionKey)
+                    )
+                ),
                 animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                 boundsTransform = { _, _ ->
                     com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -2830,7 +2834,11 @@ private fun SpaceArchiveListItemRow(
                 with(requireNotNull(sharedTransitionScope)) {
                     Modifier
                         .sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "video_title_$sharedTransitionKey"),
+                            sharedContentState = rememberSharedContentState(
+                                key = com.android.purebilibili.core.ui.transition.videoTitleSharedElementKey(
+                                    requireNotNull(sharedTransitionKey)
+                                )
+                            ),
                             animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                             boundsTransform = { _, _ ->
                                 com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -2878,7 +2886,11 @@ private fun SpaceArchiveListItemRow(
                 val viewsModifier = if (sharedTransitionReady) {
                     with(requireNotNull(sharedTransitionScope)) {
                         Modifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "video_views_$sharedTransitionKey"),
+                            sharedContentState = rememberSharedContentState(
+                                key = com.android.purebilibili.core.ui.transition.videoViewsSharedElementKey(
+                                    requireNotNull(sharedTransitionKey)
+                                )
+                            ),
                             animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                             boundsTransform = { _, _ ->
                                 com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec
@@ -2892,7 +2904,11 @@ private fun SpaceArchiveListItemRow(
                 val repliesModifier = if (sharedTransitionReady) {
                     with(requireNotNull(sharedTransitionScope)) {
                         Modifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "video_danmaku_$sharedTransitionKey"),
+                            sharedContentState = rememberSharedContentState(
+                                key = com.android.purebilibili.core.ui.transition.videoDanmakuSharedElementKey(
+                                    requireNotNull(sharedTransitionKey)
+                                )
+                            ),
                             animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                             boundsTransform = { _, _ ->
                                 com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec

@@ -2722,7 +2722,7 @@ fun VideoDetailScreen(
                         with(requireNotNull(sharedTransitionScope)) {
                             Modifier
                                 .sharedBounds(
-                                    sharedContentState = rememberSharedContentState(key = "video_cover_$bvid"),
+                                    sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(bvid)),
                                     animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
                                     boundsTransform = { _, _ ->
                                         com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec

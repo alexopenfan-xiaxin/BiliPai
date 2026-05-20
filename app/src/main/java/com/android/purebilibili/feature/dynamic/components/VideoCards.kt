@@ -54,7 +54,7 @@ fun VideoCardLarge(
     isCollection: Boolean = false,
     collectionTitle: String = "",
     cornerBadgeText: String? = null,
-    transitionName: String? = null
+    sharedElementKey: Any? = null
 ) {
     val context = LocalContext.current
     val coverUrl = remember(archive.cover) { normalizeDynamicCoverUrl(archive.cover) }
@@ -66,10 +66,10 @@ fun VideoCardLarge(
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
 
-    if (transitionName != null && sharedTransitionScope != null && animatedVisibilityScope != null) {
+    if (sharedElementKey != null && sharedTransitionScope != null && animatedVisibilityScope != null) {
         with(sharedTransitionScope) {
             modifier = modifier.sharedElement(
-                sharedContentState = rememberSharedContentState(key = transitionName),
+                sharedContentState = rememberSharedContentState(key = sharedElementKey),
                 animatedVisibilityScope = animatedVisibilityScope
             )
         }

@@ -649,7 +649,7 @@ fun LivePlayerScreen(
                     if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                         with(sharedTransitionScope) {
                             Modifier.sharedElement(
-                                sharedContentState = rememberSharedContentState(key = "live_cover_$roomId"),
+                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(roomId)),
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
                         }

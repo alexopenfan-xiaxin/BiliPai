@@ -162,7 +162,7 @@ fun TabletVideoLayout(
                     with(sharedTransitionScope) {
                         Modifier
                             .sharedBounds(
-                                sharedContentState = rememberSharedContentState(key = "video_cover_$bvid"),
+                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(bvid)),
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 boundsTransform = { _, _ -> com.android.purebilibili.core.theme.AnimationSpecs.BiliPaiSpringSpec },
                                 clipInOverlayDuringTransition = OverlayClip(
