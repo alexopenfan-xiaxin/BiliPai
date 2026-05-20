@@ -1142,6 +1142,22 @@ fun AppNavigation(
                                 onReplayOnboardingClick = { navController.navigate(ScreenRoutes.Onboarding.route) },
                                 mainHazeState = mainHazeState
                             )
+                            BiliPaiNavEntryContentRole.WATCH_LATER -> com.android.purebilibili.feature.watchlater.WatchLaterScreen(
+                                onBack = { performSystemBackAction() },
+                                onVideoClick = { bvid, cid, resumePositionMs ->
+                                    navigateToVideo(bvid, cid, "", resumePositionMs = resumePositionMs)
+                                },
+                                onPlayAllAudioClick = { bvid, cid, resumePositionMs ->
+                                    navigateToVideo(
+                                        bvid,
+                                        cid,
+                                        "",
+                                        startAudio = true,
+                                        resumePositionMs = resumePositionMs
+                                    )
+                                },
+                                globalHazeState = mainHazeState
+                            )
                             else -> Unit
                         }
                     }

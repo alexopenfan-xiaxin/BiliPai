@@ -44,6 +44,7 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(source.contains("sharedTransitionScope = LocalSharedTransitionScope.current"))
         assertTrue(source.contains("resolveBiliPaiNavEntryContentRole"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.SETTINGS ->"))
+        assertTrue(source.contains("BiliPaiNavEntryContentRole.WATCH_LATER ->"))
         assertTrue(source.contains("onBack = { performSystemBackAction() }"))
         assertTrue(source.contains("else NavHost("))
     }
