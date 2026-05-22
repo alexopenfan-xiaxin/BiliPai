@@ -161,10 +161,26 @@ internal fun VideoShareSheet(
                                     onDismiss()
                                 }
                                 VideoShareTarget.MORE -> {
-                                    context.startMoreVideoShare(
-                                        payload = payload,
-                                        onSuccess = onDismiss
-                                    )
+                                    if (sharingTarget != null) return@VideoShareSheetItemView
+                                    sharingTarget = item.target
+                                    clipboardManager.setText(AnnotatedString(payload.url))
+                                    Toast.makeText(context, "链接已复制，正在准备视频封面", Toast.LENGTH_SHORT).show()
+                                    shareScope.launch {
+                                        val coverFile = prepareVideoShareCoverFile(context, payload)
+                                        if (coverFile == null && payload.coverUrl.isNotBlank()) {
+                                            Toast.makeText(
+                                                context,
+                                                "封面加载失败，已改用链接分享",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        context.startMoreVideoShare(
+                                            payload = payload,
+                                            coverFile = coverFile,
+                                            onSuccess = onDismiss
+                                        )
+                                        sharingTarget = null
+                                    }
                                 }
                             }
                         }
@@ -276,10 +292,24 @@ private fun Context.startTargetedVideoShare(
 
 private fun Context.startMoreVideoShare(
     payload: VideoSharePayload,
+    coverFile: VideoShareCoverFile?,
     onSuccess: () -> Unit
 ) {
     try {
-        val chooser = Intent.createChooser(buildVideoShareIntent(payload), "分享视频到")
+        val sendIntent = if (coverFile != null) {
+            buildVideoCoverShareIntent(
+                payload = payload,
+                coverUri = coverFile.uri,
+                mimeType = coverFile.mimeType,
+                contentResolver = contentResolver
+            )
+        } else {
+            buildVideoShareIntent(payload)
+        }
+        val chooser = Intent.createChooser(sendIntent, "分享视频到")
+        if (coverFile != null) {
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
         startActivityWithTaskFlag(chooser)
         onSuccess()
     } catch (_: ActivityNotFoundException) {
