@@ -405,10 +405,10 @@ private fun BangumiPiliPlusHomeContent(
                         )
                     }
                 } else {
-                    items(
+                    itemsIndexed(
                         items = listState.items,
-                        key = { it.seasonId }
-                    ) { item ->
+                        key = { index, item -> resolveBangumiIndexItemLazyKey(index, item) }
+                    ) { _, item ->
                         BangumiCard(
                             item = item,
                             modifier = Modifier.animateItem(),
@@ -637,10 +637,10 @@ private fun BangumiTimelinePreviewSection(
                     }
                 }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(
+                    itemsIndexed(
                         items = selectedDay.episodes.orEmpty(),
-                        key = { it.episodeId }
-                    ) { episode ->
+                        key = { index, episode -> resolveTimelineEpisodeLazyKey(index, episode) }
+                    ) { _, episode ->
                         TimelineEpisodeHomeCard(
                             episode = episode,
                             onClick = { onItemClick(episode.seasonId) }
@@ -1164,10 +1164,10 @@ private fun BangumiSearchGrid(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        items(
+        itemsIndexed(
             items = items,
-            key = { it.seasonId }
-        ) { item ->
+            key = { index, item -> resolveBangumiSearchItemLazyKey(index, item) }
+        ) { _, item ->
             BangumiSearchCardGrid(
                 item = item,
                 onClick = { onItemClick(item.seasonId) }
