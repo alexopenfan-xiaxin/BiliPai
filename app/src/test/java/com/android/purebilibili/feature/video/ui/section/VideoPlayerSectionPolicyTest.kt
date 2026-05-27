@@ -1089,6 +1089,16 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
+    fun longPressSpeedLockHint_dismissActionEndsCurrentLongPressSpeed() {
+        val source = loadVideoPlayerSectionSource()
+        val dismissAction = source
+            .substringAfter("TextButton(\n                            onClick = {\n                                showLongPressSpeedLockHint = false")
+            .substringBefore("Text(\"不再提示\")")
+
+        assertTrue(dismissAction.contains("finishLongPressSpeedGesture(gestureEnded = true)"))
+    }
+
+    @Test
     fun longPressSpeedDrag_usesSingleLongPressDragGestureDetector() {
         val source = loadVideoPlayerSectionSource()
 

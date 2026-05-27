@@ -237,6 +237,28 @@ class VideoDetailSystemBarsPolicyTest {
     }
 
     @Test
+    fun portraitPlayerTopInset_isZeroWhenStatusBarHidden() {
+        assertEquals(
+            0f,
+            resolveVideoDetailPortraitPlayerTopInsetDp(
+                stableStatusBarHeightDp = 24f,
+                hideStatusBars = true
+            )
+        )
+    }
+
+    @Test
+    fun portraitPlayerTopInset_keepsStatusInsetWhenStatusBarVisible() {
+        assertEquals(
+            24f,
+            resolveVideoDetailPortraitPlayerTopInsetDp(
+                stableStatusBarHeightDp = 24f,
+                hideStatusBars = false
+            )
+        )
+    }
+
+    @Test
     fun restorePolicy_restoresSystemBarsAsSoonAsExitTransitionStarts() {
         assertTrue(
             shouldRestoreSystemBarsDuringVideoDetailExitTransition(
