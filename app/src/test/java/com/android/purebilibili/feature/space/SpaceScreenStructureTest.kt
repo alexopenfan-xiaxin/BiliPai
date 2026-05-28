@@ -15,7 +15,7 @@ class SpaceScreenStructureTest {
         assertTrue(source.contains("resolveSpaceContentGridColumnCount("))
         assertTrue(source.contains("SpaceContributionVideoLayoutMode.GRID"))
         assertTrue(source.contains("SpaceHomeVideoCard("))
-        assertTrue(source.contains("key = { \"space_video_${'$'}{it.bvid}_${'$'}{it.aid}\" }"))
+        assertTrue(source.contains("resolveSpaceContributionVideoItemKey("))
         assertFalse(source.contains("SpaceVideoListItemRow("))
     }
 
@@ -29,9 +29,10 @@ class SpaceScreenStructureTest {
         assertTrue(source.contains("onLayoutModeClick"))
         assertTrue(source.contains("toggleSpaceContributionVideoLayoutMode"))
         assertTrue(source.contains("resolveSpaceContributionVideoGridSpan("))
+        assertTrue(source.contains("resolveSpaceContributionVideoItemKey("))
         assertTrue(source.contains("SpaceContributionVideoLayoutMode.SINGLE_COLUMN"))
         assertTrue(source.contains("SpaceArchiveListItemRow("))
-        assertTrue(contributionVideoItems.contains("Modifier.animateItem()"))
+        assertFalse(contributionVideoItems.contains("Modifier.animateItem()"))
         assertFalse(contributionVideoItems.contains("AnimatedContent("))
         assertFalse(contributionVideoItems.contains("SizeTransform("))
     }

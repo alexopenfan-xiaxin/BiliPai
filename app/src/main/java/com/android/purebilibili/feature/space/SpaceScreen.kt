@@ -1191,7 +1191,13 @@ private fun SpaceContent(
 
                         items(
                             items = state.videos,
-                            key = { "space_video_${it.bvid}_${it.aid}" },
+                            key = {
+                                resolveSpaceContributionVideoItemKey(
+                                    layoutMode = contributionVideoLayoutMode,
+                                    bvid = it.bvid,
+                                    aid = it.aid
+                                )
+                            },
                             span = {
                                 GridItemSpan(
                                     resolveSpaceContributionVideoGridSpan(
@@ -1211,8 +1217,7 @@ private fun SpaceContent(
                                         onClick = { playVideoFromSpace(video.bvid) },
                                         sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
                                         sharedTransitionScope = lazyGridSharedTransitionScope,
-                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope,
-                                        modifier = Modifier.animateItem()
+                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope
                                     )
                                 }
                                 SpaceContributionVideoLayoutMode.SINGLE_COLUMN -> {
@@ -1228,8 +1233,7 @@ private fun SpaceContent(
                                         onClick = { playVideoFromSpace(video.bvid) },
                                         sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
                                         sharedTransitionScope = lazyGridSharedTransitionScope,
-                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope,
-                                        modifier = Modifier.animateItem()
+                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope
                                     )
                                 }
                             }

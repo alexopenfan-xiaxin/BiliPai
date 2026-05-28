@@ -276,6 +276,15 @@ internal fun resolveSpaceContributionVideoGridSpan(
     }
 }
 
+internal fun resolveSpaceContributionVideoItemKey(
+    layoutMode: SpaceContributionVideoLayoutMode,
+    bvid: String,
+    aid: Long
+): String {
+    // 布局模式切换会同时改变 span 和内容树，key 随模式变化可避免 LazyGrid 复用旧 lookahead 节点。
+    return "space_video_${layoutMode.name}_${bvid}_${aid}"
+}
+
 internal data class SpaceInitialSeed(
     val userInfo: SpaceUserInfo,
     val relationStat: RelationStatData?,
