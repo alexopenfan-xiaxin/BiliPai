@@ -90,6 +90,33 @@ internal class MainBottomPagerState(
             selectedPage = pagerState.currentPage
         }
     }
+
+    /**
+     * 立即跳到目标页，不播放横向滚动动画。
+     * 用于「返回首页」按钮：在视频详情把 MainHost 完全遮挡时静默切到 HOME，
+     * 待 [popBiliPaiNavKeyToRoot] 触发的横向过渡播放时背后已经是首页。
+     */
+    fun snapToPage(targetIndex: Int) {
+        if (targetIndex == pagerState.currentPage && targetIndex == selectedPage) {
+            return
+        }
+        val previousJob = navJob
+        navJob = null
+        previousJob?.cancel()
+        navigationStartPage = targetIndex
+        selectedPage = targetIndex
+        isNavigating = false
+        navJob = coroutineScope.launch {
+            try {
+                pagerState.scrollToPage(targetIndex)
+            } finally {
+                if (pagerState.currentPage == targetIndex) {
+                    selectedPage = targetIndex
+                    navigationStartPage = targetIndex
+                }
+            }
+        }
+    }
 }
 
 @Composable

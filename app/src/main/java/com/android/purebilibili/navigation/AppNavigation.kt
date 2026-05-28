@@ -129,6 +129,7 @@ import com.android.purebilibili.navigation3.BiliPaiNavKey
 import com.android.purebilibili.navigation3.BiliPaiReturnSessionState
 import com.android.purebilibili.navigation3.legacyRouteToBiliPaiNavKey
 import com.android.purebilibili.navigation3.popBiliPaiNavKey
+import com.android.purebilibili.navigation3.popBiliPaiNavKeyToRoot
 import com.android.purebilibili.navigation3.pushBiliPaiNavKey
 import com.android.purebilibili.navigation3.resolveBiliPaiBackGestureDecision
 import com.android.purebilibili.navigation3.resolveBiliPaiNavCardSourceDirection
@@ -1471,7 +1472,13 @@ fun AppNavigation(
                                     navigation3ReturnSession =
                                         navigation3ReturnSession.markReturning(SystemClock.uptimeMillis())
                                     miniPlayerManager?.markLeavingByNavigation(expectedBvid = videoKey.bvid)
-                                    pushNavigation3Route(ScreenRoutes.Home.route)
+                                    // 先把 bottom pager 静默切到 HOME（被详情页遮挡，切换不可见），
+                                    // 再 pop 至 MainHost 触发与系统返回相同的横向过渡。
+                                    val homeIndex = visibleBottomBarItems.indexOf(BottomNavItem.HOME)
+                                    if (homeIndex >= 0) {
+                                        mainBottomPagerState.snapToPage(homeIndex)
+                                    }
+                                    navigation3BackStack = popBiliPaiNavKeyToRoot(navigation3BackStack)
                                 },
                                 onNavigateToAudioMode = {
                                     isNavigatingToAudioMode = true

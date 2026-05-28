@@ -98,6 +98,18 @@ internal fun resolveBiliPaiBackGestureDecision(
     )
 }
 
+/**
+ * 解析 [BiliPaiNavDisplayHost] 全局 `popTransitionSpec` / `predictivePopTransitionSpec` 使用的过渡。
+ *
+ * 实际生效场景：
+ *   - **预测式返回手势**（Android 13+ swipe-back）：entry metadata 不注入 PREDICTIVE_POP_TRANSITION_SPEC，
+ *     所以此函数的输出是唯一来源；
+ *   - 普通 pop：entry metadata 会注入 POP_TRANSITION_SPEC 并优先生效（见
+ *     [resolveBiliPaiNavEntryPopRouteTransition]），此函数仅作兜底。
+ *
+ * 两条路径需要保持视觉一致——任何对此函数的逻辑修改都应同步检查
+ * [resolveBiliPaiNavEntryPopRouteTransition]，反之亦然。
+ */
 internal fun resolveBiliPaiNavDisplayPopRouteTransition(
     cardTransitionEnabled: Boolean = true,
     sourceMetadata: BiliPaiNavSourceMetadata,
@@ -105,29 +117,28 @@ internal fun resolveBiliPaiNavDisplayPopRouteTransition(
     toKey: BiliPaiNavKey?
 ): BiliPaiNavRouteTransition {
     val fromVideoKey = fromKey as? BiliPaiNavKey.VideoDetail
-    val normalizedSourceRoute = sourceMetadata.sourceRoute?.substringBefore("?")
-    val normalizedVideoRoute = fromVideoKey?.sourceRoute?.substringBefore("?")
-    val sourceMatchesCurrentVideo = fromVideoKey != null &&
-        normalizedSourceRoute != null &&
-        normalizedVideoRoute == normalizedSourceRoute &&
-        sourceMetadata.sourceKey == "$normalizedSourceRoute:${fromVideoKey.bvid}"
-    val sharedReadyVideoToSourceCard = sourceMetadata.sharedTransitionReady &&
-        sourceMatchesCurrentVideo &&
-        toKey != null &&
-        isCardReturnTargetNavKey(toKey)
-    if (cardTransitionEnabled && sharedReadyVideoToSourceCard) {
-        return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
-    }
-    if (!cardTransitionEnabled && sharedReadyVideoToSourceCard) {
-        resolveCardDisabledReturnTransition(sourceMetadata.cardSourceDirection)?.let {
-            return it
+    val toIsCardReturnTarget = toKey != null && isCardReturnTargetNavKey(toKey)
+    if (cardTransitionEnabled) {
+        val normalizedSourceRoute = sourceMetadata.sourceRoute?.substringBefore("?")
+        val normalizedVideoRoute = fromVideoKey?.sourceRoute?.substringBefore("?")
+        val sourceMatchesCurrentVideo = fromVideoKey != null &&
+            normalizedSourceRoute != null &&
+            normalizedVideoRoute == normalizedSourceRoute &&
+            sourceMetadata.sourceKey == "$normalizedSourceRoute:${fromVideoKey.bvid}"
+        val sharedReadyVideoToSourceCard = sourceMetadata.sharedTransitionReady &&
+            sourceMatchesCurrentVideo &&
+            toIsCardReturnTarget
+        if (sharedReadyVideoToSourceCard) {
+            return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
         }
+        return BiliPaiNavRouteTransition.CLASSIC_CARD
     }
-    return if (cardTransitionEnabled) {
-        BiliPaiNavRouteTransition.CLASSIC_CARD
-    } else {
-        BiliPaiNavRouteTransition.FALLBACK
+    // 关闭共享元素时：VideoDetail → 任意 card-return-target 一律走方向化横向过渡，
+    // 没有源方向信息（单列、居中、未点击源、卡片已滚出视口等）时兜底向右滑出。
+    if (fromVideoKey != null && toIsCardReturnTarget) {
+        return resolveCardDisabledReturnTransition(sourceMetadata.cardSourceDirection)
     }
+    return BiliPaiNavRouteTransition.FALLBACK
 }
 
 internal fun shouldInterceptSystemBackForNavigation3(
@@ -140,12 +151,12 @@ internal fun shouldInterceptSystemBackForNavigation3(
 
 private fun resolveCardDisabledReturnTransition(
     sourceDirection: BiliPaiNavCardSourceDirection
-): BiliPaiNavRouteTransition? {
+): BiliPaiNavRouteTransition {
     return when (sourceDirection) {
         BiliPaiNavCardSourceDirection.SOURCE_LEFT ->
             BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT
-        BiliPaiNavCardSourceDirection.SOURCE_RIGHT ->
+        BiliPaiNavCardSourceDirection.SOURCE_RIGHT,
+        BiliPaiNavCardSourceDirection.NONE ->
             BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT
-        BiliPaiNavCardSourceDirection.NONE -> null
     }
 }

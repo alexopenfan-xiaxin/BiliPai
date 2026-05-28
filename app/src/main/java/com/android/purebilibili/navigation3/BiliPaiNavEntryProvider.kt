@@ -8,7 +8,12 @@ import androidx.navigation3.ui.NavDisplay
 private const val BILI_PAI_NAV_ROUTE_BASE_METADATA_KEY = "biliPaiNavRouteBase"
 private const val VIDEO_ROUTE_BASE = "video"
 private const val SPACE_ROUTE_BASE = "space"
+// 必须与 [isCardReturnTargetNavKey] 保持同步覆盖。
+// 注意 "main_host" 必须在内——实际栈是 [MainHost, VideoDetail]（Home/Dynamic/... tab 渲染在
+// MainHost 的 bottom pager 里），pop 时 entry-level popTransitionSpec 的 targetState.routeBase
+// 是 "main_host" 而非 "home"。漏掉会导致关闭共享元素后 VideoDetail → 首页退化成 fade。
 private val CARD_RETURN_TARGET_ROUTE_BASES = setOf(
+    "main_host",
     "home",
     "dynamic",
     "search",
@@ -102,6 +107,21 @@ internal fun biliPaiNavEntryProvider(
     }
 }
 
+/**
+ * 注入到每个 [NavEntry.metadata] 的过渡描述。
+ *
+ * 按官方 NavDisplay 优先级（NavDisplay.kt:219）：
+ *   transitioning NavEntry.metadata > current Scene.metadata > NavDisplay defaults
+ * 而 [androidx.navigation3.scene.SinglePaneScene] 的 `Scene.metadata` 默认就是栈顶 entry 的 metadata。
+ *
+ * 所以这里注入的 [NavDisplay.transitionSpec] 与 [NavDisplay.popTransitionSpec] 是**系统返回 / 普通 pop /
+ * 普通 push 路径的实际生效路径**——[BiliPaiNavDisplayHost] 那两个同名全局 lambda 只是兜底。
+ *
+ * 注意：此处刻意**不**注入预测式返回的过渡（即不写 PREDICTIVE_POP_TRANSITION_SPEC 那个 key），
+ * 因此预测式返回（Android 13+ swipe-back）落到 [BiliPaiNavDisplayHost] 上 NavDisplay 的全局值。
+ * 该约束被 `BiliPaiNavEntryProviderPolicyTest.providerDoesNotOwnPredictivePopTransition` 守护
+ * （直接文本断言 "NavDisplay.predictivePop" 不出现在本文件中）。
+ */
 internal fun biliPaiNavEntryMetadata(
     key: BiliPaiNavKey,
     sourceMetadata: BiliPaiNavSourceMetadata,
@@ -165,19 +185,20 @@ internal fun resolveBiliPaiNavEntryPopRouteTransition(
     val normalizedFromRoute = normalizeBiliPaiNavEntryRouteBase(fromRoute)
     val normalizedToRoute = normalizeBiliPaiNavEntryRouteBase(toRoute)
     val normalizedSourceRoute = normalizeBiliPaiNavEntryRouteBase(sourceMetadata.sourceRoute)
-    val sharedReadyVideoToSourceCard = sourceMetadata.sharedTransitionReady &&
-        normalizedFromRoute == VIDEO_ROUTE_BASE &&
+    val videoToCardReturnTarget = normalizedFromRoute == VIDEO_ROUTE_BASE &&
         normalizedToRoute != null &&
-        normalizedToRoute == normalizedSourceRoute &&
         isCardReturnTargetRouteBase(normalizedToRoute)
 
-    if (cardTransitionEnabled && sharedReadyVideoToSourceCard) {
-        return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
-    }
-    if (!cardTransitionEnabled && sharedReadyVideoToSourceCard) {
-        resolveCardDisabledVideoReturnTransition(sourceMetadata.cardSourceDirection)?.let {
-            return it
+    if (cardTransitionEnabled) {
+        val sharedReadyVideoToSourceCard = sourceMetadata.sharedTransitionReady &&
+            videoToCardReturnTarget &&
+            normalizedToRoute == normalizedSourceRoute
+        if (sharedReadyVideoToSourceCard) {
+            return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
         }
+    } else if (videoToCardReturnTarget) {
+        // 关闭共享元素时：VideoDetail → 任意 card-return-target 一律走方向化横向过渡。
+        return resolveCardDisabledVideoReturnTransition(sourceMetadata.cardSourceDirection)
     }
 
     return if (defaultTransition == BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT) {
@@ -264,12 +285,12 @@ private fun resolveCardDisabledVideoForwardTransition(
 
 private fun resolveCardDisabledVideoReturnTransition(
     sourceDirection: BiliPaiNavCardSourceDirection
-): BiliPaiNavRouteTransition? {
+): BiliPaiNavRouteTransition {
     return when (sourceDirection) {
         BiliPaiNavCardSourceDirection.SOURCE_LEFT ->
             BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT
-        BiliPaiNavCardSourceDirection.SOURCE_RIGHT ->
+        BiliPaiNavCardSourceDirection.SOURCE_RIGHT,
+        BiliPaiNavCardSourceDirection.NONE ->
             BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT
-        BiliPaiNavCardSourceDirection.NONE -> null
     }
 }

@@ -58,6 +58,23 @@ class AppNavigationNavigation3BridgeStructureTest {
     }
 
     @Test
+    fun videoDetailHomeClickUsesPopToRootSoHorizontalReturnTransitionPlays() {
+        val source = appNavigationSource()
+        val videoDetailBranch = source
+            .substringAfter("BiliPaiNavEntryContentRole.VIDEO_DETAIL ->")
+            .substringBefore("BiliPaiNavEntryContentRole.ARTICLE_DETAIL ->")
+        val onHomeClickBlock = videoDetailBranch
+            .substringAfter("onHomeClick = {")
+            .substringBefore("onNavigateToAudioMode")
+
+        // 必须走 pop 路径才能触发 popTransitionSpec → 方向化横向过渡。
+        assertTrue(onHomeClickBlock.contains("popBiliPaiNavKeyToRoot(navigation3BackStack)"))
+        assertTrue(onHomeClickBlock.contains("mainBottomPagerState.snapToPage"))
+        // 不再用 push 把 Home 叠到栈顶；避免 fade 兜底以及栈泄漏。
+        assertFalse(onHomeClickBlock.contains("pushNavigation3Route(ScreenRoutes.Home.route)"))
+    }
+
+    @Test
     fun videoDetailRelatedVideoClickUsesVideoSourceRouteForSharedElementPairing() {
         val source = appNavigationSource()
         val videoDetailBranch = source

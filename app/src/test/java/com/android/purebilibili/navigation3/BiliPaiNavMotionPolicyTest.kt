@@ -141,6 +141,82 @@ class BiliPaiNavMotionPolicyTest {
     }
 
     @Test
+    fun navDisplayPop_disabledSharedTransition_noDirectionFallsBackToRight() {
+        val transition = resolveBiliPaiNavDisplayPopRouteTransition(
+            cardTransitionEnabled = false,
+            sourceMetadata = BiliPaiNavSourceMetadata(
+                sourceKey = "home:BV1",
+                sourceRoute = "home",
+                clickedBoundsRecorded = true,
+                cardFullyVisible = true,
+                cardSourceDirection = BiliPaiNavCardSourceDirection.NONE
+            ),
+            fromKey = BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "home"),
+            toKey = BiliPaiNavKey.Home
+        )
+
+        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, transition)
+    }
+
+    @Test
+    fun navDisplayPop_disabledSharedTransition_scrolledOutCardStillSlidesHorizontally() {
+        // 详情中分 P 切换导致卡片滚出视口 → cardFullyVisible=false，没有源方向。
+        // 期望仍走方向化退出（兜底右侧），而不是退化为 fade。
+        val transition = resolveBiliPaiNavDisplayPopRouteTransition(
+            cardTransitionEnabled = false,
+            sourceMetadata = BiliPaiNavSourceMetadata(
+                sourceKey = "home:BV1",
+                sourceRoute = "home",
+                clickedBoundsRecorded = true,
+                cardFullyVisible = false,
+                cardSourceDirection = BiliPaiNavCardSourceDirection.NONE
+            ),
+            fromKey = BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "home"),
+            toKey = BiliPaiNavKey.Home
+        )
+
+        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, transition)
+    }
+
+    @Test
+    fun navDisplayPop_disabledSharedTransition_deepLinkEntryStillSlidesHorizontally() {
+        // 深链 / 通知 / 桌面快捷方式进入详情 → clickedBoundsRecorded=false。
+        val transition = resolveBiliPaiNavDisplayPopRouteTransition(
+            cardTransitionEnabled = false,
+            sourceMetadata = BiliPaiNavSourceMetadata(
+                sourceKey = null,
+                sourceRoute = null,
+                clickedBoundsRecorded = false,
+                cardFullyVisible = false,
+                cardSourceDirection = BiliPaiNavCardSourceDirection.NONE
+            ),
+            fromKey = BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "home"),
+            toKey = BiliPaiNavKey.Home
+        )
+
+        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, transition)
+    }
+
+    @Test
+    fun navDisplayPop_disabledSharedTransition_videoToNonCardTargetUsesFallback() {
+        // 详情套详情等非 card-return-target 的 pop 不应被横向覆盖。
+        val transition = resolveBiliPaiNavDisplayPopRouteTransition(
+            cardTransitionEnabled = false,
+            sourceMetadata = BiliPaiNavSourceMetadata(
+                sourceKey = "home:BV1",
+                sourceRoute = "home",
+                clickedBoundsRecorded = true,
+                cardFullyVisible = true,
+                cardSourceDirection = BiliPaiNavCardSourceDirection.SOURCE_LEFT
+            ),
+            fromKey = BiliPaiNavKey.VideoDetail("BV2", sourceRoute = "video"),
+            toKey = BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "home")
+        )
+
+        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transition)
+    }
+
+    @Test
     fun plainPopOverridesOnlySharedOrDirectionalVideoReturnTransitions() {
         assertNotNull(
             resolveBiliPaiNavPopContentTransform(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT)

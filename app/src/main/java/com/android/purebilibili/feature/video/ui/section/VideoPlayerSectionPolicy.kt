@@ -869,6 +869,14 @@ internal fun shouldEnableForcedReturnCoverSharedBounds(
     sourceRoute: String?
 ): Boolean {
     val sourceRouteBase = sourceRoute?.substringBefore("?")
+    // Home 源返回时：详情↔首页卡片的整体 shell sharedBounds（[videoCardShellSharedElementKey]）
+    // 已经完整接管 morph。此处再额外挂一层封面 sharedBounds（[videoCoverSharedElementKey]）
+    // 会和 shell 错位——首页卡片侧并没有匹配 cover key 的对端（GlassVideoCard 完全没挂；
+    // VideoCard 仅在 `!useCardShellSharedBounds` 时挂，对 home 源永远 false），单边 morph + spring
+    // 终态过冲就是用户感知到的"封面回弹"。直接撤掉，让封面跟随 shell 一起被裁剪/缩放即可。
+    if (sourceRouteBase == com.android.purebilibili.navigation.ScreenRoutes.Home.route) {
+        return false
+    }
     val allowBySourceRoute = sourceRouteBase == null ||
         com.android.purebilibili.navigation.isVideoCardReturnTargetRoute(sourceRouteBase)
     return forceCoverDuringReturnAnimation &&

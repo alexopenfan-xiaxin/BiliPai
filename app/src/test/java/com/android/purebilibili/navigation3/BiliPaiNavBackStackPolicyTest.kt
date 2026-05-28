@@ -51,6 +51,43 @@ class BiliPaiNavBackStackPolicyTest {
     }
 
     @Test
+    fun popToRoot_dropsAllEntriesAboveMainHost() {
+        // 「返回首页」按钮：[MainHost, Search, VideoDetail] → [MainHost]，
+        // 让 popTransitionSpec 一次性播放横向过渡。
+        assertEquals(
+            listOf(BiliPaiNavKey.MainHost),
+            popBiliPaiNavKeyToRoot(
+                listOf(
+                    BiliPaiNavKey.MainHost,
+                    BiliPaiNavKey.Search,
+                    BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "search")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun popToRoot_isIdempotentAtMainHost() {
+        assertEquals(
+            listOf(BiliPaiNavKey.MainHost),
+            popBiliPaiNavKeyToRoot(listOf(BiliPaiNavKey.MainHost))
+        )
+    }
+
+    @Test
+    fun popToRoot_preservesNonMainHostRoot() {
+        // Onboarding 流程或异常态：栈底不是 MainHost 时不应误删。
+        val stack = listOf(BiliPaiNavKey.Onboarding, BiliPaiNavKey.VideoDetail("BV1"))
+
+        assertEquals(stack, popBiliPaiNavKeyToRoot(stack))
+    }
+
+    @Test
+    fun popToRoot_handlesEmptyStack() {
+        assertEquals(emptyList(), popBiliPaiNavKeyToRoot(emptyList()))
+    }
+
+    @Test
     fun onboardingFinishEntersMainHostInsteadOfDirectHomeRoute() {
         val sourceFile = listOf(
             File("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt"),
