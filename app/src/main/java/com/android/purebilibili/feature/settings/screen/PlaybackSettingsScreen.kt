@@ -1225,8 +1225,8 @@ private fun PlaybackInteractionSettingsSection(
         )
         IOSDivider()
         IOSSlidingSegmentedSetting(
-            title = "评论回复预览：${commentCollapsedReplyPreviewLimit}条",
-            subtitle = "一级评论下默认展开的回复数量",
+            title = "评论回复收起预览：${commentCollapsedReplyPreviewLimit}条",
+            subtitle = "收起楼中楼时保留的回复数量",
             options = listOf(
                 PlaybackSegmentOption(3, "3条"),
                 PlaybackSegmentOption(5, "5条"),

@@ -54,8 +54,10 @@ import com.android.purebilibili.core.ui.VideoCardSkeleton
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.draw.rotate
 import com.android.purebilibili.core.ui.common.copyOnClick
+import com.android.purebilibili.core.ui.OfficialVerifyBadge
 import com.android.purebilibili.core.ui.components.resolveUpStatsText
 import com.android.purebilibili.core.ui.components.UserUpBadge
+import com.android.purebilibili.core.ui.resolveOfficialVerifyBadgeFromRole
 import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedTransition
 import com.android.purebilibili.core.ui.transition.shouldEnableVideoMetadataSharedTransition
 import com.android.purebilibili.data.model.response.BgmDetailData
@@ -913,6 +915,15 @@ private fun CreatorTeamMemberChip(
     member: VideoStaff,
     onClick: () -> Unit
 ) {
+    val officialBadge = remember(member.official) {
+        resolveOfficialVerifyBadgeFromRole(
+            type = member.official.type,
+            role = member.official.role,
+            title = member.official.title,
+            desc = member.official.desc,
+            compact = true
+        )
+    }
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
@@ -937,14 +948,26 @@ private fun CreatorTeamMemberChip(
         Column(
             modifier = Modifier.widthIn(min = 64.dp, max = 112.dp)
         ) {
-            Text(
-                text = member.name,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = member.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (officialBadge != null) {
+                    OfficialVerifyBadge(
+                        badge = officialBadge,
+                        compact = true
+                    )
+                }
+            }
             if (member.title.isNotBlank()) {
                 Text(
                     text = member.title,

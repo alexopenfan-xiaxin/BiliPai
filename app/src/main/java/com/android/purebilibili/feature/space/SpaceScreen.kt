@@ -101,9 +101,12 @@ import com.android.purebilibili.core.ui.AdaptiveScaffold
 import com.android.purebilibili.core.ui.AdaptiveTopAppBar
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
+import com.android.purebilibili.core.ui.OfficialVerifyBadge
+import com.android.purebilibili.core.ui.OfficialVerifyBadgeSpec
 import com.android.purebilibili.core.ui.blur.BlurSurfaceType
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
 import com.android.purebilibili.core.ui.blur.unifiedBlur
+import com.android.purebilibili.core.ui.resolveOfficialVerifyBadge
 import com.android.purebilibili.core.ui.components.IOSSearchBar
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_COVER_ASPECT_RATIO
@@ -1698,7 +1701,13 @@ private fun SpaceHeader(
     val topPhotoUrl = normalizeSpaceTopPhotoUrl(userInfo.topPhoto)
     val avatarPreviewEnabled = userInfo.face.isNotBlank()
     val followLabel = if (userInfo.isFollowed) "已关注" else "关注"
-    val officialText = userInfo.official.title.ifBlank { userInfo.official.desc }
+    val officialBadge = remember(userInfo.official) {
+        resolveOfficialVerifyBadge(
+            type = userInfo.official.type,
+            title = userInfo.official.title,
+            desc = userInfo.official.desc
+        )
+    }
     val metrics = remember(relationStat, upStat) {
         resolveSpaceHeaderMetricItems(
             relationStat = relationStat,
@@ -1962,9 +1971,9 @@ private fun SpaceHeader(
                 }
             }
 
-            if (officialText.isNotBlank()) {
+            if (officialBadge != null) {
                 Spacer(modifier = Modifier.height(10.dp))
-                SpaceOfficialTag(text = officialText)
+                SpaceOfficialTag(badge = officialBadge)
             }
 
             if (userInfo.sign.isNotBlank()) {
@@ -3596,38 +3605,8 @@ private fun SpaceCollectionWithPreviewCard(
 }
 
 @Composable
-private fun SpaceOfficialTag(text: String) {
-    val colors = resolveSpaceOfficialTagColors(MaterialTheme.colorScheme)
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = colors.backgroundColor
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = Color(0xFFFFC107)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Bolt,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .size(14.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = text,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textColor
-            )
-        }
-    }
+private fun SpaceOfficialTag(badge: OfficialVerifyBadgeSpec) {
+    OfficialVerifyBadge(badge = badge)
 }
 
 @Composable
