@@ -491,6 +491,14 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.APPEARANCE,
+        title = "自定义 MD3 颜色",
+        subtitle = "HEX、HSV 取色器和预设主题色",
+        section = "外观设置",
+        aliases = listOf("自定义md3颜色", "自定义颜色", "md3颜色", "主题色", "hex", "material you"),
+        focusId = SettingsSearchFocusIds.APPEARANCE_THEME
+    ),
+    SettingsSearchEntry(
+        target = SettingsSearchTarget.APPEARANCE,
         title = "界面预设 / 主题模式",
         subtitle = "iOS、安卓原生、深色风格、MD3 颜色来源、应用语言",
         section = "外观设置",

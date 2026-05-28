@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
@@ -122,12 +123,15 @@ import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
 import com.android.purebilibili.feature.screenshot.AppScreenshotResult
+import com.android.purebilibili.feature.screenshot.AppScreenshotSavedImage
 import com.android.purebilibili.feature.screenshot.AppScreenshotRegionOverlay
 import com.android.purebilibili.feature.screenshot.appScreenshotGestureDetector
-import com.android.purebilibili.feature.screenshot.captureAndSaveAppScreenshot
+import com.android.purebilibili.feature.screenshot.captureAndSaveAppScreenshotImage
 import com.android.purebilibili.feature.screenshot.captureCurrentAppWindow
 import com.android.purebilibili.feature.screenshot.cropAppScreenshotBitmap
-import com.android.purebilibili.feature.screenshot.saveAppScreenshotBitmapToGallery
+import com.android.purebilibili.feature.screenshot.saveAppScreenshotBitmapToGalleryUri
+import com.android.purebilibili.feature.screenshot.shareAppScreenshot
+import com.android.purebilibili.feature.screenshot.shouldOfferAppScreenshotShare
 import com.android.purebilibili.feature.privacy.PrivacyAuthenticationReason
 import com.android.purebilibili.feature.privacy.PrivacyAuthenticationRequest
 import com.android.purebilibili.feature.privacy.PrivacyAuthenticationResult
@@ -1198,6 +1202,29 @@ open class MainActivity : AppCompatActivity() {
                     var isAppScreenshotBlockedBySplash by remember { mutableStateOf(false) }
                     var isAppScreenshotSaving by remember { mutableStateOf(false) }
                     var appScreenshotRegionBitmap by remember { mutableStateOf<Bitmap?>(null) }
+                    val appScreenshotSnackbarHostState = remember { SnackbarHostState() }
+                    val isLandscapeAppScreenshot =
+                        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    val showAppScreenshotSaveFeedback: suspend (AppScreenshotResult, Uri?) -> Unit = { result, uri ->
+                        val message = when (result) {
+                            AppScreenshotResult.Success -> "截图已保存到相册（PNG）"
+                            AppScreenshotResult.Blocked -> "当前状态暂不支持截图"
+                            AppScreenshotResult.CaptureFailed,
+                            AppScreenshotResult.SaveFailed -> "截图失败，请稍后重试"
+                        }
+                        if (shouldOfferAppScreenshotShare(isLandscapeAppScreenshot, result, uri != null)) {
+                            val snackbarResult = appScreenshotSnackbarHostState.showSnackbar(
+                                message = message,
+                                actionLabel = "分享",
+                                duration = SnackbarDuration.Short
+                            )
+                            if (snackbarResult == SnackbarResult.ActionPerformed && uri != null) {
+                                shareAppScreenshot(context, uri)
+                            }
+                        } else {
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -1228,19 +1255,13 @@ open class MainActivity : AppCompatActivity() {
                                                         appScreenshotRegionBitmap = bitmap
                                                     }
                                                 } else {
-                                                    val result = runCatching {
-                                                        captureAndSaveAppScreenshot(this@MainActivity)
+                                                    val savedImage = runCatching {
+                                                        captureAndSaveAppScreenshotImage(this@MainActivity)
                                                     }.getOrElse {
                                                         Logger.e(TAG, "应用内截图失败", it)
-                                                        AppScreenshotResult.CaptureFailed
+                                                        AppScreenshotSavedImage(AppScreenshotResult.CaptureFailed)
                                                     }
-                                                    val message = when (result) {
-                                                        AppScreenshotResult.Success -> "截图已保存到相册（PNG）"
-                                                        AppScreenshotResult.Blocked -> "当前状态暂不支持截图"
-                                                        AppScreenshotResult.CaptureFailed,
-                                                        AppScreenshotResult.SaveFailed -> "截图失败，请稍后重试"
-                                                    }
-                                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                                    showAppScreenshotSaveFeedback(savedImage.result, savedImage.uri)
                                                 }
                                             } finally {
                                                 isAppScreenshotSaving = false
@@ -1569,22 +1590,23 @@ open class MainActivity : AppCompatActivity() {
                                         isAppScreenshotSaving = true
                                         try {
                                             val croppedBitmap = cropAppScreenshotBitmap(bitmap, cropRect)
-                                            val saved = croppedBitmap?.let { cropped ->
+                                            val savedUri = croppedBitmap?.let { cropped ->
                                                 try {
-                                                    saveAppScreenshotBitmapToGallery(context, cropped)
+                                                    saveAppScreenshotBitmapToGalleryUri(context, cropped)
                                                 } finally {
                                                     cropped.recycle()
                                                 }
-                                            } ?: false
-                                            Toast.makeText(
-                                                context,
-                                                if (saved) "截图已保存到相册（PNG）" else "截图失败，请稍后重试",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            if (saved) {
+                                            }
+                                            val result = if (savedUri != null) {
+                                                AppScreenshotResult.Success
+                                            } else {
+                                                AppScreenshotResult.SaveFailed
+                                            }
+                                            if (savedUri != null) {
                                                 bitmap.recycle()
                                                 appScreenshotRegionBitmap = null
                                             }
+                                            showAppScreenshotSaveFeedback(result, savedUri)
                                         } finally {
                                             isAppScreenshotSaving = false
                                         }
@@ -1593,6 +1615,14 @@ open class MainActivity : AppCompatActivity() {
                             }
                         )
                     }
+
+                    SnackbarHost(
+                        hostState = appScreenshotSnackbarHostState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(WindowInsets.safeDrawing.asPaddingValues())
+                            .padding(16.dp)
+                    )
 
                     startupUpdateCheckResult?.let { info ->
                         val resolvedReleaseNotes = remember(info.releaseNotes) {

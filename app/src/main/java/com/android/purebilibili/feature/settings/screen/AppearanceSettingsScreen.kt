@@ -605,7 +605,21 @@ fun AppearanceSettingsContent(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        IOSDivider()
+                        IOSClickableItem(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
+                            title = "自定义 MD3 颜色",
+                            subtitle = if (state.md3ColorSource == Md3ColorSource.CUSTOM) {
+                                "使用 HSV 取色器或 HEX 输入精确选择"
+                            } else {
+                                "当前跟随系统壁纸；确认后切换为自定义颜色"
+                            },
+                            value = state.md3CustomColorHex,
+                            onClick = { showMd3ColorPickerDialog = true },
+                            iconTint = selectedCustomThemeColor
+                        )
+
                         IOSDivider()
 	                        ThemePresetDropdownSetting(
 	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
@@ -701,17 +715,6 @@ fun AppearanceSettingsContent(
                                         )
                                     }
                                 }
-
-                                IOSClickableItem(
-                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
-                                    title = "编辑自定义颜色",
-                                    subtitle = "使用 HSV 取色器或 HEX 输入精确选择",
-                                    value = state.md3CustomColorHex,
-                                    onClick = { showMd3ColorPickerDialog = true },
-                                    iconTint = selectedCustomThemeColor
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
 
                                 //  [Redesign] Theme Color Grid - Strict 2 Rows x 5 Columns
                                 val spacing = 12.dp
