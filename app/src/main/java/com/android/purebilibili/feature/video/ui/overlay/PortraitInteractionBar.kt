@@ -1,7 +1,12 @@
 package com.android.purebilibili.feature.video.ui.overlay
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,20 +28,43 @@ import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.purebilibili.core.theme.BiliPink
 import com.android.purebilibili.core.util.FormatUtils
+import com.android.purebilibili.core.util.HapticType
+import com.android.purebilibili.core.util.rememberHapticFeedback
 
+private const val PortraitTripleProgressDurationMillis = 900
 
+internal fun shouldStartPortraitTriplePress(longPressConfirmed: Boolean): Boolean {
+    return longPressConfirmed
+}
+
+internal fun shouldCancelPortraitTriplePressOnRelease(
+    isTriplePressing: Boolean,
+    tripleCompleted: Boolean
+): Boolean {
+    return isTriplePressing && !tripleCompleted
+}
 
 /**
  * 竖屏播放器右侧互动栏 (Refined Style)
@@ -64,6 +92,38 @@ fun PortraitInteractionBar(
             widthDp = configuration.screenWidthDp
         )
     }
+    val haptic = rememberHapticFeedback()
+    var isTriplePressing by remember { mutableStateOf(false) }
+    var tripleCompleted by remember { mutableStateOf(false) }
+    var tripleProgress by remember { mutableFloatStateOf(0f) }
+    val animatedTripleProgress by animateFloatAsState(
+        targetValue = if (isTriplePressing) 1f else 0f,
+        animationSpec = if (isTriplePressing) {
+            tween(durationMillis = PortraitTripleProgressDurationMillis, easing = LinearEasing)
+        } else {
+            tween(durationMillis = 180, easing = FastOutSlowInEasing)
+        },
+        label = "portraitTripleProgress",
+        finishedListener = { progress ->
+            tripleProgress = progress
+            if (progress >= 1f && isTriplePressing && !tripleCompleted) {
+                tripleCompleted = true
+                haptic(HapticType.MEDIUM)
+                onLikeLongClick()
+                isTriplePressing = false
+            }
+        }
+    )
+
+    LaunchedEffect(animatedTripleProgress) {
+        tripleProgress = animatedTripleProgress
+    }
+
+    LaunchedEffect(isTriplePressing) {
+        if (isTriplePressing) {
+            haptic(HapticType.LIGHT)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -82,8 +142,24 @@ fun PortraitInteractionBar(
             isActive = isLiked,
             activeColor = BiliPink,
             layoutPolicy = layoutPolicy,
+            progress = tripleProgress,
             onClick = onLikeClick,
-            onLongClick = onLikeLongClick
+            onLongClick = {
+                tripleCompleted = false
+                isTriplePressing = shouldStartPortraitTriplePress(
+                    longPressConfirmed = true
+                )
+            },
+            onPressRelease = {
+                if (
+                    shouldCancelPortraitTriplePressOnRelease(
+                        isTriplePressing = isTriplePressing,
+                        tripleCompleted = tripleCompleted
+                    )
+                ) {
+                    isTriplePressing = false
+                }
+            }
         )
         
         // 评论
@@ -126,19 +202,25 @@ private fun InteractionButton(
     isActive: Boolean,
     activeColor: Color = BiliPink,
     layoutPolicy: PortraitInteractionBarLayoutPolicy,
+    progress: Float = 0f,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onPressRelease: (() -> Unit)? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = if (onLongClick != null) {
-            Modifier.combinedClickable(
-                indication = null,
-                interactionSource = interactionSource,
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+            Modifier.pointerInput(onClick, onLongClick, onPressRelease) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = { onLongClick() },
+                    onPress = {
+                        tryAwaitRelease()
+                        onPressRelease?.invoke()
+                    }
+                )
+            }
         } else {
             Modifier.clickable(
                 indication = null,
@@ -156,6 +238,34 @@ private fun InteractionButton(
                 .padding(layoutPolicy.iconBackingInnerPaddingDp.dp),
             contentAlignment = Alignment.Center
         ) {
+            if (progress > 0f) {
+                Canvas(modifier = Modifier.size(layoutPolicy.iconBackingSizeDp.dp)) {
+                    val stroke = 3.dp.toPx()
+                    val diameter = size.minDimension - stroke
+                    val topLeft = Offset(
+                        x = (size.width - diameter) / 2f,
+                        y = (size.height - diameter) / 2f
+                    )
+                    drawArc(
+                        color = activeColor.copy(alpha = 0.22f),
+                        startAngle = -90f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(diameter, diameter),
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                    drawArc(
+                        color = activeColor,
+                        startAngle = -90f,
+                        sweepAngle = 360f * progress.coerceIn(0f, 1f),
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(diameter, diameter),
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                }
+            }
             Icon(
                 imageVector = icon,
                 contentDescription = null,
