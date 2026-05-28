@@ -1,13 +1,8 @@
 package com.android.purebilibili.feature.space
 
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -1206,45 +1201,36 @@ private fun SpaceContent(
                                 )
                             }
                         ) { video ->
-                            AnimatedContent(
-                                targetState = contributionVideoLayoutMode,
-                                transitionSpec = {
-                                    fadeIn(animationSpec = tween(180)) togetherWith
-                                        fadeOut(animationSpec = tween(120)) using
-                                        SizeTransform(clip = false)
-                                },
-                                label = "spaceContributionVideoLayout"
-                            ) { layoutMode ->
-                                when (layoutMode) {
-                                    SpaceContributionVideoLayoutMode.GRID -> {
-                                        val localProgressMs = videoProgressLookup(video.bvid)
-                                        SpaceHomeVideoCard(
-                                            video = video,
-                                            progressState = resolveSpaceVideoProgressState(video, localProgressMs),
-                                            badgeLabel = resolveSpaceVideoChargeBadgeLabel(video),
-                                            onClick = { playVideoFromSpace(video.bvid) },
-                                            sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
-                                            sharedTransitionScope = lazyGridSharedTransitionScope,
-                                            animatedVisibilityScope = lazyGridAnimatedVisibilityScope
-                                        )
-                                    }
-                                    SpaceContributionVideoLayoutMode.SINGLE_COLUMN -> {
-                                        val localProgressMs = videoProgressLookup(video.bvid)
-                                        SpaceArchiveListItemRow(
-                                            title = video.title,
-                                            cover = video.pic,
-                                            duration = video.length,
-                                            publishTime = FormatUtils.formatPublishTime(video.created),
-                                            play = video.play.toLong(),
-                                            secondaryCount = video.comment.toLong(),
-                                            progressState = resolveSpaceVideoProgressState(video, localProgressMs),
-                                            badgeLabel = resolveSpaceVideoChargeBadgeLabel(video),
-                                            onClick = { playVideoFromSpace(video.bvid) },
-                                            sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
-                                            sharedTransitionScope = lazyGridSharedTransitionScope,
-                                            animatedVisibilityScope = lazyGridAnimatedVisibilityScope
-                                        )
-                                    }
+                            val localProgressMs = videoProgressLookup(video.bvid)
+                            when (contributionVideoLayoutMode) {
+                                SpaceContributionVideoLayoutMode.GRID -> {
+                                    SpaceHomeVideoCard(
+                                        video = video,
+                                        progressState = resolveSpaceVideoProgressState(video, localProgressMs),
+                                        badgeLabel = resolveSpaceVideoChargeBadgeLabel(video),
+                                        onClick = { playVideoFromSpace(video.bvid) },
+                                        sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
+                                        sharedTransitionScope = lazyGridSharedTransitionScope,
+                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope,
+                                        modifier = Modifier.animateItem()
+                                    )
+                                }
+                                SpaceContributionVideoLayoutMode.SINGLE_COLUMN -> {
+                                    SpaceArchiveListItemRow(
+                                        title = video.title,
+                                        cover = video.pic,
+                                        duration = video.length,
+                                        publishTime = FormatUtils.formatPublishTime(video.created),
+                                        play = video.play.toLong(),
+                                        secondaryCount = video.comment.toLong(),
+                                        progressState = resolveSpaceVideoProgressState(video, localProgressMs),
+                                        badgeLabel = resolveSpaceVideoChargeBadgeLabel(video),
+                                        onClick = { playVideoFromSpace(video.bvid) },
+                                        sharedTransitionKey = resolveSpaceArchiveSharedTransitionKey(video.bvid),
+                                        sharedTransitionScope = lazyGridSharedTransitionScope,
+                                        animatedVisibilityScope = lazyGridAnimatedVisibilityScope,
+                                        modifier = Modifier.animateItem()
+                                    )
                                 }
                             }
                         }
@@ -2505,7 +2491,8 @@ private fun SpaceHomeVideoCard(
     onClick: () -> Unit,
     sharedTransitionKey: String? = null,
     sharedTransitionScope: SharedTransitionScope? = null,
-    animatedVisibilityScope: AnimatedVisibilityScope? = null
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -2527,7 +2514,7 @@ private fun SpaceHomeVideoCard(
     )
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 8.dp)
             .clip(coverShape)
             .clickable {
@@ -2934,7 +2921,8 @@ private fun SpaceArchiveListItemRow(
     onClick: () -> Unit,
     sharedTransitionKey: String? = null,
     sharedTransitionScope: SharedTransitionScope? = null,
-    animatedVisibilityScope: AnimatedVisibilityScope? = null
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -2987,7 +2975,7 @@ private fun SpaceArchiveListItemRow(
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clickable {

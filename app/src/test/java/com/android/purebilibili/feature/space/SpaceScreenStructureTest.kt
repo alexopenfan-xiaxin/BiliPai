@@ -20,16 +20,20 @@ class SpaceScreenStructureTest {
     }
 
     @Test
-    fun `contribution videos expose single column toggle with animated card transition`() {
+    fun `contribution videos switch layout without dual placing lazy grid content`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/space/SpaceScreen.kt")
+        val contributionVideoItems = source
+            .substringAfter("items(\n                            items = state.videos")
+            .substringBefore("if (state.isLoadingMore)")
 
         assertTrue(source.contains("onLayoutModeClick"))
         assertTrue(source.contains("toggleSpaceContributionVideoLayoutMode"))
-        assertTrue(source.contains("AnimatedContent("))
-        assertTrue(source.contains("SizeTransform(clip = false)"))
         assertTrue(source.contains("resolveSpaceContributionVideoGridSpan("))
         assertTrue(source.contains("SpaceContributionVideoLayoutMode.SINGLE_COLUMN"))
         assertTrue(source.contains("SpaceArchiveListItemRow("))
+        assertTrue(contributionVideoItems.contains("Modifier.animateItem()"))
+        assertFalse(contributionVideoItems.contains("AnimatedContent("))
+        assertFalse(contributionVideoItems.contains("SizeTransform("))
     }
 
     @Test
