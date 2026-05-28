@@ -69,8 +69,12 @@ import androidx.compose.ui.layout.ContentScale
 import com.android.purebilibili.core.ui.common.CopySelectionDialog
 import com.android.purebilibili.core.ui.common.copyOnLongPress
 import com.android.purebilibili.core.ui.common.rememberClipboardCopyHandler
+import com.android.purebilibili.core.ui.OfficialVerifyBadge
+import com.android.purebilibili.core.ui.OfficialVerifyBadgeSpec
+import com.android.purebilibili.core.ui.OfficialVerifyBadgeTone
 import com.android.purebilibili.core.ui.rememberAppLikeFilledIcon
 import com.android.purebilibili.core.ui.rememberAppLikeIcon
+import com.android.purebilibili.core.ui.resolveOfficialVerifyBadge
 import androidx.compose.foundation.text.selection.SelectionContainer
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -83,6 +87,8 @@ import kotlinx.coroutines.launch
 
 private val EMOTE_TOKEN_PATTERN = """\[(.*?)\]""".toRegex()
 private const val COMMENT_INLINE_UP_BADGE_ID = "comment_inline_up_badge"
+private const val COMMENT_INLINE_VERIFY_PERSONAL_BADGE_ID = "comment_inline_verify_personal_badge"
+private const val COMMENT_INLINE_VERIFY_ORGANIZATION_BADGE_ID = "comment_inline_verify_organization_badge"
 internal const val COMMENT_INLINE_TOP_BADGE_ID = "comment_inline_top_badge"
 internal const val COMMENT_URL_TAG = "URL"
 internal const val COMMENT_TIMESTAMP_TAG = "TIMESTAMP"
@@ -265,10 +271,22 @@ internal fun resolveReplyLocationText(location: String?): String? {
 
 internal fun buildSubReplyPreviewPrefix(
     userName: String,
-    isUpComment: Boolean
+    isUpComment: Boolean,
+    officialVerifyTone: OfficialVerifyBadgeTone? = null
 ): List<String> {
     return buildList {
         add(userName)
+        when (officialVerifyTone) {
+            OfficialVerifyBadgeTone.PERSONAL -> {
+                add(" ")
+                add("[VERIFY_PERSONAL]")
+            }
+            OfficialVerifyBadgeTone.ORGANIZATION -> {
+                add(" ")
+                add("[VERIFY_ORGANIZATION]")
+            }
+            null -> Unit
+        }
         if (isUpComment) {
             add(" ")
             add("[UP]")
@@ -797,6 +815,10 @@ internal fun resolveVisibleSubReplies(
     return if (expanded) previewReplies else previewReplies.take(limit)
 }
 
+internal fun resolveInitialSubReplyPreviewExpanded(
+    previewReplyCount: Int
+): Boolean = previewReplyCount > 0
+
 internal fun shouldShowInlineSubReplyToggle(
     previewReplyCount: Int,
     collapsedLimit: Int = COLLAPSED_SUB_REPLY_PREVIEW_LIMIT
@@ -1072,7 +1094,20 @@ fun ReplyItemView(
         null
     }
     val piliPlusDecoration = fanGroupVisual
-    var isSubPreviewExpanded by remember(item.rpid) { mutableStateOf(false) }
+    val replyOfficialBadge = remember(item.member.officialVerify) {
+        resolveOfficialVerifyBadge(
+            type = item.member.officialVerify.type,
+            desc = item.member.officialVerify.desc,
+            compact = true
+        )
+    }
+    var isSubPreviewExpanded by remember(item.rpid, item.replies) {
+        mutableStateOf(
+            resolveInitialSubReplyPreviewExpanded(
+                previewReplyCount = item.replies.orEmpty().size
+            )
+        )
+    }
     val visibleSubReplies = remember(item.replies, isSubPreviewExpanded, collapsedSubReplyPreviewLimit) {
         resolveVisibleSubReplies(
             replies = item.replies,
@@ -1291,6 +1326,13 @@ fun ReplyItemView(
                                     .copyOnLongPress(item.member.uname, "用户名")
                             )
 
+                            if (replyOfficialBadge != null) {
+                                OfficialVerifyBadge(
+                                    badge = replyOfficialBadge,
+                                    compact = true
+                                )
+                            }
+
                             if (item.member.levelInfo.currentLevel > 0) {
                                 LevelTag(
                                     level = item.member.levelInfo.currentLevel,
@@ -1450,10 +1492,23 @@ fun ReplyItemView(
                                 }
                             }
 
-                            val prefixTokens = remember(subReply.member.uname, upMid, subReply.mid) {
+                            val subReplyOfficialBadge = remember(subReply.member.officialVerify) {
+                                resolveOfficialVerifyBadge(
+                                    type = subReply.member.officialVerify.type,
+                                    desc = subReply.member.officialVerify.desc,
+                                    compact = true
+                                )
+                            }
+                            val prefixTokens = remember(
+                                subReply.member.uname,
+                                upMid,
+                                subReply.mid,
+                                subReplyOfficialBadge?.tone
+                            ) {
                                 buildSubReplyPreviewPrefix(
                                     userName = subReply.member.uname,
-                                    isUpComment = upMid > 0 && subReply.mid == upMid
+                                    isUpComment = upMid > 0 && subReply.mid == upMid,
+                                    officialVerifyTone = subReplyOfficialBadge?.tone
                                 )
                             }
                             val prefixTextColor = appearance.primaryTextColor.copy(alpha = 0.8f)
@@ -1463,6 +1518,14 @@ fun ReplyItemView(
                                 buildAnnotatedString {
                                     prefixTokens.forEach { token ->
                                         when (token) {
+                                            "[VERIFY_PERSONAL]" -> appendInlineContent(
+                                                COMMENT_INLINE_VERIFY_PERSONAL_BADGE_ID,
+                                                "个人"
+                                            )
+                                            "[VERIFY_ORGANIZATION]" -> appendInlineContent(
+                                                COMMENT_INLINE_VERIFY_ORGANIZATION_BADGE_ID,
+                                                "机构"
+                                            )
                                             "[UP]" -> withStyle(
                                                 SpanStyle(color = upTagColor)
                                             ) {
@@ -1692,10 +1755,19 @@ private fun ReplyVideoReferenceText(
     }
     val upBadgeInlineContent = rememberInlineUpBadgeContent()
     val topBadgeInlineContent = rememberInlineTopBadgeContent()
-    val inlineContent = remember(upBadgeInlineContent, topBadgeInlineContent) {
+    val personalVerifyInlineContent = rememberInlineOfficialVerifyBadgeContent(OfficialVerifyBadgeTone.PERSONAL)
+    val organizationVerifyInlineContent = rememberInlineOfficialVerifyBadgeContent(OfficialVerifyBadgeTone.ORGANIZATION)
+    val inlineContent = remember(
+        upBadgeInlineContent,
+        topBadgeInlineContent,
+        personalVerifyInlineContent,
+        organizationVerifyInlineContent
+    ) {
         mapOf(
             COMMENT_INLINE_UP_BADGE_ID to upBadgeInlineContent,
-            COMMENT_INLINE_TOP_BADGE_ID to topBadgeInlineContent
+            COMMENT_INLINE_TOP_BADGE_ID to topBadgeInlineContent,
+            COMMENT_INLINE_VERIFY_PERSONAL_BADGE_ID to personalVerifyInlineContent,
+            COMMENT_INLINE_VERIFY_ORGANIZATION_BADGE_ID to organizationVerifyInlineContent
         )
     }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -1809,7 +1881,19 @@ fun RichCommentText(
 
     val upBadgeInlineContent = rememberInlineUpBadgeContent()
     val topBadgeInlineContent = rememberInlineTopBadgeContent()
-    val inlineContent = remember(renderableEmoteKeys, emoteMap, content?.urls, context, urlColor, upBadgeInlineContent, topBadgeInlineContent) {
+    val personalVerifyInlineContent = rememberInlineOfficialVerifyBadgeContent(OfficialVerifyBadgeTone.PERSONAL)
+    val organizationVerifyInlineContent = rememberInlineOfficialVerifyBadgeContent(OfficialVerifyBadgeTone.ORGANIZATION)
+    val inlineContent = remember(
+        renderableEmoteKeys,
+        emoteMap,
+        content?.urls,
+        context,
+        urlColor,
+        upBadgeInlineContent,
+        topBadgeInlineContent,
+        personalVerifyInlineContent,
+        organizationVerifyInlineContent
+    ) {
         buildMap {
             renderableEmoteKeys.forEach { key ->
                 val url = emoteMap[key].orEmpty()
@@ -1854,6 +1938,8 @@ fun RichCommentText(
             }
             put(COMMENT_INLINE_UP_BADGE_ID, upBadgeInlineContent)
             put(COMMENT_INLINE_TOP_BADGE_ID, topBadgeInlineContent)
+            put(COMMENT_INLINE_VERIFY_PERSONAL_BADGE_ID, personalVerifyInlineContent)
+            put(COMMENT_INLINE_VERIFY_ORGANIZATION_BADGE_ID, organizationVerifyInlineContent)
         }
     }
     
@@ -2017,6 +2103,41 @@ private fun rememberInlineUpBadgeContent(): InlineTextContent {
                 contentAlignment = Alignment.Center
             ) {
                 UserUpBadge()
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberInlineOfficialVerifyBadgeContent(
+    tone: OfficialVerifyBadgeTone
+): InlineTextContent {
+    return remember(tone) {
+        InlineTextContent(
+            Placeholder(
+                width = 2.2.em,
+                height = 1.15.em,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                OfficialVerifyBadge(
+                    badge = OfficialVerifyBadgeSpec(
+                        text = when (tone) {
+                            OfficialVerifyBadgeTone.PERSONAL -> "个人"
+                            OfficialVerifyBadgeTone.ORGANIZATION -> "机构"
+                        },
+                        contentDescription = when (tone) {
+                            OfficialVerifyBadgeTone.PERSONAL -> "个人认证"
+                            OfficialVerifyBadgeTone.ORGANIZATION -> "机构认证"
+                        },
+                        tone = tone
+                    ),
+                    compact = true
+                )
             }
         }
     }
