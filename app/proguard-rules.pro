@@ -81,6 +81,10 @@
 -keep class com.android.purebilibili.feature.video.ui.section.** { *; }
 -keep class com.android.purebilibili.feature.video.ui.overlay.** { *; }
 
+# Release 下底栏搜索入口依赖 Compose 动画协程完成回调再交接到搜索页。
+# 保留 BottomBarKt，避免 R8 优化破坏搜索胶囊点击、展开与完成回调链路。
+-keep class com.android.purebilibili.feature.home.components.BottomBarKt { *; }
+
 # === Haze (毛玻璃效果) ===
 -keep class dev.chrisbanes.haze.** { *; }
 -dontwarn dev.chrisbanes.haze.**

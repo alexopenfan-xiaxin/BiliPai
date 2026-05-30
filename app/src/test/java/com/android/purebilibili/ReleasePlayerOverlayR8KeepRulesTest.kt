@@ -23,5 +23,10 @@ class ReleasePlayerOverlayR8KeepRulesTest {
                 "-keep class com.android.purebilibili.feature.video.ui.overlay.** { *; }"
             )
         )
+        assertTrue(
+            rules.contains(
+                "-keep class com.android.purebilibili.feature.home.components.BottomBarKt { *; }"
+            )
+        )
     }
 }
