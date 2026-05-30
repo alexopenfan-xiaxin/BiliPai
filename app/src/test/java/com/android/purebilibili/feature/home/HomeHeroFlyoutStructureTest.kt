@@ -35,13 +35,13 @@ class HomeHeroFlyoutStructureTest {
     }
 
     @Test
-    fun ordinaryHomeVideoCardUsesShellSharedTransitionPolicy() {
+    fun ordinaryHomeVideoCardUsesCoverFirstSharedTransitionPolicy() {
         val cardSource = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/cards/VideoCard.kt")
 
         assertTrue(cardSource.contains("resolveVideoCardSharedTransitionMotionSpec("))
         assertTrue(cardSource.contains("resolveHomeVideoSharedTransitionCornerSpec("))
         assertTrue(cardSource.contains("durationMillis = homeSharedTransitionMotionSpec.durationMillis"))
-        assertTrue(cardSource.contains("videoCardShellSharedElementKey("))
+        assertTrue(cardSource.contains("videoCoverSharedElementKey("))
         assertTrue(cardSource.contains("sharedElementSourceRoute"))
         assertFalse(cardSource.contains("使用 renderInSharedTransitionScopeOverlayOption 控制可见性"))
     }
