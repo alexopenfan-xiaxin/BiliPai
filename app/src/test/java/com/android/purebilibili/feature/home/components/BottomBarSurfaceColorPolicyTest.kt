@@ -123,7 +123,7 @@ class BottomBarSurfaceColorPolicyTest {
     }
 
     @Test
-    fun `ios26 liquid glass preset uses distinct shell translucency`() {
+    fun `ios26 liquid glass preset uses lower shell translucency`() {
         val tuning = resolveAndroidNativeBottomBarTuning(
             blurEnabled = true,
             darkTheme = true
@@ -146,8 +146,8 @@ class BottomBarSurfaceColorPolicyTest {
         )
 
         assertEquals(0.30f, bilipai.alpha, 0.003f)
-        assertEquals(0.34f, ios26.alpha, 0.003f)
-        assertTrue(ios26.alpha > bilipai.alpha)
+        assertEquals(0.24f, ios26.alpha, 0.003f)
+        assertTrue(ios26.alpha < bilipai.alpha)
     }
 
     @Test
