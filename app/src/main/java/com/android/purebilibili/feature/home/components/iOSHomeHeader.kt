@@ -2012,6 +2012,14 @@ fun iOSHomeHeader(
             drawUnifiedTopPanelChrome &&
             currentSearchHeight > 0.dp &&
             searchRevealFraction > 0f
+    val useTopTabBottomBarMatchedDock =
+        useUnifiedTopPanel &&
+            effectiveTabMaterialMode == TopTabMaterialMode.LIQUID_GLASS &&
+            (
+                effectiveTabChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
+                    effectiveTabChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
+            )
+    val drawTopTabDockChrome = drawTopTabOuterChromeSurface || useTopTabBottomBarMatchedDock
     val currentTabToSearchSpacing = currentSearchToTabsSpacing + if (drawTopSearchDivider) {
         1.dp + currentUnifiedDividerBottomSpacing
     } else {
@@ -2089,9 +2097,9 @@ fun iOSHomeHeader(
             gestureEnabled = topTabsVisible && !isHeaderCollapseEnabled,
             isTabsCollapsed = topTabsCollapsed,
             onTabsCollapsedChange = onTopTabsCollapsedChange,
-            drawChromeSurface = drawTopTabOuterChromeSurface,
-            useBottomBarMatchedSurface = useUnifiedTopPanel && useUnifiedLiquidChrome,
-            drawMatchedShellLens = useUnifiedTopPanel && useUnifiedLiquidChrome
+            drawChromeSurface = drawTopTabDockChrome,
+            useBottomBarMatchedSurface = useTopTabBottomBarMatchedDock,
+            drawMatchedShellLens = useTopTabBottomBarMatchedDock
         ) {
             CategoryTabRow(
                 categories = topCategories,
@@ -2115,7 +2123,7 @@ fun iOSHomeHeader(
                 backdrop = backdrop,
                 isFloatingStyle = isTabFloating,
                 edgeToEdge = integratedCollapsedTopBar,
-                hasOuterChromeSurface = drawTopTabOuterChromeSurface,
+                hasOuterChromeSurface = drawTopTabDockChrome,
                 interactionBudget = interactionBudget,
                 motionTier = motionTier,
                 isTransitionRunning = isTransitionRunning,
