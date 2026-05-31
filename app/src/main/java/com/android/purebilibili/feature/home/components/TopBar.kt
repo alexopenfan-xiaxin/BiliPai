@@ -1063,43 +1063,39 @@ private fun LightweightHomeTopTabs(
                             itemWidthDp = itemWidth.value,
                             horizontalGapDp = dockIndicatorHorizontalGap.value
                         ).dp
-                        BottomBarLiquidIndicatorSurface(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .graphicsLayer {
-                                    translationX = resolveTopTabDockIndicatorOffsetPx(
-                                        slotTranslationPx = iosCapsuleTranslationXPx +
-                                            topTabPanelOffsetPx,
-                                        horizontalGapPx = with(density) {
-                                            dockIndicatorHorizontalGap.toPx()
-                                        }
-                                    )
+                        KernelSuBottomBarIndicatorLayer(
+                            visible = true,
+                            dockContentAlpha = 1f,
+                            indicatorTranslationXPx = resolveTopTabDockIndicatorOffsetPx(
+                                slotTranslationPx = iosCapsuleTranslationXPx,
+                                horizontalGapPx = with(density) {
+                                    dockIndicatorHorizontalGap.toPx()
                                 }
-                                .width(indicatorWidth)
-                                .height(dockIndicatorHeight),
-                            shape = capsuleShape,
-                            liquidGlassEnabled = true,
+                            ),
+                            indicatorPanelOffsetPx = topTabPanelOffsetPx,
+                            indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
+                            indicatorWidth = indicatorWidth,
+                            indicatorHeight = dockIndicatorHeight,
+                            shellShape = capsuleShape,
+                            liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
+                            contentBackdrop = backdrop,
                             backdrop = backdrop,
-                            hasExternalBackdrop = backdrop != null,
                             indicatorLensSpec = topTabIndicatorLensSpec,
+                            refractionMotionProfile = topTabRefractionMotionProfile,
                             indicatorHighlightAlpha = topTabIndicatorHighlightAlpha,
                             indicatorGlowAlpha = topTabIndicatorGlowAlpha,
-                            motionProgress = topTabMotionProgress,
-                            idleSurfaceColor = resolveIosTopTabCapsuleContainerColor(
+                            effectivePressProgress = topTabPressProgress,
+                            indicatorIdleSurfaceColor = resolveIosTopTabCapsuleContainerColor(
                                 isDarkTheme = isDarkTheme,
                                 selectionFraction = 1f
                             ),
-                            layerBlock = {
-                                val indicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
-                                    motionProgress = topTabMotionProgress,
-                                    velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
-                                    isDragging = topTabDragActive,
-                                    dragScaleProgress = topTabIndicatorLayerScaleProgress,
-                                    motionSpec = topTabDragMotionSpec
-                                )
-                                scaleX = indicatorLayerTransform.scaleX
-                                scaleY = indicatorLayerTransform.scaleY
-                            }
+                            glassEnabled = true,
+                            motionProgress = topTabMotionProgress,
+                            velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
+                            isDragging = topTabShouldStretchIndicator,
+                            indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
+                            bottomBarMotionSpec = topTabDragMotionSpec,
+                            isDarkTheme = isDarkTheme
                         )
                     } else {
                         val capsuleShape = resolveSharedBottomBarCapsuleShape()
@@ -1159,38 +1155,35 @@ private fun LightweightHomeTopTabs(
                 }
                 if (shouldUseMd3LiquidCapsule) {
                     val capsuleShape = resolveSharedBottomBarCapsuleShape()
-                    BottomBarLiquidIndicatorSurface(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .graphicsLayer {
-                                translationX = md3LiquidCapsuleTranslationXPx + topTabPanelOffsetPx
-                            }
-                            .width(md3LiquidCapsuleWidth)
-                            .height(dockIndicatorHeight),
-                        shape = capsuleShape,
-                        liquidGlassEnabled = true,
+                    KernelSuBottomBarIndicatorLayer(
+                        visible = true,
+                        dockContentAlpha = 1f,
+                        indicatorTranslationXPx = md3LiquidCapsuleTranslationXPx,
+                        indicatorPanelOffsetPx = topTabPanelOffsetPx,
+                        indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
+                        indicatorWidth = md3LiquidCapsuleWidth,
+                        indicatorHeight = dockIndicatorHeight,
+                        shellShape = capsuleShape,
+                        liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
+                        contentBackdrop = backdrop,
                         backdrop = backdrop,
-                        hasExternalBackdrop = backdrop != null,
                         indicatorLensSpec = topTabIndicatorLensSpec,
+                        refractionMotionProfile = topTabRefractionMotionProfile,
                         indicatorHighlightAlpha = topTabIndicatorHighlightAlpha,
                         indicatorGlowAlpha = topTabIndicatorGlowAlpha,
-                        motionProgress = topTabMotionProgress,
-                        idleSurfaceColor = if (isDarkTheme) {
+                        effectivePressProgress = topTabPressProgress,
+                        indicatorIdleSurfaceColor = if (isDarkTheme) {
                             Color.White.copy(alpha = 0.1f)
                         } else {
                             Color.Black.copy(alpha = 0.1f)
                         },
-                        layerBlock = {
-                            val indicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
-                                motionProgress = topTabMotionProgress,
-                                velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
-                                isDragging = topTabDragActive,
-                                dragScaleProgress = topTabIndicatorLayerScaleProgress,
-                                motionSpec = topTabDragMotionSpec
-                            )
-                            scaleX = indicatorLayerTransform.scaleX
-                            scaleY = indicatorLayerTransform.scaleY
-                        }
+                        glassEnabled = true,
+                        motionProgress = topTabMotionProgress,
+                        velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
+                        isDragging = topTabShouldStretchIndicator,
+                        indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
+                        bottomBarMotionSpec = topTabDragMotionSpec,
+                        isDarkTheme = isDarkTheme
                     )
                 }
                 LazyRow(
@@ -1269,35 +1262,35 @@ private fun LightweightHomeTopTabs(
                         resolveMd3TopTabIndicatorBottomPadding()
                     }
                     if (shouldRenderTopTabLiquidGlassIndicator && !shouldUseMd3LiquidCapsule) {
-                        BottomBarLiquidIndicatorSurface(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(bottom = indicatorBottomPadding)
-                                .graphicsLayer {
-                                    translationX = md3IndicatorTranslationXPx + topTabPanelOffsetPx
-                                }
-                                .width(md3IndicatorWidth)
-                                .height(4.dp),
-                            shape = AppShapes.container(ContainerLevel.Pill),
-                            liquidGlassEnabled = true,
+                        KernelSuBottomBarIndicatorLayer(
+                            visible = true,
+                            dockContentAlpha = 1f,
+                            indicatorTranslationXPx = md3IndicatorTranslationXPx,
+                            indicatorTranslationYPx = -with(density) {
+                                indicatorBottomPadding.toPx()
+                            },
+                            indicatorPanelOffsetPx = topTabPanelOffsetPx,
+                            indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
+                            indicatorWidth = md3IndicatorWidth,
+                            indicatorHeight = 4.dp,
+                            shellShape = AppShapes.container(ContainerLevel.Pill),
+                            liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
+                            contentBackdrop = backdrop,
                             backdrop = backdrop,
-                            hasExternalBackdrop = backdrop != null,
                             indicatorLensSpec = topTabIndicatorLensSpec,
+                            refractionMotionProfile = topTabRefractionMotionProfile,
                             indicatorHighlightAlpha = topTabIndicatorHighlightAlpha,
                             indicatorGlowAlpha = topTabIndicatorGlowAlpha,
+                            effectivePressProgress = topTabPressProgress,
+                            indicatorIdleSurfaceColor = indicatorColor.copy(alpha = 0.42f),
+                            glassEnabled = true,
                             motionProgress = topTabMotionProgress,
-                            idleSurfaceColor = indicatorColor.copy(alpha = 0.42f),
-                            layerBlock = {
-                                val indicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
-                                    motionProgress = topTabMotionProgress,
-                                    velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
-                                    isDragging = topTabDragActive,
-                                    dragScaleProgress = topTabIndicatorLayerScaleProgress,
-                                    motionSpec = topTabDragMotionSpec
-                                )
-                                scaleX = indicatorLayerTransform.scaleX
-                                scaleY = indicatorLayerTransform.scaleY
-                            }
+                            velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
+                            isDragging = topTabShouldStretchIndicator,
+                            indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
+                            bottomBarMotionSpec = topTabDragMotionSpec,
+                            isDarkTheme = isDarkTheme,
+                            indicatorAlignment = Alignment.BottomStart
                         )
                     } else if (!shouldUseMd3DockBackedCapsule) {
                         Box(

@@ -18,11 +18,11 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("shouldUseLiquidGlassIndicator"))
         assertTrue(source.contains("shouldForceDragLiquidGlassIndicator"))
         assertTrue(source.contains("KernelSuBottomBarIndicatorLayer("))
-        assertTrue(source.contains("BottomBarLiquidIndicatorSurface("))
+        assertFalse(source.contains("BottomBarLiquidIndicatorSurface("))
         assertTrue(source.contains("resolveBottomBarRefractionMotionProfile("))
         assertTrue(source.contains("resolveBottomBarBackdropPresetIndicatorLens("))
         assertTrue(source.contains("topTabShouldStretchIndicator"))
-        assertTrue(source.contains(".height(4.dp)"))
+        assertTrue(source.contains("indicatorHeight = 4.dp"))
     }
 
     @Test
@@ -311,7 +311,7 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("pagerCurrentPageOffsetFraction = pagerState?.currentPageOffsetFraction"))
         assertTrue(source.contains("resolveTopTabClickAction(index, selectedIndex)"))
         assertTrue(source.contains("KernelSuBottomBarIndicatorLayer("))
-        assertTrue(source.contains("BottomBarLiquidIndicatorSurface("))
+        assertFalse(source.contains("BottomBarLiquidIndicatorSurface("))
         assertFalse(source.contains("LiquidIndicator("))
         assertFalse(source.contains("SimpleLiquidIndicator("))
         assertFalse(source.contains("BottomBarStyleIndicatorSurface("))
