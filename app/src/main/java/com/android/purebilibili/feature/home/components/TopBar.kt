@@ -873,8 +873,13 @@ private fun LightweightHomeTopTabs(
         }
         val iosCapsulePosition = if (topTabDragActive) topTabDragPosition else selectedContentPosition
         val indicatorIsInteracting = pagerIsDragging || pagerIsScrolling || topTabDragActive
+        val topTabShouldStretchIndicator = (topTabDragActive && topTabDragState.isDragging) ||
+            shouldDeformTopTabIndicator(
+                position = topTabIndicatorPosition,
+                isInMotion = indicatorIsInteracting
+            )
         val topTabIndicatorDragScaleProgress = rememberBottomBarIndicatorDragScaleProgress(
-            isDragging = topTabDragActive && topTabDragState.isDragging
+            isDragging = topTabShouldStretchIndicator
         )
         val topTabIndicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
             motionProgress = if (topTabDragActive) topTabDragState.pressProgress else 0f,
@@ -927,7 +932,8 @@ private fun LightweightHomeTopTabs(
         )
         val topTabIndicatorGlowAlpha = resolveBottomBarIndicatorGlowAlpha(
             glassEnabled = topTabDragActive || isLiquidGlassEnabled,
-            pressProgress = topTabPressProgress
+            pressProgress = topTabPressProgress,
+            motionProgress = topTabMotionProgress
         )
         val md3IndicatorTranslationXPx by remember(topTabIndicatorPosition, itemWidth, md3IndicatorWidth, density, listState) {
             derivedStateOf {
@@ -1123,26 +1129,32 @@ private fun LightweightHomeTopTabs(
                     }
                 }
                 if (shouldUseMd3DockBackedCapsule) {
-                    val capsuleShape = resolveSharedBottomBarCapsuleShape()
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .graphicsLayer {
-                                translationX = md3LiquidCapsuleTranslationXPx + topTabPanelOffsetPx
-                                scaleX = topTabIndicatorLayerTransform.scaleX
-                                scaleY = topTabIndicatorLayerTransform.scaleY
-                            }
-                            .width(md3LiquidCapsuleWidth)
-                            .height(dockIndicatorHeight)
-                            .clip(capsuleShape)
-                            .background(
-                                if (isDarkTheme) {
-                                    Color.White.copy(alpha = 0.1f)
-                                } else {
-                                    Color.Black.copy(alpha = 0.1f)
-                                },
-                                capsuleShape
-                            )
+                    KernelSuBottomBarIndicatorLayer(
+                        visible = true,
+                        dockContentAlpha = 1f,
+                        indicatorTranslationXPx = md3LiquidCapsuleTranslationXPx,
+                        indicatorPanelOffsetPx = topTabPanelOffsetPx,
+                        indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
+                        indicatorWidth = md3LiquidCapsuleWidth,
+                        shellShape = resolveSharedBottomBarCapsuleShape(),
+                        liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
+                        contentBackdrop = backdrop,
+                        backdrop = backdrop,
+                        indicatorLensSpec = topTabIndicatorLensSpec,
+                        refractionMotionProfile = topTabRefractionMotionProfile,
+                        indicatorHighlightAlpha = topTabIndicatorHighlightAlpha,
+                        indicatorGlowAlpha = topTabIndicatorGlowAlpha,
+                        effectivePressProgress = topTabPressProgress,
+                        indicatorIdleSurfaceColor = resolveAndroidNativeIdleIndicatorSurfaceColor(
+                            darkTheme = isDarkTheme
+                        ),
+                        glassEnabled = true,
+                        motionProgress = topTabMotionProgress,
+                        velocityItemsPerSecond = topTabDragState.deformationVelocityItemsPerSecond,
+                        isDragging = topTabShouldStretchIndicator,
+                        indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
+                        bottomBarMotionSpec = topTabDragMotionSpec,
+                        isDarkTheme = isDarkTheme
                     )
                 }
                 if (shouldUseMd3LiquidCapsule) {

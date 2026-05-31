@@ -20,6 +20,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(source.contains("private fun rememberKernelSuBottomBarSearchLayoutState("))
         assertTrue(source.contains("private fun KernelSuBottomBarShell("))
         assertTrue(source.contains("KernelSuBottomBarIndicatorLayer("))
+        assertTrue(source.contains("internal fun BoxScope.KernelSuBottomBarIndicatorLayer("))
         assertTrue(source.contains("private fun KernelSuBottomBarSearchSlot("))
         assertTrue(source.contains("KernelSuBottomBarInputLayer("))
         assertTrue(source.contains("uiSkinDecoration: BottomBarUiSkinDecoration? = null"))
@@ -114,7 +115,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(kernelSuRendererSource.contains("scaleY = indicatorSettleReboundTransform.scaleY"))
         assertTrue(kernelSuRendererSource.contains("dragScaleProgress = indicatorLayerScaleProgress"))
         val indicatorLayerSource = source
-            .substringAfter("@Composable\nprivate fun BoxScope.KernelSuBottomBarIndicatorLayer(")
+            .substringAfter("@Composable\ninternal fun BoxScope.KernelSuBottomBarIndicatorLayer(")
             .substringBefore("@Composable\nprivate fun BoxScope.KernelSuBottomBarInputLayer(")
         val backdropLayerBlockSource = indicatorLayerSource
             .substringAfter("layerBlock = {")
@@ -180,7 +181,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(kernelSuRendererSource.contains("Shadow("))
         assertTrue(kernelSuRendererSource.contains("radius = 8.dp * indicatorGlowAlpha"))
         assertTrue(kernelSuRendererSource.contains("alpha = indicatorGlowAlpha"))
-        assertTrue(kernelSuRendererSource.contains("translationX = presetPanelOffsets.exportPanelOffsetPx -"))
+        assertTrue(kernelSuRendererSource.contains("translationX = presetPanelOffsets.exportPanelOffsetPx"))
         assertTrue(kernelSuRendererSource.contains("resolveBottomBarGlassVisibleContentColor("))
         assertTrue(kernelSuRendererSource.contains("resolveBottomBarGlassExportContentColor("))
         assertTrue(kernelSuRendererSource.contains("indicatorProgress = effectiveIndicatorEffectProgress"))
@@ -255,7 +256,7 @@ class BottomBarMiuixStructureTest {
 
         val shellSource = source
             .substringAfter("private fun KernelSuBottomBarShell(")
-            .substringBefore("@Composable\nprivate fun BoxScope.KernelSuBottomBarIndicatorLayer(")
+            .substringBefore("@Composable\ninternal fun BoxScope.KernelSuBottomBarIndicatorLayer(")
         val shellIndex = shellSource.indexOf(".kernelSuFloatingDockSurface(")
         val skinIndex = shellSource.indexOf("BottomBarSkinDecorativeTrim(")
         val visibleContentIndex = kernelSuRendererSource.indexOf(

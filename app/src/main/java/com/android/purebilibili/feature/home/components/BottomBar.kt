@@ -3752,7 +3752,7 @@ private fun KernelSuBottomBarShell(
 }
 
 @Composable
-private fun BoxScope.KernelSuBottomBarIndicatorLayer(
+internal fun BoxScope.KernelSuBottomBarIndicatorLayer(
     visible: Boolean,
     dockContentAlpha: Float,
     indicatorTranslationXPx: Float,
@@ -3789,16 +3789,19 @@ private fun BoxScope.KernelSuBottomBarIndicatorLayer(
     } else {
         BottomBarIndicatorLayerTransform(scaleX = 1f, scaleY = 1f)
     }
+    val indicatorLayerWidth = indicatorWidth * indicatorLayerTransform.scaleX
+    val indicatorLayerHeight = 56.dp * indicatorLayerTransform.scaleY
     Box(
         modifier = Modifier
             .alpha(dockContentAlpha)
             .graphicsLayer {
-                translationX = indicatorTranslationXPx + indicatorPanelOffsetPx
+                translationX = indicatorTranslationXPx + indicatorPanelOffsetPx -
+                    ((indicatorLayerWidth - indicatorWidth) / 2f).toPx()
                 scaleX = indicatorSettleReboundTransform.scaleX
                 scaleY = indicatorSettleReboundTransform.scaleY
             }
-            .width(indicatorWidth)
-            .height(56.dp)
+            .width(indicatorLayerWidth)
+            .height(indicatorLayerHeight)
             .align(Alignment.CenterStart)
             .run {
                 val indicatorBackdrop = if (shouldUseBottomBarCombinedIndicatorBackdrop(liquidGlassPreset)) {
@@ -3854,12 +3857,6 @@ private fun BoxScope.KernelSuBottomBarIndicatorLayer(
                                 radius = 8.dp * indicatorGlowAlpha,
                                 alpha = indicatorGlowAlpha
                             )
-                        },
-                        layerBlock = {
-                            if (glassEnabled) {
-                                scaleX = indicatorLayerTransform.scaleX
-                                scaleY = indicatorLayerTransform.scaleY
-                            }
                         }
                     )
                 } else {

@@ -147,11 +147,12 @@ class HomeChromeLiquidSurfaceStructureTest {
                 topBarSource.contains("liquidGlassPreset = liquidGlassPreset")
         )
         assertTrue(
-            "top tab indicator should leave liquid-glass rendering to the outer dock when chrome exists",
+            "top tab indicator should reuse the bottom bar KSU indicator layer when chrome exists",
             topBarSource.contains("val shouldRenderTopTabLiquidGlassIndicator = shouldUseLiquidGlassIndicator &&") &&
                 topBarSource.contains("!hasOuterChromeSurface") &&
                 topBarSource.contains("if (shouldRenderTopTabLiquidGlassIndicator)") &&
                 topBarSource.contains("val shouldUseMd3DockBackedCapsule =") &&
+                topBarSource.contains("KernelSuBottomBarIndicatorLayer(") &&
                 topBarSource.contains("else if (!shouldUseMd3DockBackedCapsule)")
         )
         assertFalse(

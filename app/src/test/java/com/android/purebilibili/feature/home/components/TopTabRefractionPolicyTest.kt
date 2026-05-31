@@ -17,10 +17,11 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("shouldUseMovingIosCapsule"))
         assertTrue(source.contains("shouldUseLiquidGlassIndicator"))
         assertTrue(source.contains("shouldForceDragLiquidGlassIndicator"))
+        assertTrue(source.contains("KernelSuBottomBarIndicatorLayer("))
         assertTrue(source.contains("BottomBarLiquidIndicatorSurface("))
         assertTrue(source.contains("resolveBottomBarRefractionMotionProfile("))
         assertTrue(source.contains("resolveBottomBarBackdropPresetIndicatorLens("))
-        assertTrue(source.contains(".height((rowHeight - 8.dp).coerceAtLeast(2.dp))"))
+        assertTrue(source.contains("topTabShouldStretchIndicator"))
         assertTrue(source.contains(".height(4.dp)"))
     }
 
@@ -309,6 +310,7 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("resolveTopTabIndicatorRenderPosition("))
         assertTrue(source.contains("pagerCurrentPageOffsetFraction = pagerState?.currentPageOffsetFraction"))
         assertTrue(source.contains("resolveTopTabClickAction(index, selectedIndex)"))
+        assertTrue(source.contains("KernelSuBottomBarIndicatorLayer("))
         assertTrue(source.contains("BottomBarLiquidIndicatorSurface("))
         assertFalse(source.contains("LiquidIndicator("))
         assertFalse(source.contains("SimpleLiquidIndicator("))
@@ -325,8 +327,9 @@ class TopTabRefractionPolicyTest {
         )
 
         assertTrue(source.contains("val shouldUseMd3LiquidCapsule = effectiveRenderer == HomeTopTabRenderer.MD3"))
-        assertTrue(source.contains(".height((rowHeight - 8.dp).coerceAtLeast(30.dp))"))
-        assertTrue(source.contains("if (shouldUseLiquidGlassIndicator && !shouldUseMd3LiquidCapsule)"))
+        assertTrue(source.contains("val shouldUseMd3DockBackedCapsule = effectiveRenderer == HomeTopTabRenderer.MD3"))
+        assertTrue(source.contains("indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress"))
+        assertTrue(source.contains("refractionMotionProfile = topTabRefractionMotionProfile"))
     }
 
     private fun loadSource(path: String): String {
