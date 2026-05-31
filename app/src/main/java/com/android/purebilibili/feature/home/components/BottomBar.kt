@@ -4034,6 +4034,7 @@ private fun KernelSuBottomBarSearchCapsule(
     var searchLongPressHeld by remember { mutableStateOf(false) }
     val currentOnSubmit by rememberUpdatedState(onSubmit)
     val currentHaptic by rememberUpdatedState(haptic)
+    val launchSearchFromExpandedBlankQuery = expanded && query.isBlank()
     val longPressHorizontalScale by animateFloatAsState(
         targetValue = if (searchLongPressHeld) 0.94f else 1f,
         animationSpec = spring(
@@ -4132,6 +4133,20 @@ private fun KernelSuBottomBarSearchCapsule(
             fieldAlpha = fieldAlpha,
             interactive = true
         )
+        if (launchSearchFromExpandedBlankQuery) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(shape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        currentHaptic(HapticType.LIGHT)
+                        currentOnSubmit()
+                    }
+            )
+        }
     }
 }
 
