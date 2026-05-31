@@ -92,6 +92,7 @@ import com.android.purebilibili.feature.home.policy.resolveHomeHeaderOffsetForSe
 import com.android.purebilibili.feature.home.policy.resolveHomePagerSettledAction
 import com.android.purebilibili.feature.home.policy.shouldAnimateHomePagerToCategory
 import com.android.purebilibili.feature.home.policy.HomePagerSettledAction
+import com.android.purebilibili.feature.home.policy.shouldSkipHomePagerStateDrive
 import com.android.purebilibili.feature.home.policy.shouldUseInitialHomePagerSnap
 //  从 cards 子包导入卡片组件
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard
@@ -303,6 +304,7 @@ fun HomeScreen(
     val initialPage = topTabEntries.indexOf(HomeTopTabEntry.Category(state.currentCategory)).takeIf { it >= 0 } ?: 0
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = initialPage) { topTabEntries.size }
     var hasSyncedPagerWithState by remember(topTabEntries) { mutableStateOf(false) }
+    var lastDrivenPagerCategory by remember(topTabEntries) { mutableStateOf<HomeCategory?>(null) }
     var programmaticPageSwitchInProgress by remember { mutableStateOf(false) }
     TrackJankStateFlag(
         stateName = "home:pager_swipe",
@@ -371,6 +373,19 @@ fun HomeScreen(
         ) {
             pagerState.scrollToPage(targetPage)
             hasSyncedPagerWithState = true
+            lastDrivenPagerCategory = state.currentCategory
+            return@LaunchedEffect
+        }
+        if (shouldSkipHomePagerStateDrive(
+                hasSyncedPagerWithState = hasSyncedPagerWithState,
+                lastDrivenCategory = lastDrivenPagerCategory,
+                currentCategory = state.currentCategory
+            )
+        ) {
+            return@LaunchedEffect
+        }
+        if (targetPage == pagerState.currentPage && !pagerState.isScrollInProgress) {
+            lastDrivenPagerCategory = state.currentCategory
             return@LaunchedEffect
         }
         if (shouldAnimateHomePagerToCategory(
@@ -387,6 +402,7 @@ fun HomeScreen(
             } finally {
                 programmaticPageSwitchInProgress = false
             }
+            lastDrivenPagerCategory = state.currentCategory
         }
     }
 

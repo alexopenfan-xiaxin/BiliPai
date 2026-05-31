@@ -16,11 +16,46 @@ class PartitionScreenStructureTest {
         assertTrue(source.contains("PartitionVideoRow("))
         assertTrue(source.contains("SettingsManager.getHomeSettings(context)"))
         assertTrue(source.contains("resolveEffectiveLiquidGlassEnabled("))
-        assertTrue(source.contains("partitionLiquidGlassIndicator("))
+        assertTrue(source.contains("BottomBarLiquidIndicatorSurface("))
         assertTrue(source.contains("liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled"))
+        assertTrue(source.contains("partitionSideRailSweepSelection("))
+        assertTrue(source.contains("CardPositionManager.recordVideoCardPosition("))
+        assertTrue(source.contains("videoCoverSharedElementKey("))
+        assertTrue(source.contains("LocalVideoCardSharedElementSourceRoute.current"))
         assertTrue(source.contains("VideoRepository.getPopularVideos(page = currentPage)"))
         assertTrue(source.contains("VideoRepository.getRegionVideos(tid = partition.id, page = currentPage)"))
         assertFalse(source.contains("LazyVerticalGrid("))
+    }
+
+    @Test
+    fun `side rail sweep resolves visible item under finger`() {
+        val visibleItems = listOf(
+            PartitionSideRailVisibleItem(index = 0, offset = 8, size = 48),
+            PartitionSideRailVisibleItem(index = 1, offset = 60, size = 48),
+            PartitionSideRailVisibleItem(index = 2, offset = 112, size = 48)
+        )
+
+        assertTrue(
+            resolvePartitionSideRailSweepIndex(
+                pointerY = 64f,
+                visibleItems = visibleItems,
+                itemCount = 3
+            ) == 1
+        )
+        assertTrue(
+            resolvePartitionSideRailSweepIndex(
+                pointerY = 180f,
+                visibleItems = visibleItems,
+                itemCount = 3
+            ) == null
+        )
+        assertTrue(
+            resolvePartitionSideRailSweepIndex(
+                pointerY = 64f,
+                visibleItems = visibleItems,
+                itemCount = 1
+            ) == null
+        )
     }
 
     private fun loadSource(path: String): String {

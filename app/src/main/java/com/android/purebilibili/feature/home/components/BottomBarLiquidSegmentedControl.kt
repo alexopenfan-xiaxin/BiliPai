@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -169,6 +171,79 @@ internal fun shouldDrawSegmentedControlIndicatorBackdrop(
 ): Boolean {
     if (!liquidGlassEnabled) return false
     return hasExternalBackdrop || motionProgress > 0.001f
+}
+
+@Composable
+internal fun BottomBarLiquidIndicatorSurface(
+    modifier: Modifier = Modifier,
+    shape: Shape = resolveSharedBottomBarCapsuleShape(),
+    liquidGlassEnabled: Boolean,
+    backdrop: Backdrop? = null,
+    hasExternalBackdrop: Boolean = backdrop != null,
+    indicatorLensSpec: BottomBarBackdropPresetLensSpec = resolveBottomBarBackdropPresetIndicatorLens(
+        progress = if (liquidGlassEnabled) 1f else 0f
+    ),
+    indicatorHighlightAlpha: Float = resolveBottomBarLiquidGlassHighlightAlpha(
+        motionProgress = if (liquidGlassEnabled) 1f else 0f
+    ),
+    indicatorGlowAlpha: Float = resolveBottomBarIndicatorGlowAlpha(
+        glassEnabled = liquidGlassEnabled,
+        pressProgress = 0f
+    ),
+    motionProgress: Float = 0f,
+    idleSurfaceColor: Color = Color.Unspecified,
+    layerBlock: GraphicsLayerScope.() -> Unit = {}
+) {
+    val resolvedIdleSurfaceColor = if (idleSurfaceColor == Color.Unspecified) {
+        resolveAndroidNativeIdleIndicatorSurfaceColor(darkTheme = isSystemInDarkTheme())
+    } else {
+        idleSurfaceColor
+    }
+    Box(
+        modifier = modifier.run {
+            if (backdrop != null && shouldDrawSegmentedControlIndicatorBackdrop(
+                    liquidGlassEnabled = liquidGlassEnabled,
+                    motionProgress = motionProgress,
+                    hasExternalBackdrop = hasExternalBackdrop
+                )
+            ) {
+                drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { shape },
+                    effects = {
+                        lens(
+                            refractionHeight = indicatorLensSpec.refractionHeightDp.dp.toPx(),
+                            refractionAmount = indicatorLensSpec.refractionAmountDp.dp.toPx(),
+                            depthEffect = true,
+                            chromaticAberration = true
+                        )
+                    },
+                    highlight = {
+                        Highlight.Default.copy(alpha = maxOf(indicatorHighlightAlpha, indicatorGlowAlpha))
+                    },
+                    shadow = {
+                        Shadow(alpha = indicatorGlowAlpha)
+                    },
+                    innerShadow = {
+                        InnerShadow(
+                            radius = 8.dp * indicatorGlowAlpha,
+                            alpha = indicatorGlowAlpha
+                        )
+                    },
+                    layerBlock = layerBlock,
+                    onDrawSurface = {
+                        drawRect(
+                            color = resolvedIdleSurfaceColor,
+                            alpha = 1f - motionProgress
+                        )
+                        drawRect(Color.Black.copy(alpha = 0.03f * motionProgress))
+                    }
+                )
+            } else {
+                background(resolvedIdleSurfaceColor, shape)
+            }
+        }
+    )
 }
 
 internal fun resolveSegmentedControlMotionProgress(
@@ -583,7 +658,7 @@ fun BottomBarLiquidSegmentedControl(
             )
         }
 
-        Box(
+        BottomBarLiquidIndicatorSurface(
             modifier = Modifier
                 .offset(x = indicatorOffset)
                 .graphicsLayer {
@@ -593,69 +668,29 @@ fun BottomBarLiquidSegmentedControl(
                 }
                 .width(indicatorWidth)
                 .height(resolvedIndicatorHeight)
-                .align(Alignment.CenterStart)
-                .run {
-                    if (shouldDrawSegmentedControlIndicatorBackdrop(
-                            liquidGlassEnabled = liquidGlassEnabled,
-                            motionProgress = motionProgress,
-                            hasExternalBackdrop = backdrop != null
-                        )
-                    ) {
-                        drawBackdrop(
-                            backdrop = contentBackdrop,
-                            shape = { indicatorShape },
-                            effects = {
-                                lens(
-                                    refractionHeight = indicatorLensSpec.refractionHeightDp.dp.toPx(),
-                                    refractionAmount = indicatorLensSpec.refractionAmountDp.dp.toPx(),
-                                    depthEffect = true,
-                                    chromaticAberration = true
-                                )
-                            },
-                            highlight = {
-                                Highlight.Default.copy(alpha = maxOf(indicatorHighlightAlpha, indicatorGlowAlpha))
-                            },
-                            shadow = {
-                                Shadow(alpha = indicatorGlowAlpha)
-                            },
-                            innerShadow = {
-                                InnerShadow(
-                                    radius = 8.dp * indicatorGlowAlpha,
-                                    alpha = indicatorGlowAlpha
-                                )
-                            },
-                            layerBlock = {
-                                if (liquidGlassEnabled) {
-                                    val indicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
-                                        motionProgress = motionProgress,
-                                        velocityItemsPerSecond = dragState.deformationVelocityItemsPerSecond,
-                                        isDragging = dragState.isDragging,
-                                        dragScaleProgress = indicatorLayerScaleProgress,
-                                        motionSpec = motionSpec
-                                    )
-                                    scaleX = indicatorLayerTransform.scaleX
-                                    scaleY = indicatorLayerTransform.scaleY
-                                }
-                            },
-                            onDrawSurface = {
-                                drawRect(
-                                    color = if (isDarkTheme) {
-                                        Color.White.copy(0.1f)
-                                    } else {
-                                        Color.Black.copy(0.1f)
-                                    },
-                                    alpha = 1f - motionProgress
-                                )
-                                drawRect(Color.Black.copy(alpha = 0.03f * motionProgress))
-                            }
-                        )
-                    } else {
-                        background(
-                            if (isDarkTheme) Color.White.copy(0.1f) else Color.Black.copy(0.1f),
-                            indicatorShape
-                        )
-                    }
+                .align(Alignment.CenterStart),
+            shape = indicatorShape,
+            liquidGlassEnabled = liquidGlassEnabled,
+            backdrop = contentBackdrop,
+            hasExternalBackdrop = backdrop != null,
+            indicatorLensSpec = indicatorLensSpec,
+            indicatorHighlightAlpha = indicatorHighlightAlpha,
+            indicatorGlowAlpha = indicatorGlowAlpha,
+            motionProgress = motionProgress,
+            idleSurfaceColor = if (isDarkTheme) Color.White.copy(0.1f) else Color.Black.copy(0.1f),
+            layerBlock = {
+                if (liquidGlassEnabled) {
+                    val indicatorLayerTransform = resolveBottomBarIndicatorLayerTransform(
+                        motionProgress = motionProgress,
+                        velocityItemsPerSecond = dragState.deformationVelocityItemsPerSecond,
+                        isDragging = dragState.isDragging,
+                        dragScaleProgress = indicatorLayerScaleProgress,
+                        motionSpec = motionSpec
+                    )
+                    scaleX = indicatorLayerTransform.scaleX
+                    scaleY = indicatorLayerTransform.scaleY
                 }
+            }
         )
 
         BottomBarLiquidSegmentedLabels(

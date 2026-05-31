@@ -127,6 +127,24 @@ class HomePagerSyncPolicyTest {
     }
 
     @Test
+    fun pagerStateDrive_skipsWhenCategoryWasAlreadyDriven() {
+        assertTrue(
+            shouldSkipHomePagerStateDrive(
+                hasSyncedPagerWithState = true,
+                lastDrivenCategory = HomeCategory.RECOMMEND,
+                currentCategory = HomeCategory.RECOMMEND
+            )
+        )
+        assertFalse(
+            shouldSkipHomePagerStateDrive(
+                hasSyncedPagerWithState = true,
+                lastDrivenCategory = HomeCategory.RECOMMEND,
+                currentCategory = HomeCategory.LIVE
+            )
+        )
+    }
+
+    @Test
     fun pagerAnimation_skipsWhenAlreadyOnTarget() {
         assertFalse(
             shouldAnimateHomePagerToCategory(

@@ -2,15 +2,20 @@
 package com.android.purebilibili.feature.partition
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 //  Cupertino Icons - iOS SF Symbols 风格图标
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
@@ -19,13 +24,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,6 +48,8 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.CutePersonLoadingIndicator
+import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
+import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.globalWallpaperAwareBackground
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.core.ui.rememberAppBackIcon
@@ -49,11 +58,21 @@ import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.resolveEffectiveLiquidGlassEnabled
 import com.android.purebilibili.core.theme.LocalUiPreset
+import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
+import com.android.purebilibili.core.ui.transition.resolveHomeVideoSharedTransitionCornerSpec
+import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
+import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedTransition
+import com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey
+import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.data.repository.VideoRepository
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
-import com.android.purebilibili.feature.home.components.LiquidGlassTuning
-import com.android.purebilibili.feature.home.components.resolveLiquidGlassTuning
+import com.android.purebilibili.feature.home.components.BottomBarLiquidIndicatorSurface
+import com.android.purebilibili.feature.home.components.resolveAndroidNativeIdleIndicatorSurfaceColor
+import com.android.purebilibili.feature.home.components.resolveBottomBarBackdropPresetIndicatorLens
+import com.android.purebilibili.feature.home.components.resolveBottomBarIndicatorGlowAlpha
+import com.android.purebilibili.feature.home.components.resolveBottomBarLiquidGlassHighlightAlpha
+import com.android.purebilibili.feature.home.components.resolveSharedBottomBarCapsuleShape
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import com.android.purebilibili.core.ui.blur.unifiedBlur
@@ -261,15 +280,6 @@ fun PartitionContent(
             androidNativeLiquidGlassEnabled = homeSettings.androidNativeLiquidGlassEnabled
         )
     }
-    val liquidGlassTuning = remember(
-        homeSettings.liquidGlassMode,
-        homeSettings.liquidGlassStrength
-    ) {
-        resolveLiquidGlassTuning(
-            mode = homeSettings.liquidGlassMode,
-            strength = homeSettings.liquidGlassStrength
-        )
-    }
     val state by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val layoutDirection = LocalLayoutDirection.current
@@ -318,7 +328,6 @@ fun PartitionContent(
                     end = 4.dp
                 ),
                 liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled,
-                liquidGlassTuning = liquidGlassTuning,
                 onPartitionSelected = viewModel::selectPartition
             )
 
@@ -345,11 +354,18 @@ private fun PartitionSideRail(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
     liquidGlassIndicatorEnabled: Boolean,
-    liquidGlassTuning: LiquidGlassTuning,
     onPartitionSelected: (PartitionCategory) -> Unit
 ) {
+    val listState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier.fillMaxHeight(),
+        state = listState,
+        modifier = modifier
+            .fillMaxHeight()
+            .partitionSideRailSweepSelection(
+                listState = listState,
+                partitions = partitions,
+                onPartitionSelected = onPartitionSelected
+            ),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -361,7 +377,6 @@ private fun PartitionSideRail(
                 partition = partition,
                 selected = partition.id == selectedId,
                 liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled,
-                liquidGlassTuning = liquidGlassTuning,
                 onClick = { onPartitionSelected(partition) }
             )
         }
@@ -373,99 +388,124 @@ private fun PartitionSideRailItem(
     partition: PartitionCategory,
     selected: Boolean,
     liquidGlassIndicatorEnabled: Boolean,
-    liquidGlassTuning: LiquidGlassTuning,
     onClick: () -> Unit
 ) {
     val selectedColor = MaterialTheme.colorScheme.primary
-    val shape = AppShapes.container(ContainerLevel.Pill)
+    val shape = resolveSharedBottomBarCapsuleShape()
+    val isDarkTheme = isSystemInDarkTheme()
     val useLiquidGlassIndicator = selected && liquidGlassIndicatorEnabled
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .height(48.dp)
             .clip(shape)
-            .then(
-                if (useLiquidGlassIndicator) {
-                    Modifier.partitionLiquidGlassIndicator(
-                        baseColor = selectedColor,
-                        highlightColor = MaterialTheme.colorScheme.onPrimary,
-                        tuning = liquidGlassTuning,
-                        shape = shape
-                    )
-                } else {
-                    Modifier
-                }
-            )
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
         if (useLiquidGlassIndicator) {
-            Spacer(modifier = Modifier.width(14.dp))
-        } else {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(36.dp)
-                    .clip(AppShapes.container(ContainerLevel.Pill))
-                    .background(if (selected) selectedColor else Color.Transparent)
+            BottomBarLiquidIndicatorSurface(
+                modifier = Modifier.matchParentSize(),
+                shape = shape,
+                liquidGlassEnabled = true,
+                backdrop = null,
+                indicatorLensSpec = resolveBottomBarBackdropPresetIndicatorLens(progress = 1f),
+                indicatorHighlightAlpha = resolveBottomBarLiquidGlassHighlightAlpha(motionProgress = 1f),
+                indicatorGlowAlpha = resolveBottomBarIndicatorGlowAlpha(
+                    glassEnabled = true,
+                    pressProgress = 0f
+                ),
+                idleSurfaceColor = resolveAndroidNativeIdleIndicatorSurfaceColor(
+                    darkTheme = isDarkTheme
+                )
             )
-            Spacer(modifier = Modifier.width(10.dp))
         }
-        Text(
-            text = partition.name,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontSize = 16.sp,
-            lineHeight = 20.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (useLiquidGlassIndicator) {
+                Spacer(modifier = Modifier.width(14.dp))
+            } else {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(36.dp)
+                        .clip(AppShapes.container(ContainerLevel.Pill))
+                        .background(if (selected) selectedColor else Color.Transparent)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+            Text(
+                text = partition.name,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 16.sp,
+                lineHeight = 20.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
-private fun Modifier.partitionLiquidGlassIndicator(
-    baseColor: Color,
-    highlightColor: Color,
-    tuning: LiquidGlassTuning,
-    shape: Shape
-): Modifier {
-    val progress = tuning.progress.coerceIn(0f, 1f)
-    val baseAlpha = (tuning.surfaceAlpha + tuning.indicatorTintAlpha * 0.45f).coerceIn(0.18f, 0.52f)
-    val highlightAlpha = (0.08f + tuning.whiteOverlayAlpha + tuning.indicatorLensBoost * 0.018f).coerceIn(0.08f, 0.22f)
-    val rimAlpha = (0.18f + progress * 0.16f).coerceIn(0.18f, 0.34f)
+internal data class PartitionSideRailVisibleItem(
+    val index: Int,
+    val offset: Int,
+    val size: Int
+)
 
-    return this
-        .background(baseColor.copy(alpha = baseAlpha), shape)
-        .drawBehind {
-            val radius = size.height / 2f
-            drawRoundRect(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        highlightColor.copy(alpha = highlightAlpha),
-                        baseColor.copy(alpha = 0.02f)
-                    ),
-                    center = Offset(size.width * 0.32f, size.height * 0.18f),
-                    radius = size.width * 0.78f
-                ),
-                cornerRadius = CornerRadius(radius, radius)
-            )
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        highlightColor.copy(alpha = highlightAlpha * 0.72f),
-                        Color.Transparent,
-                        baseColor.copy(alpha = 0.08f + progress * 0.06f)
-                    )
-                ),
-                cornerRadius = CornerRadius(radius, radius)
+internal fun resolvePartitionSideRailSweepIndex(
+    pointerY: Float,
+    visibleItems: List<PartitionSideRailVisibleItem>,
+    itemCount: Int
+): Int? {
+    if (itemCount <= 0) return null
+    return visibleItems
+        .firstOrNull { item ->
+            val start = item.offset.toFloat()
+            val end = (item.offset + item.size).toFloat()
+            pointerY in start..end
+        }
+        ?.index
+        ?.takeIf { it in 0 until itemCount }
+}
+
+private fun Modifier.partitionSideRailSweepSelection(
+    listState: LazyListState,
+    partitions: List<PartitionCategory>,
+    onPartitionSelected: (PartitionCategory) -> Unit
+): Modifier = pointerInput(partitions) {
+    fun selectAt(pointerY: Float) {
+        val visibleItems = listState.layoutInfo.visibleItemsInfo.map { item ->
+            PartitionSideRailVisibleItem(
+                index = item.index,
+                offset = item.offset,
+                size = item.size
             )
         }
-        .border(
-            width = 0.7.dp,
-            color = highlightColor.copy(alpha = rimAlpha),
-            shape = shape
+        val targetIndex = resolvePartitionSideRailSweepIndex(
+            pointerY = pointerY,
+            visibleItems = visibleItems,
+            itemCount = partitions.size
+        ) ?: return
+        onPartitionSelected(partitions[targetIndex])
+    }
+
+    awaitEachGesture {
+        val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
         )
+        selectAt(down.position.y)
+
+        while (true) {
+            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) break
+            selectAt(change.position.y)
+        }
+    }
 }
 
 @Composable
@@ -537,31 +577,110 @@ private fun PartitionVideoList(
 /**
  *  分区视频条目
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PartitionVideoRow(
     video: VideoItem,
     onClick: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenWidthPx = remember(configuration.screenWidthDp, density) {
+        with(density) { configuration.screenWidthDp.dp.toPx() }
+    }
+    val screenHeightPx = remember(configuration.screenHeightDp, density) {
+        with(density) { configuration.screenHeightDp.dp.toPx() }
+    }
+    val cardBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+    val sharedElementSourceRoute = LocalVideoCardSharedElementSourceRoute.current
+    val coverSharedEnabled = shouldEnableVideoCoverSharedTransition(
+        transitionEnabled = true,
+        hasSharedTransitionScope = sharedTransitionScope != null,
+        hasAnimatedVisibilityScope = animatedVisibilityScope != null
+    ) && !sharedElementSourceRoute.isNullOrBlank()
+    val sharedTransitionMotionSpec = remember(sharedElementSourceRoute) {
+        resolveVideoCardSharedTransitionMotionSpec(
+            sourceRoute = sharedElementSourceRoute,
+            transitionEnabled = true
+        )
+    }
+    val sharedTransitionCornerSpec = remember(sharedElementSourceRoute) {
+        resolveHomeVideoSharedTransitionCornerSpec(
+            sourceRoute = sharedElementSourceRoute,
+            transitionEnabled = true
+        )
+    }
+    val coverShape = remember(sharedTransitionCornerSpec) {
+        RoundedCornerShape(
+            if (sharedTransitionCornerSpec.enabled) {
+                sharedTransitionCornerSpec.startCornerDp.dp
+            } else {
+                10.dp
+            }
+        )
+    }
+    val coverModifier = if (coverSharedEnabled) {
+        with(requireNotNull(sharedTransitionScope)) {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(
+                    key = videoCoverSharedElementKey(
+                        video.bvid,
+                        sourceRoute = sharedElementSourceRoute
+                    )
+                ),
+                animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
+                boundsTransform = { _, _ ->
+                    tween(
+                        durationMillis = sharedTransitionMotionSpec.durationMillis,
+                        easing = sharedTransitionMotionSpec.easing
+                    )
+                },
+                clipInOverlayDuringTransition = OverlayClip(coverShape)
+            )
+        }
+    } else {
+        Modifier
+    }
+    val triggerClick = {
+        cardBoundsRef.value?.let { bounds ->
+            CardPositionManager.recordVideoCardPosition(
+                bvid = video.bvid,
+                sourceRoute = sharedElementSourceRoute,
+                bounds = bounds,
+                screenWidth = screenWidthPx,
+                screenHeight = screenHeightPx,
+                density = density.density
+            )
+        }
+        onClick()
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
+            .onGloballyPositioned { coordinates ->
+                cardBoundsRef.value = coordinates.boundsInRoot()
+            }
+            .clickable(onClick = triggerClick),
         verticalAlignment = Alignment.Top
     ) {
         Box(
             modifier = Modifier
                 .width(146.dp)
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(coverShape)
                 .background(AppSurfaceTokens.cardContainer())
         ) {
-            AsyncImage(
-                model = FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = true),
-                contentDescription = video.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            Box(modifier = coverModifier.fillMaxSize()) {
+                AsyncImage(
+                    model = FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = true),
+                    contentDescription = video.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             if (video.duration > 0) {
                 Text(
                     text = FormatUtils.formatDuration(video.duration),

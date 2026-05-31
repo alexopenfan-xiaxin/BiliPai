@@ -57,6 +57,14 @@ internal fun shouldUseInitialHomePagerSnap(
     return !hasSyncedPagerWithState && targetPage >= 0
 }
 
+internal fun shouldSkipHomePagerStateDrive(
+    hasSyncedPagerWithState: Boolean,
+    lastDrivenCategory: HomeCategory?,
+    currentCategory: HomeCategory
+): Boolean {
+    return hasSyncedPagerWithState && lastDrivenCategory == currentCategory
+}
+
 internal fun shouldAnimateHomePagerToCategory(
     hasSyncedPagerWithState: Boolean,
     targetPage: Int,
