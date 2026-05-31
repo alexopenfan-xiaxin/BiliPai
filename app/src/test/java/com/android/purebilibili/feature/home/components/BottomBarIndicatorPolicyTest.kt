@@ -762,15 +762,19 @@ class BottomBarIndicatorPolicyTest {
     }
 
     @Test
-    fun `settle rebound transform is subtle and returns to neutral`() {
+    fun `settle rebound transform expands on both axes and returns to neutral`() {
         val compressed = resolveBottomBarSettleReboundTransform(progress = 0.1f)
         val rebound = resolveBottomBarSettleReboundTransform(progress = 0.46f)
         val idle = resolveBottomBarSettleReboundTransform(progress = 1f)
 
         assertTrue(compressed.scaleX < 1f)
-        assertTrue(compressed.scaleX >= 0.97f)
+        assertTrue(compressed.scaleX >= 0.96f)
+        assertTrue(compressed.scaleY > 1f)
+        assertTrue(compressed.scaleY <= 1.03f)
         assertTrue(rebound.scaleX > 1f)
-        assertTrue(rebound.scaleX <= 1.06f)
+        assertTrue(rebound.scaleX <= 1.10f)
+        assertTrue(rebound.scaleY > 1f)
+        assertTrue(rebound.scaleY <= 1.09f)
         assertEquals(1f, idle.scaleX, 0.001f)
         assertEquals(1f, idle.scaleY, 0.001f)
     }

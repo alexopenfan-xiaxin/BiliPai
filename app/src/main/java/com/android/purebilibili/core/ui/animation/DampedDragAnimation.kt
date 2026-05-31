@@ -129,6 +129,9 @@ internal class DampedDragAnimationState(
     var settledReleaseCount by mutableIntStateOf(0)
         private set
 
+    var settledSelectionCount by mutableIntStateOf(0)
+        private set
+
     private var desiredValue = initialIndex.toFloat()
     private var desiredDragOffsetPx = 0f
     private var dragVelocityItemsPerSecond by mutableFloatStateOf(0f)
@@ -377,6 +380,9 @@ internal class DampedDragAnimationState(
                 snapshotFlow { animatable.value }
                     .filter { abs(it - releaseTargetValue) < threshold }
                     .first()
+                if (generation == motionGeneration) {
+                    settledSelectionCount += 1
+                }
                 pressProgressAnimation.animateTo(0f, motionSpec.drag.pressSpring.toSpringSpec())
             }
         }

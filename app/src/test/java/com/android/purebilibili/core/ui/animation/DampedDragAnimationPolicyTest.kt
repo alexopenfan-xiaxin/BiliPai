@@ -99,7 +99,7 @@ class DampedDragAnimationPolicyTest {
     }
 
     @Test
-    fun `release settle pulse is emitted only after drag release settles`() {
+    fun `settle pulse counters distinguish drag release and click selection`() {
         val source = listOf(
             File("app/src/main/java/com/android/purebilibili/core/ui/animation/DampedDragAnimation.kt"),
             File("src/main/java/com/android/purebilibili/core/ui/animation/DampedDragAnimation.kt")
@@ -112,8 +112,11 @@ class DampedDragAnimationPolicyTest {
             .substringBefore("}\n}\n\n/**\n * 创建并记住阻尼拖拽动画状态")
 
         assertTrue(source.contains("var settledReleaseCount by mutableIntStateOf(0)"))
+        assertTrue(source.contains("var settledSelectionCount by mutableIntStateOf(0)"))
         assertTrue(releaseSource.contains("settledReleaseCount += 1"))
         assertFalse(updateIndexSource.contains("settledReleaseCount += 1"))
+        assertTrue(updateIndexSource.contains("settledSelectionCount += 1"))
+        assertFalse(releaseSource.contains("settledSelectionCount += 1"))
     }
 
     @Test

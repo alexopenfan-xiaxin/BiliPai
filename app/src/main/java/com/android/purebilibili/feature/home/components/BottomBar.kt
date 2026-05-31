@@ -1563,21 +1563,28 @@ internal fun resolveBottomBarSettleReboundTransform(
 ): BottomBarClickPulseTransform {
     val clamped = progress.coerceIn(0f, 1f)
     val compressionEnd = 0.20f
-    val compressionAmount = 0.025f
-    val reboundAmount = 0.045f
-    val scaleX = when {
-        clamped >= 1f -> 1f
-        clamped <= compressionEnd -> {
-            val compressionProgress = (clamped / compressionEnd).coerceIn(0f, 1f)
-            1f - compressionAmount * EaseOut.transform(compressionProgress)
-        }
-        else -> {
-            val releaseProgress = ((clamped - compressionEnd) / (1f - compressionEnd)).coerceIn(0f, 1f)
-            val damping = ((1f - releaseProgress) * exp(-3.2 * releaseProgress)).toFloat()
-            1f + reboundAmount * damping * sin(PI * releaseProgress).toFloat()
-        }
+    val compressionScaleXAmount = 0.035f
+    val compressionScaleYAmount = 0.028f
+    val reboundScaleXAmount = 0.085f
+    val reboundScaleYAmount = 0.075f
+    if (clamped >= 1f) {
+        return BottomBarClickPulseTransform(scaleX = 1f, scaleY = 1f)
     }
-    return BottomBarClickPulseTransform(scaleX = scaleX)
+    if (clamped <= compressionEnd) {
+        val compressionProgress = (clamped / compressionEnd).coerceIn(0f, 1f)
+        val easedProgress = EaseOut.transform(compressionProgress)
+        return BottomBarClickPulseTransform(
+            scaleX = 1f - compressionScaleXAmount * easedProgress,
+            scaleY = 1f + compressionScaleYAmount * easedProgress
+        )
+    }
+    val releaseProgress = ((clamped - compressionEnd) / (1f - compressionEnd)).coerceIn(0f, 1f)
+    val damping = ((1f - releaseProgress) * exp(-3.2 * releaseProgress)).toFloat()
+    val reboundWave = damping * sin(PI * releaseProgress).toFloat()
+    return BottomBarClickPulseTransform(
+        scaleX = 1f + reboundScaleXAmount * reboundWave,
+        scaleY = 1f + reboundScaleYAmount * reboundWave
+    )
 }
 
 @Composable
@@ -2860,8 +2867,10 @@ private fun KernelSuAlignedBottomBar(
     var searchQuery by remember { mutableStateOf("") }
     val searchLaunchMorphSpec = remember { resolveBottomBarSearchLaunchMorphSpec() }
     var searchLaunchInProgress by remember { mutableStateOf(false) }
+    val indicatorSettlePulseKey = dampedDragState.settledReleaseCount +
+        dampedDragState.settledSelectionCount
     val indicatorSettleReboundTransform = rememberBottomBarSettleReboundTransform(
-        dampedDragState.settledReleaseCount
+        indicatorSettlePulseKey
     )
     val searchEnabled = resolveBottomBarSearchEnabledForItem(
         currentItem = currentItem,

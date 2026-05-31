@@ -130,6 +130,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(backdropLayerBlockSource.contains("scaleY = indicatorLayerTransform.scaleY"))
         assertTrue(kernelSuRendererSource.contains("rememberBottomBarSettleReboundTransform("))
         assertTrue(kernelSuRendererSource.contains("dampedDragState.settledReleaseCount"))
+        assertTrue(kernelSuRendererSource.contains("dampedDragState.settledSelectionCount"))
         assertTrue(kernelSuRendererSource.contains("indicatorSettleReboundTransform.scaleX"))
         assertTrue(kernelSuRendererSource.contains("indicatorSettleReboundTransform.scaleY"))
         assertFalse(kernelSuRendererSource.contains(".offset(x = dockHorizontalPadding + indicatorWidth * dampedDragState.value)"))
