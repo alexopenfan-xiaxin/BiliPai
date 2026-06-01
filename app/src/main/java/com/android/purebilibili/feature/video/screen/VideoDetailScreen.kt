@@ -165,7 +165,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
-import com.android.purebilibili.core.ui.transition.VideoSharedTransitionTargetMode
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionEasing
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionSourceCornerDp
@@ -1105,7 +1104,7 @@ fun VideoDetailScreen(
             ?: resolveVideoSharedTransitionSourceCornerDp(sourceRouteForSharedElement)
     }
     val videoSharedPlaybackIntent = remember(context, startAudioFromRoute) {
-        if (!startAudioFromRoute && !com.android.purebilibili.core.store.SettingsManager.getAutoPlaySync(context)) {
+        if (!startAudioFromRoute && !com.android.purebilibili.core.store.SettingsManager.getClickToPlaySync(context)) {
             VideoSharedTransitionPlaybackIntent.CoverFirst
         } else {
             VideoSharedTransitionPlaybackIntent.ImmediatePlayback
@@ -3255,6 +3254,7 @@ fun VideoDetailScreen(
                             hasAnimatedVisibilityScope = animatedVisibilityScope != null
                         ) &&
                         activeVideoSharedTransitionVisualSpec.useCoverSharedBounds &&
+                        videoSharedPlaybackIntent == VideoSharedTransitionPlaybackIntent.ImmediatePlayback &&
                         !forceCoverOnlyForReturn
                     ) {
                         with(requireNotNull(sharedTransitionScope)) {

@@ -123,7 +123,6 @@ import com.android.purebilibili.core.ui.performance.TrackJankStateFlag
 import com.android.purebilibili.core.ui.performance.TrackJankStateValue
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
-import com.android.purebilibili.core.ui.transition.VideoSharedTransitionTargetMode
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_COVER_ASPECT_RATIO
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionSourceCornerDp
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionVisualSpec
@@ -2340,7 +2339,8 @@ fun VideoPlayerSection(
                             resizeMode = viewportAspectRatio.playerResizeMode
                             visibility = if (shouldShowInlinePlayerView(
                                     isPortraitFullscreen = isPortraitFullscreen,
-                                    forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation
+                                    forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
+                                    shouldKeepCoverForManualStart = keepCoverForManualStart
                                 )
                             ) {
                                 View.VISIBLE
@@ -2362,7 +2362,8 @@ fun VideoPlayerSection(
                         playerView.keepScreenOn = keepVideoPlaybackAwake
                         playerView.visibility = if (shouldShowInlinePlayerView(
                                 isPortraitFullscreen = isPortraitFullscreen,
-                                forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation
+                                forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
+                                shouldKeepCoverForManualStart = keepCoverForManualStart
                             )
                         ) {
                             View.VISIBLE
@@ -2526,17 +2527,6 @@ fun VideoPlayerSection(
         shouldKeepCoverForManualStart = keepCoverForManualStart,
         hasStartedSmoothReveal = hasStartedSmoothReveal
     )
-    val showManualStartPlayButton = shouldShowManualStartPlayButton(
-        shouldKeepCoverForManualStart = keepCoverForManualStart
-    )
-    val enableManualStartCoverOverlay = shouldEnableManualStartCoverOverlay(
-        shouldKeepCoverForManualStart = keepCoverForManualStart
-    )
-    val baseFillPlayerViewportForManualStartCover = shouldFillPlayerViewportForManualStartCover(
-        shouldKeepCoverForManualStart = keepCoverForManualStart,
-        forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
-        isVerticalVideo = isVerticalVideo
-    )
     val manualStartPlayButtonLayoutSpec = remember {
         resolveManualStartPlayButtonLayoutSpec()
     }
@@ -2574,7 +2564,7 @@ fun VideoPlayerSection(
         isVerticalVideo,
         context
     ) {
-        val coverFirstBySetting = !SettingsManager.getAutoPlaySync(context) &&
+        val coverFirstBySetting = !SettingsManager.getClickToPlaySync(context) &&
             playerState.player.currentPosition <= 0L
         resolveVideoSharedTransitionVisualSpec(
             sourceRoute = sourceRouteForSharedElement,
@@ -2586,22 +2576,33 @@ fun VideoPlayerSection(
                 VideoSharedTransitionPlaybackIntent.ImmediatePlayback
             },
             fullscreen = isFullscreen && !isPortraitFullscreen,
-            autoPortrait = isPortraitFullscreen,
-            initialVertical = isPortraitFullscreen,
+            autoPortrait = isPortraitFullscreen || isVerticalVideo,
+            initialVertical = isPortraitFullscreen || isVerticalVideo,
             isVerticalVideo = isVerticalVideo,
             isReturning = forceCoverDuringReturnAnimation
         )
     }
-    val fillPlayerViewportForManualStartCover =
-        baseFillPlayerViewportForManualStartCover || videoSharedTransitionVisualSpec.fillTargetViewport
+    val entryPresentationSpec = remember(
+        keepCoverForManualStart,
+        forceCoverDuringReturnAnimation,
+        isVerticalVideo,
+        videoSharedTransitionVisualSpec.targetMode
+    ) {
+        resolveVideoPlayerEntryPresentationSpec(
+            shouldKeepCoverForManualStart = keepCoverForManualStart,
+            forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
+            isVerticalVideo = isVerticalVideo,
+            targetMode = videoSharedTransitionVisualSpec.targetMode
+        )
+    }
+    val fillPlayerViewportForManualStartCover = entryPresentationSpec.fillCoverViewport
     val suppressCoverFade = forceCoverDuringReturnAnimation || videoSharedTransitionVisualSpec.suppressCoverFade
     val coverMotionSpec = remember(suppressCoverFade) {
         resolveVideoPlayerCoverMotionSpec(suppressCoverFade)
     }
     val disableCoverFadeAnimation = !coverMotionSpec.shouldAnimateFade
     val coverOverlaySharedBoundsEnabled = shouldEnableCoverOverlaySharedBounds(
-        useCoverOverlaySharedBounds = forceCoverDuringReturnAnimation ||
-            videoSharedTransitionVisualSpec.targetMode == VideoSharedTransitionTargetMode.InlineCover,
+        useCoverOverlaySharedBounds = entryPresentationSpec.coverUsesSharedBounds,
         transitionEnabled = transitionEnabled,
         hasSharedTransitionScope = sharedTransitionScope != null,
         hasAnimatedVisibilityScope = animatedVisibilityScope != null,
@@ -2610,15 +2611,6 @@ fun VideoPlayerSection(
     val forcedReturnCoverSharedElementSourceRoute = resolveForcedReturnCoverSharedElementSourceRoute(
         sourceRouteForSharedElement
     )
-    
-    // [Debug] Logging
-    LaunchedEffect(showCover, currentCoverUrl, isFirstFrameRendered, hasStartedSmoothReveal, uiState) {
-        android.util.Log.d(
-            "VideoPlayerCover",
-            "🔍 Check: bvid=$bvid, showCover=$showCover, isFirstFrame=$isFirstFrameRendered, " +
-                "hasStartedSmoothReveal=$hasStartedSmoothReveal, coverUrl=$coverUrl, finalUrl=$currentCoverUrl"
-        )
-    }
 
     AnimatedVisibility(
         visible = showCover && currentCoverUrl.isNotEmpty(),
@@ -2668,7 +2660,7 @@ fun VideoPlayerSection(
             }
             Box(
                 modifier = coverContainerModifier
-                    .clickable(enabled = enableManualStartCoverOverlay) {
+                    .clickable(enabled = entryPresentationSpec.enableManualStartCoverOverlay) {
                         playPlayerFromUserAction(playerState.player)
                     }
             ) {
@@ -2678,19 +2670,17 @@ fun VideoPlayerSection(
                         // [关键] 尝试使用首页卡片的缓存 Key 作为占位，实现无缝过渡
                         // 假设首页卡片使用的是普通模式 ("n")
                         .placeholderMemoryCacheKey("cover_${bvid}_n")
-                        .listener(
-                            onStart = { android.util.Log.d("VideoPlayerCover", "🖼️ Image loading started: $currentCoverUrl") },
-                            onSuccess = { _, _ -> android.util.Log.d("VideoPlayerCover", "🖼️ Image loaded successfully") },
-                            onError = { _, result -> android.util.Log.e("VideoPlayerCover", "❌ Image load failed: ${result.throwable.message}", result.throwable) }
-                        )
                         .crossfade(shouldEnableCoverImageCrossfade(forceCoverDuringReturnAnimation))
                         .build(),
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                    contentScale = when (entryPresentationSpec.coverContentScaleMode) {
+                        VideoPlayerCoverContentScaleMode.Crop -> ContentScale.Crop
+                        VideoPlayerCoverContentScaleMode.Fit -> ContentScale.Fit
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (showManualStartPlayButton) {
+                if (entryPresentationSpec.showManualStartPlayButton) {
                     if (manualStartPlayButtonLayoutSpec.showCoverScrim) {
                         Box(
                             modifier = Modifier
