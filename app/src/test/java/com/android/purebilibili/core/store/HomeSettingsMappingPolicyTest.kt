@@ -31,12 +31,12 @@ class HomeSettingsMappingPolicyTest {
         assertTrue(result.isHeaderCollapseEnabled)
         assertTrue(result.isBottomBarBlurEnabled)
         assertFalse(result.isTopBarLiquidGlassEnabled)
-        assertTrue(result.isBottomBarLiquidGlassEnabled)
+        assertFalse(result.isBottomBarLiquidGlassEnabled)
         assertFalse(result.bottomBarInteractiveHighlightEnabled)
         assertFalse(result.isBottomBarSearchEnabled)
         assertEquals(BottomBarSearchAutoExpandMode.EXPAND_AT_HOME_TOP, result.bottomBarSearchAutoExpandMode)
         assertFalse(result.androidNativeLiquidGlassEnabled)
-        assertTrue(result.isLiquidGlassEnabled)
+        assertFalse(result.isLiquidGlassEnabled)
         assertEquals(BottomBarLiquidGlassPreset.BILIPAI_TUNED, result.bottomBarLiquidGlassPreset)
         assertEquals(LiquidGlassStyle.SUKISU, result.liquidGlassStyle)
         assertEquals(LiquidGlassMode.BALANCED, result.liquidGlassMode)
@@ -266,6 +266,19 @@ class HomeSettingsMappingPolicyTest {
         assertFalse(result.isTopBarLiquidGlassEnabled)
         assertFalse(result.isBottomBarLiquidGlassEnabled)
         assertFalse(result.isLiquidGlassEnabled)
+    }
+
+    @Test
+    fun legacySharedLiquidGlassToggle_trueStillBackfillsBottomSwitch() {
+        val prefs = mutablePreferencesOf(
+            booleanPreferencesKey("liquid_glass_enabled") to true
+        )
+
+        val result = mapHomeSettingsFromPreferences(prefs)
+
+        assertFalse(result.isTopBarLiquidGlassEnabled)
+        assertTrue(result.isBottomBarLiquidGlassEnabled)
+        assertTrue(result.isLiquidGlassEnabled)
     }
 
     @Test

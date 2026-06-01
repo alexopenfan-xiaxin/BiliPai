@@ -1057,7 +1057,7 @@ open class MainActivity : AppCompatActivity() {
             // var showWelcome by remember { mutableStateOf(!prefs.getBoolean(KEY_FIRST_LAUNCH, false)) }
 
             // 1. 获取存储的模式 (默认为跟随系统)
-            val uiPreset by SettingsManager.getUiPreset(context).collectAsState(initial = UiPreset.IOS)
+            val uiPreset by SettingsManager.getUiPreset(context).collectAsState(initial = UiPreset.MD3)
             val androidNativeVariant by SettingsManager.getAndroidNativeVariant(context).collectAsState(
                 initial = AndroidNativeVariant.MATERIAL3
             )

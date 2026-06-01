@@ -101,7 +101,8 @@ class SpaceScreenStructureTest {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/space/SpaceScreen.kt")
 
         assertTrue(source.contains("resolveSpaceSearchBarGridItemIndex("))
-        assertTrue(source.contains("gridState.animateScrollToItem(searchBarIndex)"))
+        assertTrue(source.contains("resolveSpaceSearchBarRevealScrollOffsetPx("))
+        assertTrue(source.contains("scrollOffset = searchBarRevealScrollOffsetPx"))
         assertTrue(source.contains("val searchFocusRequester = remember { FocusRequester() }"))
         assertTrue(source.contains(".focusRequester(searchFocusRequester)"))
         assertTrue(source.contains("onPrimaryClickOverride = { onSpaceDynamicCommentClick(dynamic) }"))

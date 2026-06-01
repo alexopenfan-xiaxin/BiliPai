@@ -372,7 +372,7 @@ data class HomeSettings(
     val headerBlurMode: HomeHeaderBlurMode = HomeHeaderBlurMode.FOLLOW_PRESET,
     val isBottomBarBlurEnabled: Boolean = true,
     val isTopBarLiquidGlassEnabled: Boolean = false,
-    val isBottomBarLiquidGlassEnabled: Boolean = true,
+    val isBottomBarLiquidGlassEnabled: Boolean = false,
     val bottomBarLiquidGlassPreset: BottomBarLiquidGlassPreset =
         BottomBarLiquidGlassPreset.BILIPAI_TUNED,
     val bottomBarInteractiveHighlightEnabled: Boolean = false,
@@ -487,7 +487,7 @@ enum class HomeHeaderCollapseMode(
 }
 
 internal fun resolveUiPresetPreferenceValue(rawValue: Int?): UiPreset {
-    return UiPreset.fromValue(rawValue ?: UiPreset.IOS.value)
+    return UiPreset.fromValue(rawValue ?: UiPreset.MD3.value)
 }
 
 internal fun resolveAndroidNativeVariantPreferenceValue(rawValue: Int?): AndroidNativeVariant {
@@ -1017,7 +1017,7 @@ object SettingsManager {
             ?: HomeHeaderCollapseMode.fromLegacyBoolean(
                 preferences[KEY_HEADER_COLLAPSE_ENABLED] ?: true
             )
-        val legacyLiquidGlassEnabled = preferences[KEY_LIQUID_GLASS_ENABLED] ?: true
+        val legacyLiquidGlassEnabled = preferences[KEY_LIQUID_GLASS_ENABLED] ?: false
         return HomeSettings(
             displayMode = preferences[KEY_DISPLAY_MODE] ?: 0,
             isBottomBarFloating = preferences[KEY_BOTTOM_BAR_FLOATING] ?: true,

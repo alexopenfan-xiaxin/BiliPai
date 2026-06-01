@@ -58,6 +58,13 @@ internal fun resolveSpaceSearchBarGridItemIndex(
     }
 }
 
+internal fun resolveSpaceSearchBarRevealScrollOffsetPx(
+    topBarHeightPx: Int,
+    extraVisibleMarginPx: Int
+): Int {
+    return -(topBarHeightPx.coerceAtLeast(0) + extraVisibleMarginPx.coerceAtLeast(0))
+}
+
 internal fun shouldEnableSpaceLazyGridSharedTransition(
     hasSharedTransitionScope: Boolean,
     hasAnimatedVisibilityScope: Boolean

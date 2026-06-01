@@ -212,16 +212,6 @@ fun SpaceScreen(
     val blockUserLabel = stringResource(R.string.space_block_user)
     val unblockUserLabel = stringResource(R.string.space_unblock_user)
 
-    LaunchedEffect(isSearchMode, currentSearchScope, hasContributionToolbarForSearch) {
-        if (!isSearchMode) return@LaunchedEffect
-        resolveSpaceSearchBarGridItemIndex(
-            scope = currentSearchScope,
-            hasContributionToolbar = hasContributionToolbarForSearch
-        )?.let { searchBarIndex ->
-            gridState.animateScrollToItem(searchBarIndex)
-        }
-    }
-
     AdaptiveScaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -311,7 +301,33 @@ fun SpaceScreen(
             }
         },
         containerColor = MaterialTheme.colorScheme.surface
-    ) { _ ->
+    ) { scaffoldPadding ->
+        val density = LocalDensity.current
+        val searchBarRevealScrollOffsetPx = with(density) {
+            resolveSpaceSearchBarRevealScrollOffsetPx(
+                topBarHeightPx = scaffoldPadding.calculateTopPadding().roundToPx(),
+                extraVisibleMarginPx = 8.dp.roundToPx()
+            )
+        }
+
+        LaunchedEffect(
+            isSearchMode,
+            currentSearchScope,
+            hasContributionToolbarForSearch,
+            searchBarRevealScrollOffsetPx
+        ) {
+            if (!isSearchMode) return@LaunchedEffect
+            resolveSpaceSearchBarGridItemIndex(
+                scope = currentSearchScope,
+                hasContributionToolbar = hasContributionToolbarForSearch
+            )?.let { searchBarIndex ->
+                gridState.animateScrollToItem(
+                    index = searchBarIndex,
+                    scrollOffset = searchBarRevealScrollOffsetPx
+                )
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier

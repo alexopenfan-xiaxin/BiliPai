@@ -169,6 +169,31 @@ class SpaceLoadPolicyTest {
     }
 
     @Test
+    fun resolveSpaceSearchBarRevealScrollOffsetPx_placesSearchBelowTopBar() {
+        assertEquals(
+            -72,
+            resolveSpaceSearchBarRevealScrollOffsetPx(
+                topBarHeightPx = 64,
+                extraVisibleMarginPx = 8
+            )
+        )
+        assertEquals(
+            -8,
+            resolveSpaceSearchBarRevealScrollOffsetPx(
+                topBarHeightPx = -1,
+                extraVisibleMarginPx = 8
+            )
+        )
+        assertEquals(
+            -64,
+            resolveSpaceSearchBarRevealScrollOffsetPx(
+                topBarHeightPx = 64,
+                extraVisibleMarginPx = -1
+            )
+        )
+    }
+
+    @Test
     fun shouldEnableSpaceLazyGridSharedTransition_requiresBothScopes() {
         assertTrue(
             shouldEnableSpaceLazyGridSharedTransition(

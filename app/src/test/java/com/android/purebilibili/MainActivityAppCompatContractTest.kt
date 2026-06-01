@@ -291,6 +291,10 @@ class MainActivityAppCompatContractTest {
             mainActivitySource.contains("getUiPreset(context)"),
             "MainActivity should keep reading UiPreset when iOS and Android Native presets are available again"
         )
+        assertTrue(
+            mainActivitySource.contains("collectAsState(initial = UiPreset.MD3)"),
+            "MainActivity should bootstrap first install with the MD3 preset"
+        )
     }
 
     private fun loadResourceFile(resourcePath: String): File {
