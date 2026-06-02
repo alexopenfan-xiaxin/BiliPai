@@ -1,5 +1,17 @@
 # Changelog
 
+## v9.0.3 (2026-06-03)
+
+### 版本信息
+- 版本号从 `9.0.2` 升级到 `9.0.3`，`versionCode` 升级到 `216`。
+
+### 更新内容
+- 提高软件稳定性。
+- 优化软件流畅度。
+
+### Release Notes
+- Bug fixes minor improments and more.
+
 ## v9.0.2 (2026-06-01)
 
 ### 版本信息

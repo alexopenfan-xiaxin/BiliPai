@@ -15,7 +15,7 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/Version-9.0.2-007AFF?style=flat-square&labelColor=ffffff" alt="Version 9.0.2" />
+  <img src="https://img.shields.io/badge/Version-9.0.3-007AFF?style=flat-square&labelColor=ffffff" alt="Version 9.0.3" />
   <img src="https://img.shields.io/badge/Android-8.0%2B-34C759?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
   <img src="https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-FF3B30?style=flat-square" alt="GPL-3.0" />
@@ -37,7 +37,7 @@
   </a>
 </p>
 
-<sub>README 更新：2026-06-01 · 当前构建版本以 app/build.gradle.kts 为准 · 发布记录以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
+<sub>README 更新：2026-06-03 · 当前构建版本以 app/build.gradle.kts 为准 · 发布记录以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
 
 </div>
 
@@ -182,14 +182,10 @@ cd BiliPai
 
 ## 最近更新
 
-当前仓库版本号已更新到 `9.0.2 / versionCode 215`。公开发布说明请以 [CHANGELOG.md](CHANGELOG.md) 为准；最新完整记录为 `v9.0.2`：
+当前仓库版本号已更新到 `9.0.3 / versionCode 216`。公开发布说明请以 [CHANGELOG.md](CHANGELOG.md) 为准；最新完整记录为 `v9.0.3`：
 
-- 应用打包版本、README 和更新日志同步到 `9.0.2 / versionCode 215`。
-- 视频卡片进入/退出详情页的共享元素动画统一走视觉策略，减少卡片、封面和播放器之间的形态跳变。
-- 分区、动态、稍后再看、空间、相关视频和首页视频卡片统一记录来源圆角，返回收尾时圆角不再突然弹回。
-- 手动封面、立即播放、普通横屏播放器、横屏全屏和竖屏/autoPortrait 场景各自使用稳定目标。
-- 竖屏视频返回时强制由封面 sharedBounds 接管后再回到卡片，避免播放器视口和卡片裁剪互相抢动画。
-- 横屏全屏过渡期间目标圆角收敛到 0dp，减少全屏黑底边缘残留卡片圆角。
+- 提高软件稳定性。
+- 优化软件流畅度。
 
 ## 路线图
 
