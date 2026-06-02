@@ -124,7 +124,7 @@ fun CollectionSheet(
                 }
             }
             
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             val sortModes = remember { CollectionSortMode.entries.toList() }
 
@@ -153,7 +153,7 @@ fun CollectionSheet(
                 )
             }
 
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             
             //  视频列表
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()

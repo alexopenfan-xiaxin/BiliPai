@@ -620,12 +620,8 @@ internal fun resolveIosTopTabCapsuleContainerColor(
     selectionFraction: Float
 ): Color {
     val selectedAlpha = selectionFraction.coerceIn(0f, 1f)
-    val baseColor = if (isDarkTheme) {
-        Color(0xFFF2F2F7).copy(alpha = 0.92f)
-    } else {
-        Color(0xFFF2F2F7)
-    }
-    return baseColor.copy(alpha = baseColor.alpha * selectedAlpha)
+    val baseColor = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = isDarkTheme)
+    return baseColor.copy(alpha = 0.28f * selectedAlpha)
 }
 
 internal fun Modifier.homeTopBottomBarMatchedSurface(

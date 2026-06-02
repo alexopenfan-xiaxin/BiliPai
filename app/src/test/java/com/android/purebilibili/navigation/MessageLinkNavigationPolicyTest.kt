@@ -53,6 +53,20 @@ class MessageLinkNavigationPolicyTest {
     }
 
     @Test
+    fun resolveMessageLinkNavigationAction_decodesEncodedEnterUriCompatibly() {
+        val action = resolveMessageLinkNavigationAction(
+            "bilibili://comment/detail/1/1199344045210468386/265141324256" +
+                "?enterUri=bilibili%3A%2F%2Ffollowing%2Fdetail%2F1199344045210468386" +
+                "&comment_id=265141324999"
+        )
+
+        val dynamicAction = assertIs<MessageLinkNavigationAction.DynamicComment>(action)
+        assertEquals("1199344045210468386", dynamicAction.dynamicId)
+        assertEquals(265141324256L, dynamicAction.rootReplyId)
+        assertEquals(265141324999L, dynamicAction.targetReplyId)
+    }
+
+    @Test
     fun resolveMessageLinkNavigationAction_routesOpusCommentLinkToDynamicComment() {
         val action = resolveMessageLinkNavigationAction(
             "bilibili://opus/detail/1073543151725051921?comment_root_id=265141324256&comment_on=1"

@@ -22,7 +22,7 @@ import io.github.alexzhirkevich.cupertino.icons.outlined.*
 import io.github.alexzhirkevich.cupertino.icons.filled.*
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -717,7 +717,7 @@ fun WatchLaterScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState) // 内容作为模糊源（全局源由根层提供）
+                .hazeSourceCompat(state = hazeState) // 内容作为模糊源（全局源由根层提供）
         ) {
             when {
                 state.isLoading -> {

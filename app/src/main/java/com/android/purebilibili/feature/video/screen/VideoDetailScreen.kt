@@ -198,7 +198,7 @@ import com.android.purebilibili.core.util.FormatUtils
 import coil.compose.AsyncImage
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import com.android.purebilibili.feature.video.ui.components.DanmakuContextMenu
@@ -3502,7 +3502,7 @@ fun VideoDetailScreen(
                                                         renderEffect = null
                                                     }
                                                 }
-                                                .hazeSource(hazeState)
+                                                .hazeSourceCompat(hazeState)
                                         ) {
                                             // [性能优化] 延迟显示下方内容，优先保证进场动画流畅
                                             // 配合 isTransitionFinished 状态

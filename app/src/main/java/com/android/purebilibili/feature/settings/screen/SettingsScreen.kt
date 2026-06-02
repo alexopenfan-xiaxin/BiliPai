@@ -65,7 +65,7 @@ import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
 import com.android.purebilibili.core.ui.adaptive.resolveEffectiveMotionTier
 import com.android.purebilibili.core.plugin.PluginManager
 
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.filled.*
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
@@ -946,7 +946,7 @@ fun SettingsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = activeHazeState)
+                .hazeSourceCompat(state = activeHazeState)
         ) {
             if (shouldUseSettingsSplitLayout(widthDp = configuration.screenWidthDp)) {
                 TabletSettingsLayout(

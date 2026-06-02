@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.spring
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -557,7 +557,7 @@ fun CommonListScreen(
             val contentModifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(commonListChromeBackdrop)
-                .hazeSource(state = localHazeState)
+                .hazeSourceCompat(state = localHazeState)
 
             Box(modifier = contentModifier) {
                 if (isSubscribedBrowse) {
@@ -1397,7 +1397,7 @@ private fun CommonListContent(
                                         }
                                     },
                                     onLongClick = if (!historyBatchMode && supportsHistoryDissolve) {
-                                        { onHistoryLongDelete?.invoke(historyKey) }
+                                        { onHistoryLongDelete(historyKey) }
                                     } else {
                                         null
                                     }
@@ -1430,7 +1430,7 @@ private fun CommonListContent(
                                     onUnfavorite = if (onUnfavorite != null) { { onUnfavorite(video) } } else null,
                                     onUpClick = onUpClick,
                                     onLongClick = if (!historyBatchMode && supportsHistoryDissolve) {
-                                        { onHistoryLongDelete?.invoke(historyKey) }
+                                        { onHistoryLongDelete(historyKey) }
                                     } else null
                                 )
                             }
@@ -1476,7 +1476,7 @@ private fun CommonListContent(
                     if (supportsHistoryDissolve) {
                         DissolvableVideoCard(
                             isDissolving = isDissolving,
-                            onDissolveComplete = { onHistoryDissolveComplete?.invoke(historyKey) },
+                            onDissolveComplete = { onHistoryDissolveComplete(historyKey) },
                             cardId = historyKey,
                             preset = DissolveAnimationPreset.TELEGRAM_FAST,
                             collapseAfterDissolve = shouldCollapseHistoryDeleteCard(historyDeleteAnimationMode),

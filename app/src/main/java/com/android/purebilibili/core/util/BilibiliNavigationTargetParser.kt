@@ -1,7 +1,6 @@
 package com.android.purebilibili.core.util
 
 import java.net.URI
-import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 sealed interface BilibiliNavigationTarget {
@@ -336,8 +335,8 @@ object BilibiliNavigationTargetParser {
             .mapNotNull { part ->
                 if (part.isBlank()) return@mapNotNull null
                 val pair = part.split("=", limit = 2)
-                val key = URLDecoder.decode(pair[0], StandardCharsets.UTF_8)
-                val value = URLDecoder.decode(pair.getOrElse(1) { "" }, StandardCharsets.UTF_8)
+                val key = decodeUrlComponentCompat(pair[0], StandardCharsets.UTF_8)
+                val value = decodeUrlComponentCompat(pair.getOrElse(1) { "" }, StandardCharsets.UTF_8)
                 key to value
             }
             .toMap()

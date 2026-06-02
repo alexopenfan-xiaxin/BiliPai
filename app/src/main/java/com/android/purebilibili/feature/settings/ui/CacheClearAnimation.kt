@@ -35,7 +35,7 @@ import com.android.purebilibili.core.ui.blur.shouldAllowRuntimeShaderBackedHazeE
 import kotlin.math.*
 import kotlin.random.Random
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 
@@ -341,7 +341,7 @@ fun CircularProgressRing(
         
         // 进度头部光晕效果
         if (!isComplete && animatedProgress > 0.01f) {
-            val headAngle = Math.toRadians((-90.0 + sweepAngle + gradientAngle).toDouble())
+            val headAngle = Math.toRadians(-90.0 + sweepAngle + gradientAngle)
             val headX = center.x + radius * scale * cos(headAngle).toFloat()
             val headY = center.y + radius * scale * sin(headAngle).toFloat()
             
@@ -783,7 +783,7 @@ fun CacheClearAnimationDialog(
                     )
                     .then(
                         if (useHazeEffect) {
-                            Modifier.hazeChild(
+                            Modifier.hazeEffect(
                                 state = hazeState,
                                 style = HazeMaterials.thin(MaterialTheme.colorScheme.surface)
                             )

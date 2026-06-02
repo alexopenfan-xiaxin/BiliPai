@@ -111,8 +111,6 @@ internal data class HomeTopSearchRefractionLayerPolicy(
     val exportTranslationMultiplier: Float
 )
 
-private const val HOME_TOP_SEARCH_REFRACTION_MIN_REVEAL_FRACTION = 0.96f
-
 internal data class HomeTopLinkedBottomBarAppearance(
     val isFloating: Boolean,
     val blurEnabled: Boolean,
@@ -281,19 +279,26 @@ internal fun resolveHomeTopSearchRefractionLayerPolicy(
     isScrolling: Boolean,
     isTransitionRunning: Boolean
 ): HomeTopSearchRefractionLayerPolicy {
-    val shouldRefract = renderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP &&
-        hasBackdrop &&
-        searchRevealFraction >= HOME_TOP_SEARCH_REFRACTION_MIN_REVEAL_FRACTION &&
-        !isScrolling &&
-        !isTransitionRunning
     return HomeTopSearchRefractionLayerPolicy(
-        // 折射层只在搜索栏稳定展开时开启，滚动和转场阶段仍避免额外导出层闪烁。
-        captureContentLayer = shouldRefract,
-        useExportedBackdrop = shouldRefract,
-        overlayAlpha = if (shouldRefract) 1f else 0f,
+        // 搜索胶囊本身已经绘制玻璃外壳；额外导出折射层会形成第二个同尺寸胶囊。
+        captureContentLayer = false,
+        useExportedBackdrop = false,
+        overlayAlpha = 0f,
         visibleContentAlpha = 1f,
-        exportTranslationMultiplier = if (shouldRefract) 1f else 0f
+        exportTranslationMultiplier = 0f
     )
+}
+
+internal fun shouldDrawHomeTopSearchLegacyHighlight(
+    uiPreset: UiPreset,
+    useUnifiedTopPanel: Boolean,
+    renderMode: HomeTopChromeRenderMode,
+    refractionOverlayAlpha: Float
+): Boolean {
+    if (uiPreset != UiPreset.IOS || useUnifiedTopPanel) return false
+    if (refractionOverlayAlpha > 0f) return false
+    return renderMode != HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP &&
+        renderMode != HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
 }
 
 internal fun resolveHomeTopChromeSurfaceTreatment(
@@ -2593,7 +2598,14 @@ fun iOSHomeHeader(
                                         .padding(horizontal = resolveHomeTopSearchContentHorizontalPadding(uiPreset, androidNativeVariant)),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
-                                    if (uiPreset == UiPreset.IOS && !useUnifiedTopPanel) {
+                                    if (
+                                        shouldDrawHomeTopSearchLegacyHighlight(
+                                            uiPreset = uiPreset,
+                                            useUnifiedTopPanel = useUnifiedTopPanel,
+                                            renderMode = searchChromeRenderMode,
+                                            refractionOverlayAlpha = searchRefractionLayerPolicy.overlayAlpha
+                                        )
+                                    ) {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -2641,24 +2653,33 @@ fun iOSHomeHeader(
                                         searchRefractionLayerPolicy.overlayAlpha > 0f &&
                                         searchPillWidthPx > 0f
                                     ) {
-                                        SimpleLiquidIndicator(
-                                            position = 0f,
-                                            itemWidthPx = searchPillWidthPx,
-                                            isDragging = true,
-                                            velocityPxPerSecond = 0f,
-                                            isLiquidGlassEnabled = true,
-                                            liquidGlassStyle = liquidStyle,
-                                            liquidGlassTuning = liquidGlassTuning,
-                                            backdrop = searchContentBackdrop,
-                                            indicatorColor = searchIndicatorColor,
+                                        KernelSuBottomBarIndicatorLayer(
+                                            visible = true,
+                                            dockContentAlpha = searchRefractionLayerPolicy.overlayAlpha,
+                                            indicatorTranslationXPx = 0f,
+                                            indicatorPanelOffsetPx = 0f,
+                                            indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
+                                            indicatorWidth = with(density) { searchPillWidthPx.toDp() },
                                             indicatorHeight = resolveHomeTopSearchPillHeight(uiPreset, androidNativeVariant),
-                                            cornerRadius = resolveHomeTopSearchPillHeight(uiPreset, androidNativeVariant) / 2,
-                                            widthRatio = 1f,
-                                            minWidth = with(density) { searchPillWidthPx.toDp() },
-                                            horizontalInset = 0.dp,
-                                            modifier = Modifier
-                                                .matchParentSize()
-                                                .alpha(searchRefractionLayerPolicy.overlayAlpha)
+                                            shellShape = searchContainerShape,
+                                            liquidGlassPreset = bottomBarLiquidGlassPreset,
+                                            contentBackdrop = searchContentBackdrop,
+                                            backdrop = backdrop,
+                                            indicatorLensSpec = resolveBottomBarBackdropPresetIndicatorLens(
+                                                progress = searchRefractionLayerPolicy.overlayAlpha
+                                            ),
+                                            effectivePressProgress = 0f,
+                                            indicatorIdleSurfaceColor = searchIndicatorColor,
+                                            glassEnabled = true,
+                                            motionProgress = 0f,
+                                            velocityItemsPerSecond = 0f,
+                                            isDragging = false,
+                                            indicatorLayerScaleProgress = 0f,
+                                            bottomBarMotionSpec = com.android.purebilibili.core.ui.motion.resolveBottomBarMotionSpec(
+                                                com.android.purebilibili.core.ui.motion.BottomBarMotionProfile.IOS_FLOATING
+                                            ),
+                                            isDarkTheme = !isLightMode,
+                                            indicatorAlignment = Alignment.CenterStart
                                         )
                                     }
                                 }

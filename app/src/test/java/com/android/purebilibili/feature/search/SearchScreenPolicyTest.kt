@@ -141,6 +141,88 @@ class SearchScreenPolicyTest {
     }
 
     @Test
+    fun searchResultLazyItemKey_prefersStableBusinessKeys() {
+        assertEquals(
+            "video:0:text:BV1xx411c7mD",
+            resolveSearchResultLazyItemKey(
+                searchType = SearchType.VIDEO,
+                index = 0,
+                textKey = " BV1xx411c7mD ",
+                numericKey = 123L
+            )
+        )
+        assertEquals(
+            "video:0:id:123",
+            resolveSearchResultLazyItemKey(
+                searchType = SearchType.VIDEO,
+                index = 0,
+                textKey = "",
+                numericKey = 123L
+            )
+        )
+        assertEquals(
+            "media_bangumi:0:secondary:456",
+            resolveSearchResultLazyItemKey(
+                searchType = SearchType.BANGUMI,
+                index = 0,
+                numericKey = 0L,
+                secondaryNumericKey = 456L
+            )
+        )
+    }
+
+    @Test
+    fun searchResultLazyItemKey_usesIndexedFallbackForMissingIds() {
+        val first = resolveSearchResultLazyItemKey(
+            searchType = SearchType.VIDEO,
+            index = 0,
+            textKey = "",
+            numericKey = 0L
+        )
+        val second = resolveSearchResultLazyItemKey(
+            searchType = SearchType.VIDEO,
+            index = 1,
+            textKey = "",
+            numericKey = 0L
+        )
+
+        assertEquals("video:local:0", first)
+        assertEquals("video:local:1", second)
+        assertTrue(first != second)
+    }
+
+    @Test
+    fun searchResultLazyItemKey_disambiguatesDuplicateBusinessKeys() {
+        val first = resolveSearchResultLazyItemKey(
+            searchType = SearchType.VIDEO,
+            index = 0,
+            textKey = "BV_DUPLICATE"
+        )
+        val second = resolveSearchResultLazyItemKey(
+            searchType = SearchType.VIDEO,
+            index = 1,
+            textKey = "BV_DUPLICATE"
+        )
+
+        assertEquals("video:0:text:BV_DUPLICATE", first)
+        assertEquals("video:1:text:BV_DUPLICATE", second)
+        assertTrue(first != second)
+    }
+
+    @Test
+    fun searchResultLazyItemKey_preventsBlankAndDuplicateVideoGridKeys() {
+        val keys = listOf(
+            resolveSearchResultLazyItemKey(SearchType.VIDEO, index = 0, textKey = "", numericKey = 0L),
+            resolveSearchResultLazyItemKey(SearchType.VIDEO, index = 1, textKey = "", numericKey = 0L),
+            resolveSearchResultLazyItemKey(SearchType.VIDEO, index = 2, textKey = "BV_DUPLICATE", numericKey = 100L),
+            resolveSearchResultLazyItemKey(SearchType.VIDEO, index = 3, textKey = "BV_DUPLICATE", numericKey = 100L)
+        )
+
+        assertEquals(keys.size, keys.toSet().size)
+        assertTrue(keys.none { it.isBlank() })
+    }
+
+    @Test
     fun searchTypeTabs_useCompactDensityOnNarrowScreens() {
         val compact = resolveSearchTypeTabLayoutSpec(widthDp = 360)
         val regular = resolveSearchTypeTabLayoutSpec(widthDp = 412)

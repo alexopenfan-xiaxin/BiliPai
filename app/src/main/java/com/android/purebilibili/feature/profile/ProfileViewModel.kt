@@ -667,13 +667,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val request = okhttp3.Request.Builder().url(finalUrl).build()
                 val response = NetworkModule.okHttpClient.newCall(request).execute()
                 
-                if (response.isSuccessful && response.body != null) {
+                if (response.isSuccessful) {
                     val imagesDir = File(context.filesDir, "images")
                     if (!imagesDir.exists()) imagesDir.mkdirs()
                     val destFile = File(imagesDir, "profile_bg.jpg")
                     
                     FileOutputStream(destFile).use { output ->
-                        response.body!!.byteStream().copyTo(output)
+                        response.body.byteStream().copyTo(output)
                     }
                     
                     val savedUri = Uri.fromFile(destFile).toString()
@@ -731,9 +731,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val request = okhttp3.Request.Builder().url(finalUrl).build()
                 val response = NetworkModule.okHttpClient.newCall(request).execute()
 
-                if (response.isSuccessful && response.body != null) {
+                if (response.isSuccessful) {
                     // Read bytes once
-                    val bytes = response.body!!.bytes() 
+                    val bytes = response.body.bytes()
                     
                     // 1. Save to internal splash directory
                     val splashDir = File(context.filesDir, "splash")
@@ -825,8 +825,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val request = okhttp3.Request.Builder().url(finalUrl).build()
                 val response = NetworkModule.okHttpClient.newCall(request).execute()
 
-                if (response.isSuccessful && response.body != null) {
-                    val bytes = response.body!!.bytes()
+                if (response.isSuccessful) {
+                    val bytes = response.body.bytes()
                     val homeWallpaperDir = File(context.filesDir, "home_wallpaper")
                     if (!homeWallpaperDir.exists()) homeWallpaperDir.mkdirs()
                     val destFile = File(homeWallpaperDir, "home_bg_${System.currentTimeMillis()}.jpg")

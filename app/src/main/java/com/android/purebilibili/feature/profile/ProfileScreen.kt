@@ -119,7 +119,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 
 import android.net.Uri
@@ -265,16 +265,20 @@ fun ProfileScreen(
         } else null
         
         // 保存原始配置
-        val originalStatusBarColor = window?.statusBarColor ?: android.graphics.Color.TRANSPARENT
-        val originalNavBarColor = window?.navigationBarColor ?: android.graphics.Color.TRANSPARENT
+        val originalStatusBarColor = window?.let {
+            com.android.purebilibili.core.ui.getWindowStatusBarColor(it)
+        } ?: android.graphics.Color.TRANSPARENT
+        val originalNavBarColor = window?.let {
+            com.android.purebilibili.core.ui.getWindowNavigationBarColor(it)
+        } ?: android.graphics.Color.TRANSPARENT
         val originalLightStatusBars = insetsController?.isAppearanceLightStatusBars ?: true
         val originalLightNavigationBars = insetsController?.isAppearanceLightNavigationBars ?: true
         val originalDecorFits = window?.decorView?.fitsSystemWindows ?: true
         
         if (shouldControlSystemBars && window != null) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.statusBarColor = Color.Transparent.toArgb()
-            window.navigationBarColor = Color.Transparent.toArgb()
+            com.android.purebilibili.core.ui.setWindowStatusBarColor(window, Color.Transparent.toArgb())
+            com.android.purebilibili.core.ui.setWindowNavigationBarColor(window, Color.Transparent.toArgb())
             insetsController?.isAppearanceLightStatusBars = lightStatusBars
             insetsController?.isAppearanceLightNavigationBars = lightStatusBars
         }
@@ -283,8 +287,8 @@ fun ProfileScreen(
             // 离开时恢复原始配置
             if (shouldControlSystemBars && window != null && insetsController != null) {
                 WindowCompat.setDecorFitsSystemWindows(window, originalDecorFits)
-                window.statusBarColor = originalStatusBarColor
-                window.navigationBarColor = originalNavBarColor
+                com.android.purebilibili.core.ui.setWindowStatusBarColor(window, originalStatusBarColor)
+                com.android.purebilibili.core.ui.setWindowNavigationBarColor(window, originalNavBarColor)
                 insetsController.isAppearanceLightStatusBars = originalLightStatusBars
                 insetsController.isAppearanceLightNavigationBars = originalLightNavigationBars
             }
@@ -520,7 +524,7 @@ fun ProfileScreen(
                                         Icon(rememberAppSettingsIcon(), contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
                                     }
                                 },
-                                colors = TopAppBarDefaults.largeTopAppBarColors(
+                                colors = TopAppBarDefaults.topAppBarColors(
                                     containerColor = Color.Transparent,
                                     scrolledContainerColor = Color.Transparent
                                 )
@@ -932,7 +936,7 @@ private fun ProfileSpaceContent(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(if (hazeState != null) Modifier.hazeSource(hazeState) else Modifier)
+                    .then(if (hazeState != null) Modifier.hazeSourceCompat(hazeState) else Modifier)
                     .padding(paddingValues)
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -998,7 +1002,7 @@ private fun ProfileSpaceContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(if (hazeState != null) Modifier.hazeSource(hazeState) else Modifier),
+                    .then(if (hazeState != null) Modifier.hazeSourceCompat(hazeState) else Modifier),
                 contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 120.dp)
             ) {
                 item {
@@ -2472,7 +2476,7 @@ fun MobileProfileContent(
             LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (hazeState != null) Modifier.hazeSource(hazeState) else Modifier),
+                .then(if (hazeState != null) Modifier.hazeSourceCompat(hazeState) else Modifier),
             contentPadding = PaddingValues(
                 // [Modified] 顶部留白，适配 CenterAlignedTopAppBar (64dp + Status Bar ~ 30-40dp)
                 top = 120.dp, 
@@ -2574,7 +2578,7 @@ fun MobileProfileContent(
                     Icon(rememberAppSettingsIcon(), contentDescription = "Settings", tint = contentColor)
                 }
             },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent,
                 scrolledContainerColor = Color.Transparent,
                 titleContentColor = contentColor,

@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOffIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOnIcon
@@ -116,7 +116,7 @@ fun DynamicSidebar(
                 ),
                 modifier = Modifier
                     .fillMaxSize()
-                    .hazeSource(sidebarHazeState) // 设置模糊源
+                    .hazeSourceCompat(sidebarHazeState) // 设置模糊源
             ) {
                 // 隐藏用户切换按钮 (胶囊样式)
                 if (hiddenCount > 0 || showHiddenUsers) {

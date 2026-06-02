@@ -241,7 +241,7 @@ fun TabletVideoLayout(
                 
                 // 📜 视频信息区域（可滚动）
                 if (uiState is PlayerUiState.Success) {
-                    val success = uiState as PlayerUiState.Success
+                    val success = uiState
                     val currentPageIndex = success.info.pages.indexOfFirst { it.cid == success.info.cid }.coerceAtLeast(0)
                     val downloadProgress by viewModel.downloadProgress.collectAsStateWithLifecycle()
                     
@@ -284,7 +284,7 @@ fun TabletVideoLayout(
         secondaryContent = {
             // 📝 右侧：评论 / 相关推荐
             if (uiState is PlayerUiState.Success) {
-                val success = uiState as PlayerUiState.Success
+                val success = uiState
                 
                 TabletSecondaryContent(
                     success = success,
@@ -473,7 +473,7 @@ private fun TabletSecondaryContent(
         }
 
         // Tab 栏
-        TabRow(
+        PrimaryTabRow(
             selectedTabIndex = pagerState.currentPage,
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface

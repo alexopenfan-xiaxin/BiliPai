@@ -49,6 +49,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowRight
@@ -59,7 +60,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -977,14 +978,14 @@ private fun CinemaSideCurtain(
                             Spacer(modifier = Modifier.height(10.dp))
                             IconButton(onClick = { onTabSelected(1) }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.PlaylistPlay,
+                                    imageVector = Icons.AutoMirrored.Outlined.PlaylistPlay,
                                     contentDescription = "related videos"
                                 )
                             }
                         }
                     } else {
                         Column(modifier = Modifier.fillMaxSize()) {
-                            TabRow(
+                            PrimaryTabRow(
                                 selectedTabIndex = pagerState.currentPage,
                                 modifier = Modifier.fillMaxWidth()
                             ) {

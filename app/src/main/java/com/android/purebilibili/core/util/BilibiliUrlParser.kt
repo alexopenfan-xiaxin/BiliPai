@@ -5,7 +5,6 @@ import android.net.Uri
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
-import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 /**
@@ -347,8 +346,8 @@ object BilibiliUrlParser {
             .mapNotNull { part ->
                 if (part.isBlank()) return@mapNotNull null
                 val pair = part.split("=", limit = 2)
-                val key = URLDecoder.decode(pair[0], StandardCharsets.UTF_8)
-                val value = URLDecoder.decode(pair.getOrElse(1) { "" }, StandardCharsets.UTF_8)
+                val key = decodeUrlComponentCompat(pair[0], StandardCharsets.UTF_8)
+                val value = decodeUrlComponentCompat(pair.getOrElse(1) { "" }, StandardCharsets.UTF_8)
                 key to value
             }
             .toMap()

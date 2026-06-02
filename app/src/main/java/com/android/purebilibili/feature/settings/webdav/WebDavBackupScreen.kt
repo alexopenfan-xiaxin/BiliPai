@@ -61,7 +61,7 @@ import com.android.purebilibili.core.ui.components.IOSGroup
 import com.android.purebilibili.core.ui.components.IOSSectionTitle
 import com.android.purebilibili.core.ui.components.IOSSwitchItem
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 
 private enum class WebDavEditMode {
     SERVER,
@@ -119,7 +119,7 @@ fun WebDavBackupScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState),
+                .hazeSourceCompat(state = hazeState),
             contentPadding = PaddingValues(top = 118.dp, bottom = 24.dp)
         ) {
             item {

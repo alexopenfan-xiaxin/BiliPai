@@ -244,7 +244,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SettingsManager.getMd3CustomColorHex(context).asAnyFlow(),
         SettingsManager.getThemeColorStyle(context).asAnyFlow(),
         SettingsManager.getThemeColorSpec(context).asAnyFlow(),
-        SettingsManager.getBgPlay(context).asAnyFlow()
+        SettingsManager.getMiniPlayerMode(context)
+            .map { it != SettingsManager.MiniPlayerMode.OFF }
+            .asAnyFlow()
     ) { values ->
         CoreSettings(
             uiPreset = values[0] as UiPreset,
@@ -445,12 +447,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SettingsManager.getSponsorBlockAutoSkip(context)
     ) { values ->
         ExperimentalSettings(
-            auto1080p = values[0] as Boolean,
-            autoSkipOpEd = values[1] as Boolean,
-            prefetchVideo = values[2] as Boolean,
-            doubleTapLike = values[3] as Boolean,
-            sponsorBlockEnabled = values[4] as Boolean,
-            sponsorBlockAutoSkip = values[5] as Boolean
+            auto1080p = values[0],
+            autoSkipOpEd = values[1],
+            prefetchVideo = values[2],
+            doubleTapLike = values[3],
+            sponsorBlockEnabled = values[4],
+            sponsorBlockAutoSkip = values[5]
         )
     }
     
@@ -659,7 +661,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setAppDpiOverridePercent(percent: Int) {
         viewModelScope.launch { SettingsManager.setAppDpiOverridePercent(context, percent) }
     }
-    fun toggleBgPlay(value: Boolean) { viewModelScope.launch { SettingsManager.setBgPlay(context, value) } }
+    fun toggleBgPlay(value: Boolean) {
+        viewModelScope.launch {
+            SettingsManager.setMiniPlayerMode(
+                context,
+                if (value) SettingsManager.MiniPlayerMode.SYSTEM_PIP else SettingsManager.MiniPlayerMode.OFF
+            )
+        }
+    }
     //  [新增] 手势灵敏度和主题色
     fun setGestureSensitivity(value: Float) { viewModelScope.launch { SettingsManager.setGestureSensitivity(context, value) } }
     fun setThemeColorIndex(index: Int) { 

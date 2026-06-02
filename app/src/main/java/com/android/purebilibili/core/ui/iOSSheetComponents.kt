@@ -125,7 +125,7 @@ fun IOSModalBottomSheet(
     scrimColor: Color = BottomSheetDefaults.ScrimColor,
     presentationProgress: Float = 1f,
     dragHandle: @Composable (() -> Unit)? = { IOSDragHandle() },
-    windowInsets: androidx.compose.foundation.layout.WindowInsets = androidx.compose.material3.BottomSheetDefaults.windowInsets,
+    windowInsets: androidx.compose.foundation.layout.WindowInsets = androidx.compose.material3.BottomSheetDefaults.modalWindowInsets,
     content: @Composable () -> Unit
 ) {
     val uiPreset = LocalUiPreset.current

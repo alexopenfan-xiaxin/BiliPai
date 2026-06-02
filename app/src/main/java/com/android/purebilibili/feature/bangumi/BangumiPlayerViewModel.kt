@@ -175,7 +175,10 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
         if (currentIndex < episodes.size - 1) {
             val nextEpisode = episodes[currentIndex + 1]
             viewModelScope.launch {
-                _toastEvent.send("正在播放下一集: ${nextEpisode.title ?: nextEpisode.longTitle ?: "第${currentIndex + 2}集"}")
+                val episodeTitle = nextEpisode.title.ifBlank {
+                    nextEpisode.longTitle.ifBlank { "第${currentIndex + 2}集" }
+                }
+                _toastEvent.send("正在播放下一集: $episodeTitle")
             }
             switchEpisode(nextEpisode)
         } else {
@@ -321,7 +324,7 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                 if (durlSegmentUrls.isNotEmpty()) {
                     videoUrl = durlSegmentUrls.first()
                     audioUrl = null
-                    com.android.purebilibili.core.util.Logger.d("BangumiPlayerVM", "📹 DURL: segments=${durlSegmentUrls.size}, first=${videoUrl?.take(60)}...")
+                    com.android.purebilibili.core.util.Logger.d("BangumiPlayerVM", "📹 DURL: segments=${durlSegmentUrls.size}, first=${videoUrl.take(60)}...")
                 } else {
                     com.android.purebilibili.core.util.Logger.e("BangumiPlayerVM", "❌ No dash or durl in response!")
                     _uiState.value = BangumiPlayerState.Error("无法获取播放地址：服务器未返回视频流")
@@ -354,7 +357,7 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                     follow = if (isFollowed) 1 else 0,
                     followStatus = if (isFollowed) {
                         followStatusValueCache[realSeasonId]
-                            ?: maxOf(detail.userStatus?.followStatus ?: 0, BANGUMI_FOLLOW_STATUS_WANT)
+                            ?: maxOf(detail.userStatus.followStatus, BANGUMI_FOLLOW_STATUS_WANT)
                     } else {
                         0
                     }

@@ -512,7 +512,7 @@ object DownloadManager {
             return@withContext
         }
 
-        val body = response.body ?: throw Exception("Empty response")
+        val body = response.body
         val totalResponseBytes = plan.totalBytes.takeIf { it > 0L } ?: run {
             val bodyBytes = body.contentLength()
             if (bodyBytes > 0L) bodyBytes + plan.initialDownloadedBytes else 0L
@@ -718,11 +718,11 @@ object DownloadManager {
             throw Exception("HTTP ${response.code}")
         }
         
-        response.body?.byteStream()?.use { input ->
+        response.body.byteStream().use { input ->
             FileOutputStream(file).use { output ->
                 input.copyTo(output)
             }
-        } ?: throw Exception("Empty response body")
+        }
     }
     
     private fun updateTask(
@@ -921,7 +921,7 @@ object DownloadManager {
                 .build()
             
             val response = client.newCall(request).execute()
-            val body = response.body ?: return@withContext false
+            val body = response.body
             val bytes = body.bytes()
             
             // 2. 插入 MediaStore

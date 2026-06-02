@@ -111,7 +111,7 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope  //  共享过渡
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.animation.DissolvableVideoCard  //  粒子消散动画
@@ -895,9 +895,9 @@ fun HomeScreen(
             insetsController.isAppearanceLightNavigationBars = isLightBackground
             //  确保状态栏可见且透明
             insetsController.show(androidx.core.view.WindowInsetsCompat.Type.statusBars())
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            com.android.purebilibili.core.ui.setWindowStatusBarColor(window, android.graphics.Color.TRANSPARENT)
             //  [修复] 导航栏也设为透明，确保底栏隐藏时手势区域沉浸
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            com.android.purebilibili.core.ui.setWindowNavigationBarColor(window, android.graphics.Color.TRANSPARENT)
         }
     }
 
@@ -1318,7 +1318,7 @@ fun HomeScreen(
                             .fillMaxSize()
                             .layerBackdrop(homeBackdrop)
                             // 首页使用 Pager + Lazy 子层，source 挂在外层容器更稳定。
-                            .hazeSource(state = hazeState)
+                            .hazeSourceCompat(state = hazeState)
                     ) {
                     HomeWallpaperBackdrop(
                         wallpaperUri = homeWallpaperUri,
@@ -2089,7 +2089,7 @@ fun HomeScreen(
     // ON_START: 非视频返回底栏立即恢复
     // ON_STOP: 清理定时器
     // 视频返回的顶栏/底栏恢复统一由导航返回态 LaunchedEffect 处理，避免依赖不稳定的页面生命周期。
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val currentBottomBarVisible by rememberUpdatedState(bottomBarVisible)
     DisposableEffect(lifecycleOwner, useSideNavigation) {
         if (useSideNavigation) {

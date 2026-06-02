@@ -79,8 +79,6 @@ import com.android.purebilibili.core.util.Logger
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -619,7 +617,7 @@ fun VideoPlayerOverlay(
     val fullscreenLockButtonState = remember(isScreenLocked) {
         resolveFullscreenLockButtonVisualState(isScreenLocked = isScreenLocked)
     }
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
     val configuration = LocalConfiguration.current
@@ -1230,7 +1228,7 @@ fun VideoPlayerOverlay(
                         val target = nextEpisodeTarget
                         when {
                             target?.nextPageIndex != null -> onPageSelect(target.nextPageIndex)
-                            !target?.nextBvid.isNullOrBlank() -> onDrawerVideoClick(target?.nextBvid ?: "", null)
+                            !target?.nextBvid.isNullOrBlank() -> onDrawerVideoClick(target.nextBvid, null)
                         }
                     },
                     hasNextEpisode = nextEpisodeTarget != null,
@@ -2308,16 +2306,10 @@ fun LandscapeEndDrawer(
                     val hasSeason = ugcSeason != null && ugcSeason.sections.isNotEmpty()
                     
                     if (hasSeason) {
-                        TabRow(
+                        PrimaryTabRow(
                             selectedTabIndex = selectedTab,
                             containerColor = Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            indicator = { tabPositions ->
-                                TabRowDefaults.Indicator(
-                                    Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         ) {
                             Tab(
                                 selected = selectedTab == 0,
@@ -2371,7 +2363,7 @@ fun LandscapeEndDrawer(
                                     )
                                 }
                             }
-                        } else if (hasSeason && ugcSeason != null) {
+                        } else if (hasSeason) {
                             // 合集列表
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),

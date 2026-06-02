@@ -107,7 +107,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 import com.android.purebilibili.core.ui.motion.AppMotionEasing
 import com.android.purebilibili.core.theme.AndroidNativeVariant
@@ -373,6 +373,22 @@ internal fun resolveSearchFilterControls(
         SearchType.ARTICLE,
         SearchType.TOPIC,
         SearchType.PHOTO -> emptyList()
+    }
+}
+
+internal fun resolveSearchResultLazyItemKey(
+    searchType: SearchType,
+    index: Int,
+    textKey: String = "",
+    numericKey: Long = 0L,
+    secondaryNumericKey: Long = 0L
+): String {
+    val normalizedTextKey = textKey.trim()
+    return when {
+        normalizedTextKey.isNotEmpty() -> "${searchType.value}:$index:text:$normalizedTextKey"
+        numericKey > 0L -> "${searchType.value}:$index:id:$numericKey"
+        secondaryNumericKey > 0L -> "${searchType.value}:$index:secondary:$secondaryNumericKey"
+        else -> "${searchType.value}:local:$index"
     }
 }
 
@@ -720,7 +736,7 @@ fun SearchScreen(
                                     verticalArrangement = Arrangement.spacedBy(searchLayoutPolicy.resultGridSpacingDp.dp),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                    .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                         ) {
                                     // ✨ Filter Bar inside Grid
                                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -744,7 +760,17 @@ fun SearchScreen(
                                         )
                                     }
                                 
-                                itemsIndexed(state.searchResults, key = { _, video -> video.bvid }) { index, video ->
+                                itemsIndexed(
+                                    state.searchResults,
+                                    key = { index, video ->
+                                        resolveSearchResultLazyItemKey(
+                                            searchType = SearchType.VIDEO,
+                                            index = index,
+                                            textKey = video.bvid,
+                                            numericKey = video.id
+                                        )
+                                    }
+                                ) { index, video ->
                                         ElegantVideoCard(
                                             video = video,
                                             index = index,
@@ -840,7 +866,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -863,7 +889,16 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.upResults, key = { _, upItem -> upItem.mid }) { index, upItem ->
+                                    itemsIndexed(
+                                        state.upResults,
+                                        key = { index, upItem ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.UP,
+                                                index = index,
+                                                numericKey = upItem.mid
+                                            )
+                                        }
+                                    ) { index, upItem ->
                                         UpSearchResultCard(
                                             upItem = upItem,
                                             appearance = genericResultCardAppearance,
@@ -928,7 +963,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -951,7 +986,17 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.bangumiResults, key = { _, bangumiItem -> bangumiItem.seasonId }) { index, bangumiItem ->
+                                    itemsIndexed(
+                                        state.bangumiResults,
+                                        key = { index, bangumiItem ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = state.searchType,
+                                                index = index,
+                                                numericKey = bangumiItem.seasonId,
+                                                secondaryNumericKey = bangumiItem.mediaId
+                                            )
+                                        }
+                                    ) { index, bangumiItem ->
                                         BangumiSearchResultCard(
                                             item = bangumiItem,
                                             appearance = genericResultCardAppearance,
@@ -993,7 +1038,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -1016,7 +1061,17 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.liveResults, key = { _, liveItem -> liveItem.roomid }) { index, liveItem ->
+                                    itemsIndexed(
+                                        state.liveResults,
+                                        key = { index, liveItem ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.LIVE,
+                                                index = index,
+                                                numericKey = liveItem.roomid,
+                                                secondaryNumericKey = liveItem.uid
+                                            )
+                                        }
+                                    ) { index, liveItem ->
                                         LiveSearchResultCard(
                                             item = liveItem,
                                             appearance = genericResultCardAppearance,
@@ -1079,7 +1134,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -1102,7 +1157,17 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.liveUserResults, key = { _, item -> item.uid }) { index, item ->
+                                    itemsIndexed(
+                                        state.liveUserResults,
+                                        key = { index, item ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.LIVE_USER,
+                                                index = index,
+                                                numericKey = item.uid,
+                                                secondaryNumericKey = item.roomid
+                                            )
+                                        }
+                                    ) { index, item ->
                                         LiveUserSearchResultCard(
                                             item = item,
                                             appearance = genericResultCardAppearance,
@@ -1139,7 +1204,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -1162,7 +1227,16 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.articleResults, key = { _, articleItem -> articleItem.id }) { index, articleItem ->
+                                    itemsIndexed(
+                                        state.articleResults,
+                                        key = { index, articleItem ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.ARTICLE,
+                                                index = index,
+                                                numericKey = articleItem.id
+                                            )
+                                        }
+                                    ) { index, articleItem ->
                                         ArticleSearchResultCard(
                                             item = articleItem,
                                             appearance = genericResultCardAppearance,
@@ -1224,7 +1298,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -1247,7 +1321,16 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.topicResults, key = { _, item -> item.topicId }) { index, item ->
+                                    itemsIndexed(
+                                        state.topicResults,
+                                        key = { index, item ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.TOPIC,
+                                                index = index,
+                                                numericKey = item.topicId
+                                            )
+                                        }
+                                    ) { index, item ->
                                         TopicSearchResultCard(
                                             item = item,
                                             appearance = genericResultCardAppearance,
@@ -1274,7 +1357,7 @@ fun SearchScreen(
                                     state = resultListState,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .then(if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier)
+                                        .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     item {
                                         SearchFilterBar(
@@ -1297,7 +1380,17 @@ fun SearchScreen(
                                         )
                                     }
 
-                                    itemsIndexed(state.photoResults, key = { _, item -> item.id }) { index, item ->
+                                    itemsIndexed(
+                                        state.photoResults,
+                                        key = { index, item ->
+                                            resolveSearchResultLazyItemKey(
+                                                searchType = SearchType.PHOTO,
+                                                index = index,
+                                                numericKey = item.id,
+                                                secondaryNumericKey = item.mid
+                                            )
+                                        }
+                                    ) { index, item ->
                                         PhotoSearchResultCard(
                                             item = item,
                                             appearance = genericResultCardAppearance
@@ -1356,7 +1449,7 @@ fun SearchScreen(
                     onClearHistory = viewModel::clearHistory,
                     onDeleteHistory = viewModel::deleteHistory,
                     modifier = Modifier.then(
-                        if (searchHazeEnabled) Modifier.hazeSource(state = hazeState) else Modifier
+                        if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier
                     )
                 )
             }

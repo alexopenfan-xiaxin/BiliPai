@@ -385,8 +385,12 @@ class TopTabStylePolicyTest {
             isDarkTheme = false,
             selectionFraction = 1f
         )
+        val bottomIndicatorColor = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = false)
 
-        assertEquals(Color(0xFFF2F2F7), capsuleColor)
+        assertEquals(bottomIndicatorColor.red, capsuleColor.red, 0.001f)
+        assertEquals(bottomIndicatorColor.green, capsuleColor.green, 0.001f)
+        assertEquals(bottomIndicatorColor.blue, capsuleColor.blue, 0.001f)
+        assertEquals(0.28f, capsuleColor.alpha, 0.002f)
         assertEquals(
             colorScheme.primary,
             resolveIosTopTabSelectedContentColor(colorScheme)

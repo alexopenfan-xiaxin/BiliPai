@@ -147,7 +147,7 @@ class iOSHomeHeaderVisualPolicyTest {
     }
 
     @Test
-    fun `search content export layer only runs for stable liquid glass`() {
+    fun `search content export layer stays disabled to avoid duplicate search capsule`() {
         val scrolling = resolveHomeTopSearchRefractionLayerPolicy(
             renderMode = HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
             hasBackdrop = true,
@@ -182,11 +182,11 @@ class iOSHomeHeaderVisualPolicyTest {
         assertEquals(0f, scrolling.overlayAlpha, 0.0001f)
         assertEquals(1f, scrolling.visibleContentAlpha, 0.0001f)
         assertEquals(0f, scrolling.exportTranslationMultiplier, 0.0001f)
-        assertTrue(stable.captureContentLayer)
-        assertTrue(stable.useExportedBackdrop)
-        assertEquals(1f, stable.overlayAlpha, 0.0001f)
+        assertFalse(stable.captureContentLayer)
+        assertFalse(stable.useExportedBackdrop)
+        assertEquals(0f, stable.overlayAlpha, 0.0001f)
         assertEquals(1f, stable.visibleContentAlpha, 0.0001f)
-        assertEquals(1f, stable.exportTranslationMultiplier, 0.0001f)
+        assertEquals(0f, stable.exportTranslationMultiplier, 0.0001f)
         assertFalse(collapsing.captureContentLayer)
         assertFalse(collapsing.useExportedBackdrop)
         assertEquals(0f, collapsing.overlayAlpha, 0.0001f)
@@ -1158,6 +1158,26 @@ class iOSHomeHeaderVisualPolicyTest {
     }
 
     @Test
+    fun `top search legacy highlight is disabled for liquid glass refraction`() {
+        assertFalse(
+            shouldDrawHomeTopSearchLegacyHighlight(
+                uiPreset = UiPreset.IOS,
+                useUnifiedTopPanel = false,
+                renderMode = HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
+                refractionOverlayAlpha = 1f
+            )
+        )
+        assertTrue(
+            shouldDrawHomeTopSearchLegacyHighlight(
+                uiPreset = UiPreset.IOS,
+                useUnifiedTopPanel = false,
+                renderMode = HomeTopChromeRenderMode.BLUR,
+                refractionOverlayAlpha = 0f
+            )
+        )
+    }
+
+    @Test
     fun `plain top edge controls keep a contrasting visible container`() {
         val darkPlain = resolveHomeTopEdgeControlContainerColor(
             isLightMode = false,
@@ -1609,10 +1629,14 @@ class iOSHomeHeaderVisualPolicyTest {
             selectionFraction = 1f
         )
 
+        val bottomIndicatorColor = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = true)
+
         assertTrue(lightDock.luminance() > 0.8f)
         assertTrue(darkDock.luminance() < 0.1f)
-        assertTrue(darkSelectedCapsule.luminance() > 0.8f)
-        assertTrue(darkSelectedCapsule.alpha > 0.85f)
+        assertEquals(bottomIndicatorColor.red, darkSelectedCapsule.red, 0.001f)
+        assertEquals(bottomIndicatorColor.green, darkSelectedCapsule.green, 0.001f)
+        assertEquals(bottomIndicatorColor.blue, darkSelectedCapsule.blue, 0.001f)
+        assertEquals(0.28f, darkSelectedCapsule.alpha, 0.002f)
     }
 
     @Test
@@ -1722,6 +1746,9 @@ class iOSHomeHeaderVisualPolicyTest {
 
         assertTrue(searchCapsuleSource.contains("val skinSearchSurfaceColor = resolveHomeSkinSearchSurfaceColor("))
         assertTrue(searchCapsuleSource.contains("surfaceColor = skinSearchSurfaceColor"))
+        assertTrue(searchCapsuleSource.contains("KernelSuBottomBarIndicatorLayer("))
+        assertTrue(searchCapsuleSource.contains("drawShellLens = false"))
+        assertFalse(searchCapsuleSource.contains("SimpleLiquidIndicator("))
         assertFalse(searchCapsuleSource.contains(".matchParentSize()\n                                                .background("))
         assertFalse(searchCapsuleSource.contains("uiSkinDecoration.searchCapsuleTint.copy(alpha = 0.22f)"))
     }

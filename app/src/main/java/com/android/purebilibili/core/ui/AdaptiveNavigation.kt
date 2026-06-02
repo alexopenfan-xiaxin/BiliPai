@@ -19,7 +19,7 @@ import com.android.purebilibili.core.ui.blur.shouldAllowRuntimeShaderBackedHazeE
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.WindowWidthSizeClass
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 
@@ -128,7 +128,7 @@ fun AdaptiveSideNavigationRail(
             .width(if (isExpanded) 80.dp else 72.dp)
             .then(
                 if (activeHazeState != null) {
-                    Modifier.hazeChild(
+                    Modifier.hazeEffect(
                         state = activeHazeState,
                         style = HazeMaterials.ultraThin()
                     )
@@ -194,7 +194,7 @@ private fun AdaptiveBottomNavigationBar(
             .fillMaxWidth()
             .then(
                 if (activeHazeState != null) {
-                    Modifier.hazeChild(
+                    Modifier.hazeEffect(
                         state = activeHazeState,
                         style = HazeMaterials.ultraThin()
                     )

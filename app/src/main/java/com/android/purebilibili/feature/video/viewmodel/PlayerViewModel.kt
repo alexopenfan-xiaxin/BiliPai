@@ -2465,8 +2465,8 @@ class PlayerViewModel : ViewModel() {
             }
             
             //  确保音量正常
-            player?.volume = 1.0f
-            if (player?.isPlaying == false) {
+            player.volume = 1.0f
+            if (!player.isPlaying) {
                 player.play()
             }
             return
@@ -4425,11 +4425,11 @@ class PlayerViewModel : ViewModel() {
                                 current.copy(bgmInfo = data.bgmInfo)
                             } else current
                         }
-                        Logger.d("PlayerVM", "🎵 Loaded BGM: ${data.bgmInfo?.musicTitle}")
+                        Logger.d("PlayerVM", "🎵 Loaded BGM: ${data.bgmInfo.musicTitle}")
                     }
 
                     // 2b. gRPC BGM list (multi-song support)
-                    val grpcAid = currentState?.info?.aid ?: 0L
+                    val grpcAid = currentState.info.aid
                     if (grpcAid > 0) {
                         ViewGrpcRepository.getBgmList(grpcAid, bvid, cid).onSuccess { bgmList ->
                             Logger.w("PlayerVM", "gRPC BGM result: ${bgmList.size} entries for aid=$grpcAid")
@@ -4951,7 +4951,7 @@ class PlayerViewModel : ViewModel() {
         val edgeStartMs = resolveInteractiveEdgeStartPositionMs(data, resolvedEdgeId)
         val triggerOffsetMs = question.startTimeR.toLong().coerceAtLeast(0L)
         val absoluteTriggerMs = resolveInteractiveQuestionTriggerMs(edgeStartMs, triggerOffsetMs)
-        val dimension = data.edges?.dimension
+        val dimension = data.edges.dimension
 
         scheduleInteractiveQuestion(
             edgeId = resolvedEdgeId,

@@ -41,14 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.purebilibili.core.ui.IOSModalBottomSheet
+import com.android.purebilibili.core.ui.common.copyPlainTextToClipboard
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +58,6 @@ internal fun VideoShareSheet(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     val shareScope = rememberCoroutineScope()
     var sharingTarget by remember { mutableStateOf<VideoShareTarget?>(null) }
     val neutralIconBackground = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -134,7 +132,7 @@ internal fun VideoShareSheet(
                                     val packageName = item.target.packageName ?: return@VideoShareSheetItemView
                                     if (sharingTarget != null) return@VideoShareSheetItemView
                                     sharingTarget = item.target
-                                    clipboardManager.setText(AnnotatedString(payload.url))
+                                    copyPlainTextToClipboard(context, payload.url, "视频链接")
                                     Toast.makeText(context, "链接已复制，正在准备视频封面", Toast.LENGTH_SHORT).show()
                                     shareScope.launch {
                                         val coverFile = prepareVideoShareCoverFile(context, payload)
@@ -156,14 +154,14 @@ internal fun VideoShareSheet(
                                     }
                                 }
                                 VideoShareTarget.COPY_LINK -> {
-                                    clipboardManager.setText(AnnotatedString(payload.url))
+                                    copyPlainTextToClipboard(context, payload.url, "视频链接")
                                     Toast.makeText(context, "已复制链接", Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 }
                                 VideoShareTarget.MORE -> {
                                     if (sharingTarget != null) return@VideoShareSheetItemView
                                     sharingTarget = item.target
-                                    clipboardManager.setText(AnnotatedString(payload.url))
+                                    copyPlainTextToClipboard(context, payload.url, "视频链接")
                                     Toast.makeText(context, "链接已复制，正在准备视频封面", Toast.LENGTH_SHORT).show()
                                     shareScope.launch {
                                         val coverFile = prepareVideoShareCoverFile(context, payload)

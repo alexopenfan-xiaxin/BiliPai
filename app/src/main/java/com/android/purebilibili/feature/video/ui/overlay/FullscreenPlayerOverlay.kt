@@ -89,7 +89,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 
 private const val AUTO_HIDE_DELAY = 4000L
 private const val VISIBLE_TOP_CONTROLS_GESTURE_EXCLUSION_HEIGHT_DP = 96
@@ -166,7 +166,7 @@ fun FullscreenPlayerOverlay(
     val context = LocalContext.current
     val density = LocalDensity.current
     val player = miniPlayerManager.player
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
     
@@ -482,7 +482,7 @@ fun FullscreenPlayerOverlay(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .hazeSource(overlayHazeState)
+            .hazeSourceCompat(overlayHazeState)
             .pointerInput(
                 gesturesEnabled,
                 doubleTapSeekEnabled,
@@ -742,7 +742,7 @@ fun FullscreenPlayerOverlay(
         
         //  [修复] 使用 LifecycleOwner 监听真正的 Activity 生命周期
         // DisposableEffect(Unit) 会在重组时触发，导致 player 引用被清除
-        val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         DisposableEffect(lifecycleOwner) {
             val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
                 if (event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY) {

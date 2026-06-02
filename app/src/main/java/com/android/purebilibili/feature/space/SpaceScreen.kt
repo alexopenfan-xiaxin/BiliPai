@@ -134,7 +134,7 @@ import com.android.purebilibili.feature.dynamic.components.RepostDialog
 import com.android.purebilibili.feature.home.components.BottomBarLiquidSegmentedControl
 import com.android.purebilibili.feature.list.VideoProgressDisplayState
 import com.android.purebilibili.feature.video.controller.PlaybackProgressManager
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -332,7 +332,7 @@ fun SpaceScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .hazeSource(state = hazeState)
+                    .hazeSourceCompat(state = hazeState)
             ) {
                 when (val state = uiState) {
                     SpaceUiState.Loading -> {

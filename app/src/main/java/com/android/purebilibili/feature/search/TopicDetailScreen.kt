@@ -194,6 +194,9 @@ private fun TopicDetailTopBar(
 private fun TopicHeaderCard(details: TopicTopDetails?) {
     val topic = details?.topicItem
     val creator = details?.topicCreator
+    val topicDescription = topic?.description
+    val creatorName = creator?.name
+    val creatorFace = creator?.face
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -228,10 +231,10 @@ private fun TopicHeaderCard(details: TopicTopDetails?) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!topic?.description.isNullOrBlank()) {
+                if (!topicDescription.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = topic?.description.orEmpty(),
+                        text = topicDescription,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -243,21 +246,21 @@ private fun TopicHeaderCard(details: TopicTopDetails?) {
                     text = buildString {
                         append("浏览 ${FormatUtils.formatStat(topic?.view ?: 0)}")
                         append(" · 动态 ${FormatUtils.formatStat(topic?.dynamics ?: 0)}")
-                        if (!creator?.name.isNullOrBlank()) {
-                            append(" · ${creator?.name}")
+                        if (!creatorName.isNullOrBlank()) {
+                            append(" · $creatorName")
                         }
                     },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
                 )
             }
-            if (!creator?.face.isNullOrBlank()) {
+            if (!creatorFace.isNullOrBlank()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(normalizeSearchImageUrl(creator?.face.orEmpty()))
+                        .data(normalizeSearchImageUrl(creatorFace))
                         .crossfade(true)
                         .build(),
-                    contentDescription = creator?.name,
+                    contentDescription = creatorName,
                     modifier = Modifier
                         .size(34.dp)
                         .clip(CircleShape)

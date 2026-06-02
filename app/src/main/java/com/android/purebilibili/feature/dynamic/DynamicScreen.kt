@@ -86,7 +86,7 @@ import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
 import io.github.alexzhirkevich.cupertino.icons.filled.*
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 import com.android.purebilibili.core.ui.blur.BlurStyles
 import com.android.purebilibili.core.ui.blur.currentUnifiedBlurIntensity
@@ -597,7 +597,7 @@ fun DynamicScreen(
                                             modifier = Modifier
                                                 .then(dynamicTabSwipeModifier)
                                                 .layerBackdrop(dynamicChromeBackdrop)
-                                                .hazeSource(hazeState) // 本地 hazeSource - 顶栏使用（全局源由根层提供）
+                                                .hazeSourceCompat(hazeState) // 本地 hazeSource - 顶栏使用（全局源由根层提供）
                                         )
                                     }
 
@@ -694,7 +694,7 @@ fun DynamicScreen(
                                          modifier = Modifier
                                              .then(dynamicTabSwipeModifier)
                                              .layerBackdrop(dynamicChromeBackdrop)
-                                             .hazeSource(hazeState) // 本地 hazeSource - 顶栏使用（全局源由根层提供）
+                                             .hazeSourceCompat(hazeState) // 本地 hazeSource - 顶栏使用（全局源由根层提供）
                                      )
                                  }
 

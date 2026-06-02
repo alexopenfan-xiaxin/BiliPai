@@ -77,7 +77,7 @@ object SsdpCastClient {
                     Logger.w(TAG, "📺 [SSDP] Fetch device description failed: ${response.code}")
                     return null
                 }
-                val descriptionXml = response.body?.string().orEmpty()
+                val descriptionXml = response.body.string()
                 return parseDeviceProfile(descriptionXml, descriptionLocation)
             }
         }.getOrElse { error ->
@@ -205,7 +205,7 @@ object SsdpCastClient {
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                val payload = response.body?.string().orEmpty().take(180)
+                val payload = response.body.string().take(180)
                 error("SOAP $action failed (${response.code}): $payload")
             }
         }

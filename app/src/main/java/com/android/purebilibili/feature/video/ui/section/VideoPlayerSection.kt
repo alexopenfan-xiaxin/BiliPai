@@ -160,7 +160,7 @@ import com.android.purebilibili.feature.video.playback.session.startPlaybackSeek
 import com.android.purebilibili.feature.video.playback.session.syncPlaybackSeekSession
 import com.android.purebilibili.feature.video.playback.session.updatePlaybackSeekInteraction
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
+import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -1136,7 +1136,7 @@ fun VideoPlayerSection(
         .fillMaxSize()
         .clipToBounds()
         .background(Color.Black)
-        .hazeSource(overlayDrawerHazeState)
+        .hazeSourceCompat(overlayDrawerHazeState)
 
     // 应用共享元素
     val livePlayerSharedElementEnabled = shouldEnableLivePlayerSharedElement(

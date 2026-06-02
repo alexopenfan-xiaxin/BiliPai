@@ -2,6 +2,7 @@ package com.android.purebilibili.navigation
 
 import com.android.purebilibili.core.util.BilibiliNavigationTarget
 import com.android.purebilibili.core.util.BilibiliNavigationTargetParser
+import com.android.purebilibili.core.util.decodeUrlComponentCompat
 
 internal sealed interface MessageLinkNavigationAction {
     data class Video(val videoId: String) : MessageLinkNavigationAction
@@ -88,8 +89,8 @@ private fun resolveMessageCommentNavigationAction(rawLink: String): MessageLinkN
         ?.mapNotNull { part ->
             if (part.isBlank()) return@mapNotNull null
             val pair = part.split("=", limit = 2)
-            val key = java.net.URLDecoder.decode(pair[0], java.nio.charset.StandardCharsets.UTF_8)
-            val value = java.net.URLDecoder.decode(pair.getOrElse(1) { "" }, java.nio.charset.StandardCharsets.UTF_8)
+            val key = decodeUrlComponentCompat(pair[0])
+            val value = decodeUrlComponentCompat(pair.getOrElse(1) { "" })
             key to value
         }
         ?.toMap()
@@ -157,8 +158,8 @@ private fun decodeQueryMap(rawQuery: String?): Map<String, String> {
         ?.mapNotNull { part ->
             if (part.isBlank()) return@mapNotNull null
             val pair = part.split("=", limit = 2)
-            val key = java.net.URLDecoder.decode(pair[0], java.nio.charset.StandardCharsets.UTF_8)
-            val value = java.net.URLDecoder.decode(pair.getOrElse(1) { "" }, java.nio.charset.StandardCharsets.UTF_8)
+            val key = decodeUrlComponentCompat(pair[0])
+            val value = decodeUrlComponentCompat(pair.getOrElse(1) { "" })
             key to value
         }
         ?.toMap()

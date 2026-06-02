@@ -1746,7 +1746,7 @@ object VideoRepository {
                         IllegalStateException("字幕请求失败: HTTP ${call.code}")
                     )
                 }
-                val rawJson = call.body?.string().orEmpty()
+                val rawJson = call.body.string()
                 val cues = parseBiliSubtitleBody(rawJson)
                 if (subtitleCueCache.size >= SUBTITLE_CUE_CACHE_MAX_ENTRIES) {
                     subtitleCueCache.clear()

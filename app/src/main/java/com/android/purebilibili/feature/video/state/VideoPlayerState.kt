@@ -968,7 +968,7 @@ fun rememberVideoPlayerState(
     var hasTransientResumeIntent by remember { mutableStateOf(false) }
     var hasForegroundResumeIntent by remember { mutableStateOf(false) }
     
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, player) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             val miniPlayerManager = MiniPlayerManager.getInstance(context)

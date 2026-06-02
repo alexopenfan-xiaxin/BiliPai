@@ -70,7 +70,7 @@ fun MiniPlayerOverlay(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val clearIcon = rememberAppClearIcon()
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
     

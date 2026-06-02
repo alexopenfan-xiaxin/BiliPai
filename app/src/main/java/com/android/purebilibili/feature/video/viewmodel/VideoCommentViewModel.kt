@@ -879,7 +879,7 @@ class VideoCommentViewModel : ViewModel() {
             val isSubReplyContext = subReplyState.visible && subReplyState.rootReply != null
             
             val root = if (isSubReplyContext) {
-                subReplyState.rootReply!!.rpid
+                subReplyState.rootReply.rpid
             } else {
                 replyTarget?.rpid ?: 0
             }

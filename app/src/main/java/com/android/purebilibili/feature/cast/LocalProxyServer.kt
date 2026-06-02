@@ -2,8 +2,6 @@ package com.android.purebilibili.feature.cast
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.wifi.WifiManager
-import android.text.format.Formatter
 import com.android.purebilibili.core.util.Logger
 import fi.iki.elonen.NanoHTTPD
 import okhttp3.OkHttpClient
@@ -62,7 +60,7 @@ class LocalProxyServer(port: Int = 8901) : NanoHTTPD(port) {
     }
 
     private fun serveProxy(session: IHTTPSession): NanoHTTPD.Response {
-        val params = session.parms
+        val params = session.parameters.mapValues { (_, values) -> values.firstOrNull().orEmpty() }
         val targetUrl = params["url"]
 
         if (targetUrl.isNullOrEmpty()) {
@@ -93,7 +91,7 @@ class LocalProxyServer(port: Int = 8901) : NanoHTTPD(port) {
             val upstreamResponse = client.newCall(upstreamRequest).execute()
 
             if (!upstreamResponse.isSuccessful) {
-                val body = upstreamResponse.body?.string().orEmpty()
+                val body = upstreamResponse.body.string()
                 upstreamResponse.close()
                 return newFixedLengthResponse(
                     mapToNanoStatus(upstreamResponse.code),
@@ -103,10 +101,6 @@ class LocalProxyServer(port: Int = 8901) : NanoHTTPD(port) {
             }
 
             val body = upstreamResponse.body
-            if (body == null) {
-                upstreamResponse.close()
-                return newFixedLengthResponse(Response.Status.NO_CONTENT, MIME_PLAINTEXT, "")
-            }
             val inputStream = UpstreamRelayInputStream(upstreamResponse, body.byteStream())
             val contentType = upstreamResponse.header("Content-Type") ?: "video/mp4"
             val contentLength = body.contentLength()
@@ -204,12 +198,6 @@ class LocalProxyServer(port: Int = 8901) : NanoHTTPD(port) {
                 .orEmpty()
             pickBestIpv4Address(linkAddresses)?.let { return it }
 
-            val wifiManager =
-                context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val fallbackIp = Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
-            if (!fallbackIp.isNullOrBlank() && fallbackIp != "0.0.0.0") {
-                return fallbackIp
-            }
             return "127.0.0.1"
         }
 
