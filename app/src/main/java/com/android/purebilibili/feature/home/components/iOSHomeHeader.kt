@@ -574,6 +574,14 @@ internal fun shouldUseUnifiedHomeTopPanel(uiPreset: UiPreset = UiPreset.IOS): Bo
     ).useUnifiedPanel
 }
 
+internal fun shouldUseDetachedHomeTopTabDock(
+    uiPreset: UiPreset = UiPreset.IOS,
+    androidNativeVariant: AndroidNativeVariant = AndroidNativeVariant.MATERIAL3
+): Boolean {
+    return uiPreset == UiPreset.IOS ||
+        (uiPreset == UiPreset.MD3 && androidNativeVariant == AndroidNativeVariant.MIUIX)
+}
+
 internal fun resolveHomeTopUnifiedPanelHorizontalPadding(uiPreset: UiPreset = UiPreset.IOS): Dp {
     return resolveHomeTopPresetStyle(
         uiPreset = uiPreset,
@@ -1773,6 +1781,8 @@ fun iOSHomeHeader(
         isTransitionRunning = isTransitionRunning
     )
     val useUnifiedTopPanel = shouldUseUnifiedHomeTopPanel(uiPreset)
+    val useDetachedTopTabDock = shouldUseDetachedHomeTopTabDock(uiPreset, androidNativeVariant)
+    val embedTopTabsInUnifiedPanel = useUnifiedTopPanel && !useDetachedTopTabDock
     val topPanelChromeRenderMode = resolveHomeTopPanelChromeRenderMode(
         renderMode = topChromeRenderMode,
         uiPreset = uiPreset,
@@ -1968,7 +1978,7 @@ fun iOSHomeHeader(
     } else {
         topPanelChromeRenderMode
     }
-    val useUnifiedLiquidChrome = useUnifiedTopPanel &&
+    val useUnifiedLiquidChrome = embedTopTabsInUnifiedPanel &&
         (
             effectiveTopPanelChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
                 effectiveTopPanelChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
@@ -1988,7 +1998,9 @@ fun iOSHomeHeader(
     } else {
         localTabChromeRenderMode
     }
-    val effectiveTabSurfaceColor = if (useUnifiedTopPanel) {
+    val effectiveTabSurfaceColor = if (useDetachedTopTabDock) {
+        tabChromeColors.containerColor.copy(alpha = tabOverlayAlpha)
+    } else if (useUnifiedTopPanel) {
         resolveHomeTopUnifiedTabSurfaceColor(
             tabContainerColor = tabChromeColors.containerColor,
             tabOverlayAlpha = tabOverlayAlpha,
@@ -2003,7 +2015,7 @@ fun iOSHomeHeader(
     val skinTintedTabSurfaceColor = uiSkinDecoration?.topAtmosphereTint?.copy(
         alpha = effectiveTabSurfaceColor.alpha.coerceAtLeast(0.36f)
     ) ?: effectiveTabSurfaceColor
-    val renderUnifiedTopPanelChrome = shouldRenderHomeTopUnifiedPanelChrome(
+    val renderUnifiedTopPanelChrome = embedTopTabsInUnifiedPanel && shouldRenderHomeTopUnifiedPanelChrome(
         searchHeightDp = currentSearchHeight.value,
         tabHeightDp = currentTabHeight.value,
         integratedCollapsedTopBar = integratedCollapsedTopBar
@@ -2024,7 +2036,7 @@ fun iOSHomeHeader(
                 topTabDockChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
                     topTabDockChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
             )
-    val drawTopTabDockChrome = drawTopTabOuterChromeSurface || useTopTabBottomBarMatchedDock
+    val drawTopTabDockChrome = drawTopTabOuterChromeSurface || useTopTabBottomBarMatchedDock || useDetachedTopTabDock
     val currentTabToSearchSpacing = currentSearchToTabsSpacing + if (drawTopSearchDivider) {
         1.dp + currentUnifiedDividerBottomSpacing
     } else {
@@ -2052,15 +2064,15 @@ fun iOSHomeHeader(
             tabAlpha = tabAlpha,
             tabContentAlpha = tabContentAlpha,
             containerZIndex = if (useUnifiedTopPanel) 0f else -1f,
-            tabHorizontalPadding = if (useUnifiedTopPanel) {
+            tabHorizontalPadding = if (embedTopTabsInUnifiedPanel) {
                 resolveHomeTopEmbeddedTabHorizontalPadding(uiPreset)
             } else {
                 tabHorizontalPadding
             },
-            tabVerticalPadding = if (useUnifiedTopPanel) 0.dp else tabVerticalPadding,
-            tabVerticalOffset = if (useUnifiedTopPanel) 0.dp else tabVerticalOffset,
-            isTabFloating = if (useUnifiedTopPanel) false else isTabFloating,
-            effectiveTabShadowElevation = if (useUnifiedTopPanel) 0.dp else effectiveTabShadowElevation,
+            tabVerticalPadding = if (embedTopTabsInUnifiedPanel) 0.dp else tabVerticalPadding,
+            tabVerticalOffset = if (embedTopTabsInUnifiedPanel) 0.dp else tabVerticalOffset,
+            isTabFloating = if (embedTopTabsInUnifiedPanel) false else isTabFloating,
+            effectiveTabShadowElevation = if (embedTopTabsInUnifiedPanel) 0.dp else effectiveTabShadowElevation,
             tabShape = if (useUnifiedTopPanel) {
                 resolveSharedBottomBarCapsuleShape()
             } else {
@@ -2081,13 +2093,13 @@ fun iOSHomeHeader(
             isScrolling = tabChromeMotionPolicy.isScrolling,
             isTransitionRunning = tabChromeMotionPolicy.isTransitionRunning,
             forceLowBlurBudget = forceLowBlurBudget,
-            preferFlatGlass = !useUnifiedTopPanel,
-            tabBorderAlpha = if (useUnifiedTopPanel) {
+            preferFlatGlass = !embedTopTabsInUnifiedPanel,
+            tabBorderAlpha = if (embedTopTabsInUnifiedPanel) {
                 0f
             } else {
                 tabBorderAlpha
             },
-            tabHighlightColor = if (useUnifiedTopPanel) {
+            tabHighlightColor = if (embedTopTabsInUnifiedPanel) {
                 Color.Transparent
             } else {
                 resolveHomeTopChromeHighlightOverlayColor(
@@ -2096,7 +2108,7 @@ fun iOSHomeHeader(
                     softenWideChrome = true
                 )
             },
-            tabContentUnderlayColor = if (useUnifiedTopPanel) {
+            tabContentUnderlayColor = if (embedTopTabsInUnifiedPanel) {
                 Color.Transparent
             } else {
                 resolveHomeTopInnerUnderlayColor(
@@ -2208,7 +2220,7 @@ fun iOSHomeHeader(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(
-                        if (useUnifiedTopPanel) {
+                        if (embedTopTabsInUnifiedPanel) {
                             Modifier
                                 .padding(horizontal = unifiedPanelHorizontalPadding)
                                 .clip(unifiedPanelShape)
@@ -2295,7 +2307,7 @@ fun iOSHomeHeader(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(
-                            if (useUnifiedTopPanel) {
+                            if (embedTopTabsInUnifiedPanel) {
                                 Modifier.padding(
                                     horizontal = if (integratedCollapsedTopBar) 0.dp else unifiedPanelInnerPadding,
                                     vertical = if (renderUnifiedTopPanelChrome) {
@@ -2341,7 +2353,7 @@ fun iOSHomeHeader(
 	                                .fillMaxWidth()
 	                                .height(searchBarHeightDp)
 	                                .padding(
-	                                    horizontal = if (useUnifiedTopPanel) {
+	                                    horizontal = if (embedTopTabsInUnifiedPanel) {
 	                                        0.dp
 	                                    } else {
 	                                        resolveHomeTopSearchRowHorizontalPadding(uiPreset, androidNativeVariant)

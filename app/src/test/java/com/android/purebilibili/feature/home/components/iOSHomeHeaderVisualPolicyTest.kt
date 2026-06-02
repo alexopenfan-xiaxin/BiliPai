@@ -555,9 +555,22 @@ class iOSHomeHeaderVisualPolicyTest {
     }
 
     @Test
-    fun `home header uses unified panel with embedded tabs for ios and md3`() {
+    fun `home header keeps ios and miuix tabs in detached dock`() {
         assertTrue(shouldUseUnifiedHomeTopPanel(UiPreset.IOS))
         assertTrue(shouldUseUnifiedHomeTopPanel(UiPreset.MD3))
+        assertTrue(shouldUseDetachedHomeTopTabDock(UiPreset.IOS))
+        assertFalse(
+            shouldUseDetachedHomeTopTabDock(
+                UiPreset.MD3,
+                AndroidNativeVariant.MATERIAL3
+            )
+        )
+        assertTrue(
+            shouldUseDetachedHomeTopTabDock(
+                UiPreset.MD3,
+                AndroidNativeVariant.MIUIX
+            )
+        )
         assertFalse(shouldShowUnifiedHomeTopPanelDivider(UiPreset.IOS))
         assertTrue(
             shouldShowUnifiedHomeTopPanelDivider(
