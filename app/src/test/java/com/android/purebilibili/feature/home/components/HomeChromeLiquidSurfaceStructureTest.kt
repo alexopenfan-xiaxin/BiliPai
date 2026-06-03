@@ -58,7 +58,7 @@ class HomeChromeLiquidSurfaceStructureTest {
             topHeaderMatchedSurfaceCalls > 0
         )
         assertTrue(
-            "search and edge controls should still disable the full-shell lens while the top tab dock may use the bottom-bar shell lens",
+            "edge controls should still be able to disable the full-shell lens while search and top tab dock may use the bottom-bar shell lens",
             topHeaderDisabledShellLensCalls >= topHeaderMatchedSurfaceCalls - 1
         )
         assertTrue(

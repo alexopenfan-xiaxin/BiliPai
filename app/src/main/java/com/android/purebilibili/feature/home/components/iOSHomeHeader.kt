@@ -35,13 +35,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance  //  状态栏亮度计算
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalDensity
 import com.kyant.backdrop.backdrops.LayerBackdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -101,16 +98,6 @@ private const val HOME_HEADER_LIQUID_GLASS_ALPHA = 0.10f
 internal data class HomeTopChromeMotionPolicy(
     val isScrolling: Boolean,
     val isTransitionRunning: Boolean
-)
-
-internal data class HomeTopSearchRefractionLayerPolicy(
-    val captureContentLayer: Boolean,
-    val useExportedBackdrop: Boolean,
-    val overlayAlpha: Float,
-    val visibleContentAlpha: Float,
-    val exportTranslationMultiplier: Float,
-    val drawShellLens: Boolean,
-    val materialScrollProgress: Float
 )
 
 internal data class HomeTopLinkedBottomBarAppearance(
@@ -280,37 +267,6 @@ internal fun resolveHomeTopChromeRenderMode(
             else -> HomeTopChromeRenderMode.PLAIN
         }
     }
-}
-
-internal fun resolveHomeTopSearchRefractionLayerPolicy(
-    renderMode: HomeTopChromeRenderMode,
-    hasBackdrop: Boolean,
-    searchRevealFraction: Float,
-    isScrolling: Boolean,
-    isTransitionRunning: Boolean
-): HomeTopSearchRefractionLayerPolicy {
-    val isLiquidGlassMode = renderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
-        renderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-    val normalizedRevealFraction = searchRevealFraction.coerceIn(0f, 1f)
-    val isSearchSliding = normalizedRevealFraction > 0f && normalizedRevealFraction < 1f
-    val applySlidingLens = isLiquidGlassMode &&
-        hasBackdrop &&
-        (isSearchSliding || isScrolling || isTransitionRunning)
-    val materialScrollProgress = when {
-        isSearchSliding -> (1f - normalizedRevealFraction).coerceIn(0f, 1f)
-        applySlidingLens -> 1f
-        else -> 0f
-    }
-    return HomeTopSearchRefractionLayerPolicy(
-        // 搜索胶囊静止时保持单层；上下滑动时只打开 surface 镜片，避免常驻双重高光。
-        captureContentLayer = false,
-        useExportedBackdrop = false,
-        overlayAlpha = 0f,
-        visibleContentAlpha = 1f,
-        exportTranslationMultiplier = 0f,
-        drawShellLens = applySlidingLens,
-        materialScrollProgress = materialScrollProgress
-    )
 }
 
 internal fun shouldDrawHomeTopSearchLegacyHighlight(
@@ -1884,22 +1840,10 @@ fun iOSHomeHeader(
         useUnifiedPanel = useUnifiedTopPanel,
         androidNativeVariant = androidNativeVariant
     )
-    //  [Search Chrome Render] 搜索胶囊渲染策略 — 对照顶部 dock 栏区域
-    //  原有路径：
-    //    LIQUID_GLASS → useBottomBarMatchedTopControls → homeTopBottomBarMatchedSurface
-    //    → kernelSuFloatingDockSurface → drawBackdrop（静态截图，不实时）
-    //  改为始终通过 homeTopChromeSurface（与顶栏其他元素一致）：
-    //    LIQUID_GLASS + hazeState → LIQUID_GLASS_HAZE → hazeEffect（实时捕获）
-    //    LIQUID_GLASS + !hazeState → LIQUID_GLASS_BACKDROP → drawBackdrop（兼容兜底）
+    // 搜索栏液态玻璃必须复用顶部标签 dock 的材质链，避免单独的搜索胶囊渲染分支产生质感偏差。
     val useBottomBarMatchedTopControls =
         searchChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
             searchChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-    val searchHazeLiquidEnabled = useBottomBarMatchedTopControls && hazeState != null
-    val searchChromeRenderModeEffective = when {
-        searchHazeLiquidEnabled -> HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-        else -> searchChromeRenderMode
-    }
-    val searchContentBackdrop = rememberLayerBackdrop()
     val localTopChromeRenderMode = resolveHomeTopLocalChromeRenderMode(
         renderMode = topChromeRenderMode,
         uiPreset = uiPreset
@@ -1975,21 +1919,6 @@ fun iOSHomeHeader(
         (scrollLayout.searchBarHeightPx / searchBarHeightPx).coerceIn(0f, 1f)
     } else {
         0f
-    }
-    val searchRefractionLayerPolicy = remember(
-        searchChromeRenderMode,
-        backdrop,
-        searchRevealFraction,
-        topChromeMotionPolicy.isScrolling,
-        topChromeMotionPolicy.isTransitionRunning
-    ) {
-        resolveHomeTopSearchRefractionLayerPolicy(
-            renderMode = searchChromeRenderMode,
-            hasBackdrop = backdrop != null,
-            searchRevealFraction = searchRevealFraction,
-            isScrolling = topChromeMotionPolicy.isScrolling,
-            isTransitionRunning = topChromeMotionPolicy.isTransitionRunning
-        )
     }
     val usesImmediateSearchReveal = remember(searchRevealDeadZonePx) {
         usesImmediateHomeTopSearchReveal(searchRevealDeadZonePx)
@@ -2565,15 +2494,6 @@ fun iOSHomeHeader(
                                 contentAlignment = Alignment.Center
                             ) {
                                 val isTablet = com.android.purebilibili.core.util.LocalWindowSizeClass.current.isTablet
-                                var searchPillWidthPx by remember { mutableFloatStateOf(0f) }
-                                val searchIndicatorTintAlpha = resolveBottomBarIndicatorTintAlpha(
-                                    shouldRefract = true,
-                                    liquidGlassProgress = liquidGlassTuning.progress,
-                                    configuredAlpha = liquidGlassTuning.indicatorTintAlpha
-                                )
-                                val searchIndicatorColor = resolveBottomBarMovingIndicatorSurfaceColor(
-                                    isDarkTheme = !isLightMode
-                                ).copy(alpha = searchIndicatorTintAlpha)
                                 val stableSearchContentColor = if (uiPreset == UiPreset.MD3) {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                                 } else if (isLightMode) {
@@ -2612,11 +2532,24 @@ fun iOSHomeHeader(
                                         .widthIn(max = 640.dp)
                                         .fillMaxWidth()
                                         .height(resolveHomeTopSearchPillHeight(uiPreset, androidNativeVariant))
-                                        .onSizeChanged { searchPillWidthPx = it.width.toFloat() }
                                         .clip(searchContainerShape)
                                         .then(
-                                            Modifier.homeTopChromeSurface(
-                                                renderMode = searchChromeRenderModeEffective,
+                                            if (useBottomBarMatchedTopControls) {
+                                                Modifier.homeTopBottomBarMatchedSurface(
+                                                    renderMode = searchChromeRenderMode,
+                                                    shape = searchContainerShape,
+                                                    hazeState = hazeState,
+                                                    backdrop = backdrop,
+                                                    liquidGlassStyle = liquidStyle,
+                                                    liquidGlassTuning = liquidGlassTuning,
+                                                    liquidGlassPreset = bottomBarLiquidGlassPreset,
+                                                    motionTier = motionTier,
+                                                    isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
+                                                    forceLowBlurBudget = forceLowBlurBudget
+                                                )
+                                            } else {
+                                                Modifier.homeTopChromeSurface(
+                                                    renderMode = searchChromeRenderMode,
                                                     shape = searchContainerShape,
                                                     surfaceColor = skinSearchSurfaceColor,
                                                     hazeState = hazeState,
@@ -2634,6 +2567,7 @@ fun iOSHomeHeader(
                                                         isLightMode = isLightMode
                                                     )
                                                 )
+                                            }
                                         )
                                         .border(
                                             width = 0.8.dp,
@@ -2664,7 +2598,7 @@ fun iOSHomeHeader(
                                             uiPreset = uiPreset,
                                             useUnifiedTopPanel = useUnifiedTopPanel,
                                             renderMode = searchChromeRenderMode,
-                                            refractionOverlayAlpha = searchRefractionLayerPolicy.overlayAlpha
+                                            refractionOverlayAlpha = 0f
                                         )
                                     ) {
                                         Box(
@@ -2683,66 +2617,10 @@ fun iOSHomeHeader(
                                                             Color.Transparent
                                                         )
                                                     )
-                                                )
+                                            )
                                         )
                                     }
-                                    if (searchRefractionLayerPolicy.captureContentLayer) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .clearAndSetSemantics {}
-                                                .alpha(0f)
-                                                .layerBackdrop(searchContentBackdrop),
-                                            contentAlignment = Alignment.CenterStart
-                                        ) {
-                                            Box(
-                                                modifier = Modifier.padding(
-                                                    horizontal = resolveHomeTopSearchContentHorizontalPadding(uiPreset, androidNativeVariant)
-                                                ),
-                                                contentAlignment = Alignment.CenterStart
-                                            ) {
-                                                searchPillContent()
-                                            }
-                                        }
-                                    }
-                                    Box(
-                                        modifier = Modifier.alpha(searchRefractionLayerPolicy.visibleContentAlpha)
-                                    ) {
-                                        searchPillContent()
-                                    }
-                                    if (
-                                        searchRefractionLayerPolicy.overlayAlpha > 0f &&
-                                        searchPillWidthPx > 0f
-                                    ) {
-                                        KernelSuBottomBarIndicatorLayer(
-                                            visible = true,
-                                            dockContentAlpha = searchRefractionLayerPolicy.overlayAlpha,
-                                            indicatorTranslationXPx = 0f,
-                                            indicatorPanelOffsetPx = 0f,
-                                            indicatorSettleReboundTransform = BottomBarClickPulseTransform(scaleX = 1f),
-                                            indicatorWidth = with(density) { searchPillWidthPx.toDp() },
-                                            indicatorHeight = resolveHomeTopSearchPillHeight(uiPreset, androidNativeVariant),
-                                            shellShape = searchContainerShape,
-                                            liquidGlassPreset = bottomBarLiquidGlassPreset,
-                                            contentBackdrop = searchContentBackdrop,
-                                            backdrop = backdrop,
-                                            indicatorLensSpec = resolveBottomBarBackdropPresetIndicatorLens(
-                                                progress = searchRefractionLayerPolicy.overlayAlpha
-                                            ),
-                                            effectivePressProgress = 0f,
-                                            indicatorIdleSurfaceColor = searchIndicatorColor,
-                                            glassEnabled = true,
-                                            motionProgress = 0f,
-                                            velocityItemsPerSecond = 0f,
-                                            isDragging = false,
-                                            indicatorLayerScaleProgress = 0f,
-                                            bottomBarMotionSpec = com.android.purebilibili.core.ui.motion.resolveBottomBarMotionSpec(
-                                                com.android.purebilibili.core.ui.motion.BottomBarMotionProfile.IOS_FLOATING
-                                            ),
-                                            isDarkTheme = !isLightMode,
-                                            indicatorAlignment = Alignment.CenterStart
-                                        )
-                                    }
+                                    searchPillContent()
                                 }
                             }
 
