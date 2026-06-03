@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.util.fastCoerceIn
@@ -101,6 +102,7 @@ internal class DampedDragAnimationState(
     private val scaleYAnimation = Animatable(1f, 0.001f)
     private val offsetAnimation = Animatable(0f)
     private val mutatorMutex = MutatorMutex()
+    private val deformationVelocityTracker = VelocityTracker()
 
     private var motionGeneration = 0
     private var valueJob: Job? = null
@@ -143,6 +145,7 @@ internal class DampedDragAnimationState(
     }
 
     fun press() {
+        deformationVelocityTracker.resetTracking()
         releaseJob?.cancel()
         releaseJob = scope.launch {
             launch { pressProgressAnimation.animateTo(1f, pressProgressAnimationSpec) }
@@ -165,6 +168,18 @@ internal class DampedDragAnimationState(
             launch { pressProgressAnimation.animateTo(0f, pressProgressAnimationSpec) }
             launch { scaleXAnimation.animateTo(1f, scaleXAnimationSpec) }
             launch { scaleYAnimation.animateTo(1f, scaleYAnimationSpec) }
+        }
+    }
+
+    private fun updateDeformationVelocity(value: Float) {
+        val valueRange = (itemCount - 1).toFloat().coerceAtLeast(1f)
+        deformationVelocityTracker.addPosition(
+            System.currentTimeMillis(),
+            Offset(value, 0f)
+        )
+        val targetVelocity = deformationVelocityTracker.calculateVelocity().x / valueRange
+        velocityJob = scope.launch {
+            velocityAnimation.animateTo(targetVelocity, velocityAnimationSpec)
         }
     }
 
@@ -203,7 +218,7 @@ internal class DampedDragAnimationState(
      *
      * 使用 snapTo 确保指示器位置完全跟手，
      * 同时通过 desiredValue 记录超滚状态，
-     * 手势速度同步到 velocityAnimation 供形变视觉使用。
+     * 手势速度只用于释放投影；形变速度对齐 KSU，从指示器 value 轨迹平滑估算。
      */
     fun onDrag(
         dragAmountPx: Float,
@@ -224,14 +239,6 @@ internal class DampedDragAnimationState(
         }
         velocityPxPerSecond = gestureVelocityPxPerSecond
 
-        // 手势速度转 items/sec 供形变视觉
-        val gestureVelocityItems = resolveDampedDragVelocityItemsPerSecond(
-            velocityPxPerSecond = gestureVelocityPxPerSecond,
-            itemWidthPx = itemWidthPx
-        )
-        velocityJob?.cancel()
-        velocityJob = scope.launch { velocityAnimation.snapTo(gestureVelocityItems) }
-
         // 9.0.0 风格：带阻力和超滚约束的期望位置跟踪
         val currentValue = desiredValue
         val isOverscrolling = currentValue < 0f || currentValue > (itemCount - 1).toFloat()
@@ -250,6 +257,7 @@ internal class DampedDragAnimationState(
         valueJob?.cancel()
         valueJob = scope.launch {
             valueAnimation.snapTo(clampedValue)
+            updateDeformationVelocity(clampedValue)
         }
 
         // 面板偏移累计

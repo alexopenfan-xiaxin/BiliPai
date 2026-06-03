@@ -61,13 +61,22 @@ class DampedDragAnimationPolicyTest {
             File("app/src/main/java/com/android/purebilibili/core/ui/animation/DampedDragAnimation.kt"),
             File("src/main/java/com/android/purebilibili/core/ui/animation/DampedDragAnimation.kt")
         ).first { it.exists() }.readText()
+        val dragSource = source
+            .substringAfter("fun onDrag(")
+            .substringBefore("fun setPressed(")
 
         assertTrue(source.contains("val deformationVelocityItemsPerSecond: Float get() = velocityAnimation.value"))
-        // VelocityTracker 在 horizontalDragGesture 中使用
+        assertTrue(source.contains("private val deformationVelocityTracker = VelocityTracker()"))
+        assertTrue(source.contains("deformationVelocityTracker.resetTracking()"))
+        assertTrue(source.contains("deformationVelocityTracker.addPosition("))
+        assertTrue(source.contains("Offset(value, 0f)"))
+        assertTrue(source.contains("velocityAnimation.animateTo(targetVelocity, velocityAnimationSpec)"))
+        assertTrue(dragSource.contains("updateDeformationVelocity(clampedValue)"))
         assertTrue(source.contains("velocityTracker.addPosition("))
         assertTrue(source.contains("velocityTracker.calculateVelocity()"))
         // velocityAnimation 仍通过 animateToValue 中的 animateTo(0f) 做释放衰减
         assertTrue(source.contains("velocityAnimation.animateTo(0f, velocityAnimationSpec)"))
+        assertFalse(dragSource.contains("velocityAnimation.snapTo(gestureVelocityItems)"))
         assertFalse(source.contains("deformationVelocityAnimation"))
         assertFalse(source.contains("dragVelocityItemsPerSecond"))
     }
