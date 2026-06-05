@@ -3371,11 +3371,10 @@ private fun KernelSuAlignedBottomBar(
                 )
             }
 
-            fun sampledItemScale(coverage: Float): Float = if (glassEnabled) {
-                resolveBottomBarSampledItemMotionScale(
-                    coverage = coverage,
-                    motionProgress = motionProgress,
-                    pressProgress = effectivePressProgress
+            fun sampledItemScale(): Float = if (glassEnabled) {
+                resolveBottomBarItemMotionScale(
+                    coverage = 1f,
+                    motionProgress = effectivePressProgress
                 )
             } else {
                 1f
@@ -3554,9 +3553,6 @@ private fun KernelSuAlignedBottomBar(
                                 },
                                 onDrawSurface = {
                                     drawRect(containerColor)
-                                    if (materialSpec.foregroundTint.alpha > 0f) {
-                                        drawRect(materialSpec.foregroundTint)
-                                    }
                                 }
                             )
                             // 对齐 KSU：隐藏采样层保持中性色内容，再由整层 tint 统一染成主题色。
@@ -3588,20 +3584,20 @@ private fun KernelSuAlignedBottomBar(
                                         itemWidth = indicatorWidth,
                                         label = resolveBottomNavItemLabel(item),
                                         dynamicUnreadCount = dynamicUnreadCount,
-                                        selected = coverage >= 0.5f,
+                                        selected = false,
                                         showIcon = showIcon,
                                         showText = showText,
                                         selectedColor = contentColor,
                                         unselectedColor = contentColor,
                                         contentColorOverride = contentColor,
                                         iconStyle = iconStyle,
-                                        skinIconPath = uiSkinDecoration?.iconPathFor(item, selected = coverage >= 0.5f),
+                                        skinIconPath = uiSkinDecoration?.iconPathFor(item, selected = false),
                                         labelScrimColor = skinContentColors.labelScrimColor,
                                         labelScrimAlpha = skinContentColors.labelScrimAlpha,
                                         onClick = {},
                                         interactive = false,
-                                        selectedIconAlpha = coverage,
-                                        scale = sampledItemScale(coverage)
+                                        selectedIconAlpha = 0f,
+                                        scale = sampledItemScale()
                                     )
                                 }
 
@@ -3613,7 +3609,7 @@ private fun KernelSuAlignedBottomBar(
                                         itemWidth = indicatorWidth,
                                         label = stringResource(R.string.sidebar_toggle),
                                         dynamicUnreadCount = dynamicUnreadCount,
-                                        selected = coverage >= 0.5f,
+                                        selected = false,
                                         showIcon = showIcon,
                                         showText = showText,
                                         selectedColor = contentColor,
@@ -3624,8 +3620,8 @@ private fun KernelSuAlignedBottomBar(
                                         labelScrimAlpha = skinContentColors.labelScrimAlpha,
                                         onClick = {},
                                         interactive = false,
-                                        selectedIconAlpha = coverage,
-                                        scale = sampledItemScale(coverage)
+                                        selectedIconAlpha = 0f,
+                                        scale = sampledItemScale()
                                     )
                                 }
                             }

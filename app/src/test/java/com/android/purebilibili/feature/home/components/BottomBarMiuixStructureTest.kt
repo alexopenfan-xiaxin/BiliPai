@@ -217,7 +217,11 @@ class BottomBarMiuixStructureTest {
         val indicatorCaptureContentSource = kernelSuRendererSource
             .substringAfter("if (shouldRenderIndicatorContentCapture && miuixBackdrop != null) {")
             .substringBefore("if (searchEnabled) {")
-        assertTrue(indicatorCaptureContentSource.contains("scale = sampledItemScale(coverage)"))
+        assertTrue(indicatorCaptureContentSource.contains("scale = sampledItemScale()"))
+        assertTrue(indicatorCaptureContentSource.contains("selected = false,"))
+        assertTrue(indicatorCaptureContentSource.contains("selectedIconAlpha = 0f"))
+        assertFalse(indicatorCaptureContentSource.contains("selectedIconAlpha = coverage"))
+        assertFalse(indicatorCaptureContentSource.contains("materialSpec.foregroundTint"))
         assertTrue(kernelSuRendererSource.contains("resolveBottomBarIdleIndicatorSurfaceColor("))
         assertFalse(kernelSuRendererSource.contains("val indicatorSurfaceOverlayAlpha"))
         assertFalse(kernelSuRendererSource.contains("Color.Black.copy(indicatorSurfaceOverlayAlpha)"))
