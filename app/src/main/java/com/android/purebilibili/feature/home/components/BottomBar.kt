@@ -1327,7 +1327,7 @@ internal fun resolveAndroidNativeIdleIndicatorSurfaceColor(
     return if (darkTheme) {
         Color.White.copy(alpha = 0.28f)
     } else {
-        Color.Black.copy(alpha = 0.1f)
+        Color.Black.copy(alpha = 0.18f)
     }
 }
 
