@@ -1514,7 +1514,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "左右拖动一屏最多调整 ${inlineSwipeSeekSeconds} 秒，数值越小越精确",
+                text = "左右拖动约半屏达到 ${inlineSwipeSeekSeconds} 秒上限，数值越小越精确",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1566,7 +1566,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             }
             Text(
                 text = if (fullscreenSwipeSeekEnabled) {
-                    "左右拖动一屏最多调整 ${fullscreenSwipeSeekSeconds} 秒，数值越小越精确"
+                    "左右拖动约半屏达到 ${fullscreenSwipeSeekSeconds} 秒上限，数值越小越精确"
                 } else {
                     "已关闭横屏精细调进度（当前范围 ${fullscreenSwipeSeekSeconds} 秒，重新开启后生效）"
                 },

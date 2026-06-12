@@ -18,7 +18,7 @@ class VideoPlayerSeekGesturePolicyTest {
             gestureSensitivity = 1f
         )
 
-        assertEquals(3_000L, delta)
+        assertEquals(6_000L, delta)
     }
 
     @Test
@@ -63,7 +63,7 @@ class VideoPlayerSeekGesturePolicyTest {
             gestureSensitivity = 1.2f
         )
 
-        assertEquals(2_250L, delta)
+        assertEquals(4_500L, delta)
     }
 
     @Test
@@ -93,7 +93,32 @@ class VideoPlayerSeekGesturePolicyTest {
             gestureSensitivity = 1f
         )
 
-        assertEquals(250L, delta)
+        assertEquals(500L, delta)
+    }
+
+    @Test
+    fun `configured seek range reaches selected maximum after half screen drag`() {
+        val fullscreenDelta = resolveHorizontalSeekDeltaMs(
+            isFullscreen = true,
+            fullscreenSwipeSeekEnabled = true,
+            totalDragDistanceX = 400f,
+            containerWidthPx = 800f,
+            fullscreenSwipeSeekSeconds = 30,
+            inlineSwipeSeekSeconds = 60,
+            gestureSensitivity = 1f
+        )
+        val inlineDelta = resolveHorizontalSeekDeltaMs(
+            isFullscreen = false,
+            fullscreenSwipeSeekEnabled = true,
+            totalDragDistanceX = 400f,
+            containerWidthPx = 800f,
+            fullscreenSwipeSeekSeconds = 30,
+            inlineSwipeSeekSeconds = 60,
+            gestureSensitivity = 1f
+        )
+
+        assertEquals(30_000L, fullscreenDelta)
+        assertEquals(60_000L, inlineDelta)
     }
 
     @Test

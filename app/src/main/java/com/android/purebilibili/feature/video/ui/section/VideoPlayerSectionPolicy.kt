@@ -384,18 +384,36 @@ internal fun resolveHorizontalSeekDeltaMs(
 ): Long? {
     if (isFullscreen && fullscreenSwipeSeekEnabled) {
         val seekSeconds = fullscreenSwipeSeekSeconds ?: return null
-        val safeWidthPx = containerWidthPx.coerceAtLeast(1f)
-        val maxDeltaMs = seekSeconds.coerceAtLeast(1) * 1000L
-        val rawDeltaMs = (totalDragDistanceX / safeWidthPx * maxDeltaMs * gestureSensitivity).toLong()
-        return rawDeltaMs.coerceIn(-maxDeltaMs, maxDeltaMs)
+        return resolveConfiguredSeekDeltaMs(
+            totalDragDistanceX = totalDragDistanceX,
+            containerWidthPx = containerWidthPx,
+            seekSeconds = seekSeconds.coerceAtLeast(1),
+            gestureSensitivity = gestureSensitivity
+        )
     }
     if (!isFullscreen) {
-        val safeWidthPx = containerWidthPx.coerceAtLeast(1f)
-        val maxDeltaMs = inlineSwipeSeekSeconds.coerceIn(1, 120) * 1000L
-        val rawDeltaMs = (totalDragDistanceX / safeWidthPx * maxDeltaMs * gestureSensitivity).toLong()
-        return rawDeltaMs.coerceIn(-maxDeltaMs, maxDeltaMs)
+        return resolveConfiguredSeekDeltaMs(
+            totalDragDistanceX = totalDragDistanceX,
+            containerWidthPx = containerWidthPx,
+            seekSeconds = inlineSwipeSeekSeconds.coerceIn(1, 120),
+            gestureSensitivity = gestureSensitivity
+        )
     }
     return (totalDragDistanceX * 200f * gestureSensitivity).toLong()
+}
+
+private fun resolveConfiguredSeekDeltaMs(
+    totalDragDistanceX: Float,
+    containerWidthPx: Float,
+    seekSeconds: Int,
+    gestureSensitivity: Float
+): Long {
+    val effectiveDragRangePx = (containerWidthPx * 0.5f).coerceAtLeast(1f)
+    val maxDeltaMs = seekSeconds * 1000L
+    val rawDeltaMs = (
+        totalDragDistanceX / effectiveDragRangePx * maxDeltaMs * gestureSensitivity
+    ).toLong()
+    return rawDeltaMs.coerceIn(-maxDeltaMs, maxDeltaMs)
 }
 
 internal fun resolveRelativeSeekTargetPosition(
