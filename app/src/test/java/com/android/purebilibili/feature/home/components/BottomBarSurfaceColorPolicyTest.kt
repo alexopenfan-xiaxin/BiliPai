@@ -484,19 +484,15 @@ class BottomBarSurfaceColorPolicyTest {
     }
 
     @Test
-    fun `ksu blur only shell keeps theme surface dominant while allowing blur`() {
+    fun `ksu blur only shell keeps configured blur surface alpha`() {
         val themeSurface = Color(0x66352F2A)
         val color = resolveKernelSuBottomBarShellColor(
             containerColor = themeSurface,
             liquidGlassEnabled = false,
-            blurEnabled = true,
             darkTheme = true
         )
 
-        assertEquals(themeSurface.red, color.red, 0.001f)
-        assertEquals(themeSurface.green, color.green, 0.001f)
-        assertEquals(themeSurface.blue, color.blue, 0.001f)
-        assertEquals(0.82f, color.alpha, 0.001f)
+        assertEquals(themeSurface, color)
         assertTrue(shouldBlurKernelSuBottomBarShell(blurEnabled = true))
         assertFalse(shouldBlurKernelSuBottomBarShell(blurEnabled = false))
     }
@@ -506,7 +502,6 @@ class BottomBarSurfaceColorPolicyTest {
         val color = resolveKernelSuBottomBarShellColor(
             containerColor = Color.Red,
             liquidGlassEnabled = true,
-            blurEnabled = true,
             darkTheme = true
         )
 

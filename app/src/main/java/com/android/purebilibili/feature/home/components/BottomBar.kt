@@ -925,13 +925,12 @@ internal fun shouldUseBottomBarCaptureLens(
 internal fun resolveKernelSuBottomBarShellColor(
     containerColor: Color,
     liquidGlassEnabled: Boolean,
-    blurEnabled: Boolean,
     darkTheme: Boolean
 ): Color {
-    return when {
-        liquidGlassEnabled -> resolveKernelSuBottomBarContainerColor(darkTheme = darkTheme)
-        blurEnabled -> containerColor.copy(alpha = maxOf(containerColor.alpha, 0.82f))
-        else -> containerColor
+    return if (liquidGlassEnabled) {
+        resolveKernelSuBottomBarContainerColor(darkTheme = darkTheme)
+    } else {
+        containerColor
     }
 }
 
@@ -2941,7 +2940,6 @@ private fun KernelSuAlignedBottomBar(
     val ksuContainerColor = resolveKernelSuBottomBarShellColor(
         containerColor = containerColor,
         liquidGlassEnabled = glassEnabled,
-        blurEnabled = blurEnabled,
         darkTheme = isDarkTheme
     )
     val shellBlurEnabled = shouldBlurKernelSuBottomBarShell(
