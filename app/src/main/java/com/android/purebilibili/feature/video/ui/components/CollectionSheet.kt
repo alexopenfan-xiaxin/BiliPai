@@ -22,7 +22,6 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.util.FormatUtils
-import com.android.purebilibili.core.theme.iOSBlue
 import com.android.purebilibili.core.ui.rememberAppClearIcon
 import com.android.purebilibili.data.model.response.UgcEpisode
 import com.android.purebilibili.data.model.response.UgcSeason
@@ -200,7 +199,7 @@ fun CollectionSheet(
                                 }
                             }
                             .background(
-                                if (isCurrentEpisode) iOSBlue.copy(alpha = 0.1f)
+                                if (isCurrentEpisode) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                                 else Color.Transparent
                             )
                             .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -255,7 +254,7 @@ fun CollectionSheet(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .background(iOSBlue.copy(alpha = 0.5f)),
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
@@ -275,7 +274,7 @@ fun CollectionSheet(
                             Text(
                                 text = episode.title,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isCurrentEpisode) iOSBlue 
+                                color = if (isCurrentEpisode) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = if (isCurrentEpisode) FontWeight.SemiBold 
                                             else FontWeight.Normal,
@@ -289,7 +288,7 @@ fun CollectionSheet(
                                     text = metadataText,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isCurrentEpisode) {
-                                        iOSBlue
+                                        MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                     },
