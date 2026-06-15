@@ -58,8 +58,10 @@ import com.android.purebilibili.core.ui.adaptive.resolveEffectiveMotionTier
 import com.android.purebilibili.core.ui.blur.BlurIntensity
 import com.android.purebilibili.core.ui.blur.shouldAllowHomeChromeLiquidGlass
 import com.android.purebilibili.core.ui.globalWallpaperAwareChromeColor
+import com.android.purebilibili.core.ui.getWindowNavigationBarColor
 import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.rememberAppSparklesIcon
+import com.android.purebilibili.core.ui.setWindowNavigationBarColor
 import com.android.purebilibili.core.util.HapticType
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.rememberHapticFeedback
@@ -111,18 +113,18 @@ fun AppearanceSettingsScreen(
     val appearanceAnimationSpeed = if (state.dynamicColor) 1.1f else 1f
     
     //  [修复] 设置导航栏透明，确保底部手势栏沉浸式效果
-    val view = androidx.compose.ui.platform.LocalView.current
     androidx.compose.runtime.DisposableEffect(Unit) {
         val window = (context as? android.app.Activity)?.window
-        val originalNavBarColor = window?.navigationBarColor ?: android.graphics.Color.TRANSPARENT
+        val originalNavBarColor = window?.let(::getWindowNavigationBarColor)
+            ?: android.graphics.Color.TRANSPARENT
         
         if (window != null) {
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            setWindowNavigationBarColor(window, android.graphics.Color.TRANSPARENT)
         }
         
         onDispose {
             if (window != null) {
-                window.navigationBarColor = originalNavBarColor
+                setWindowNavigationBarColor(window, originalNavBarColor)
             }
         }
     }

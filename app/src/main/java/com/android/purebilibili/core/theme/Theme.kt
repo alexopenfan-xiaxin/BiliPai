@@ -2,11 +2,11 @@
 package com.android.purebilibili.core.theme
 
 import android.app.Activity
-import android.content.BroadcastReceiver
+import android.app.WallpaperManager
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import com.android.purebilibili.core.store.ThemeRoleOverrides
 import com.android.purebilibili.feature.settings.AppThemeMode
@@ -659,24 +658,16 @@ private fun rememberSystemWallpaperRefreshToken(
         if (!shouldObserve) {
             return@DisposableEffect onDispose { }
         }
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_WALLPAPER_CHANGED) {
-                    token += 1
-                }
-            }
+        val wallpaperManager = WallpaperManager.getInstance(context)
+        val listener = WallpaperManager.OnColorsChangedListener { _, _ ->
+            token += 1
         }
-        val filter = IntentFilter(Intent.ACTION_WALLPAPER_CHANGED)
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            filter,
-            ContextCompat.RECEIVER_EXPORTED
+        wallpaperManager.addOnColorsChangedListener(
+            listener,
+            Handler(Looper.getMainLooper())
         )
         onDispose {
-            runCatching {
-                context.unregisterReceiver(receiver)
-            }
+            wallpaperManager.removeOnColorsChangedListener(listener)
         }
     }
 

@@ -110,7 +110,7 @@ class WebDavBackupService(private val context: Context) {
                 if (!response.isSuccessful) {
                     throw IOException("下载失败: HTTP ${response.code}")
                 }
-                response.body?.bytes() ?: throw IOException("备份文件为空")
+                response.body.bytes()
             }
 
             val restoredCount = restoreFromBackupArchive(zipBytes)
@@ -137,7 +137,7 @@ class WebDavBackupService(private val context: Context) {
             if (response.code !in setOf(200, 207)) {
                 throw IOException("读取目录失败: HTTP ${response.code} (PROPFIND ${request.url.encodedPath})")
             }
-            response.body?.string() ?: ""
+            response.body.string()
         }
 
         return parseWebDavBackupEntries(xml)

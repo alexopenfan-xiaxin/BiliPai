@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Process
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -174,20 +173,11 @@ fun PlaybackSettingsContent(
     fun checkPipPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_PICTURE_IN_PICTURE,
-                    Process.myUid(),
-                    context.packageName
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_PICTURE_IN_PICTURE,
-                    Process.myUid(),
-                    context.packageName
-                )
-            }
+            val mode = appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_PICTURE_IN_PICTURE,
+                context.applicationInfo.uid,
+                context.packageName
+            )
             return mode == AppOpsManager.MODE_ALLOWED
         }
         return false
