@@ -39,6 +39,15 @@ internal fun clampMiniPlayerOverlayOffset(
     )
 }
 
+internal fun resolveMiniPlayerDockedBottomOffsetY(
+    screenHeightPx: Float,
+    miniPlayerHeightPx: Float,
+    outerPaddingPx: Float,
+    bottomInsetPx: Float
+): Float {
+    return screenHeightPx - miniPlayerHeightPx - outerPaddingPx - bottomInsetPx
+}
+
 internal fun resolveMiniPlayerContentDragIntent(
     totalDragX: Float,
     totalDragY: Float,

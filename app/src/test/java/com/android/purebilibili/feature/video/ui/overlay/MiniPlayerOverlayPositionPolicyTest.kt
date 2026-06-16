@@ -42,6 +42,20 @@ class MiniPlayerOverlayPositionPolicyTest {
     }
 
     @Test
+    fun dockedBottomOffset_keepsMiniPlayerAboveHomeBottomBarArea() {
+        assertEquals(
+            2030f,
+            resolveMiniPlayerDockedBottomOffsetY(
+                screenHeightPx = 2400f,
+                miniPlayerHeightPx = 240f,
+                outerPaddingPx = 24f,
+                bottomInsetPx = 106f
+            ),
+            0.001f
+        )
+    }
+
+    @Test
     fun dragIntent_prefersSeekOnlyForClearlyHorizontalDrags() {
         assertEquals(
             MiniPlayerContentDragIntent.SEEK,

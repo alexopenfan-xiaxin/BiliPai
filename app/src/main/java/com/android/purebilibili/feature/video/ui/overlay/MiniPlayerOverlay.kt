@@ -155,8 +155,12 @@ fun MiniPlayerOverlay(
         clampMiniPlayerOverlayOffset(
             offsetX = cardBounds?.left
                 ?: if (entryFromLeft) paddingPx else screenWidthPx - defaultMiniPlayerWidthPx - paddingPx,
-            offsetY = cardBounds?.top
-                ?: (screenHeightPx - defaultMiniPlayerHeightPx - paddingPx - dragBottomInsetPx),
+            offsetY = resolveMiniPlayerDockedBottomOffsetY(
+                screenHeightPx = screenHeightPx,
+                miniPlayerHeightPx = defaultMiniPlayerHeightPx,
+                outerPaddingPx = paddingPx,
+                bottomInsetPx = dragBottomInsetPx
+            ),
             screenWidthPx = screenWidthPx,
             screenHeightPx = screenHeightPx,
             miniPlayerWidthPx = defaultMiniPlayerWidthPx,
