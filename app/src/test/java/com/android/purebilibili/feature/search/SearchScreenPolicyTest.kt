@@ -83,21 +83,30 @@ class SearchScreenPolicyTest {
     }
 
     @Test
-    fun searchFilterTabs_exposeFullSearchTypesInPlannedOrder() {
+    fun searchFilterTabs_followPiliPlusPrimaryOrder() {
         assertEquals(
             listOf(
                 SearchType.VIDEO,
-                SearchType.UP,
                 SearchType.BANGUMI,
                 SearchType.MEDIA_FT,
                 SearchType.LIVE,
-                SearchType.LIVE_USER,
-                SearchType.ARTICLE,
-                SearchType.TOPIC,
-                SearchType.PHOTO
+                SearchType.UP,
+                SearchType.ARTICLE
             ),
             resolveSearchFilterTabs()
         )
+    }
+
+    @Test
+    fun searchFilterTabs_hideExtraTypesWithoutRemovingModelSupport() {
+        val visibleTabs = resolveSearchFilterTabs()
+
+        assertFalse(SearchType.LIVE_USER in visibleTabs)
+        assertFalse(SearchType.TOPIC in visibleTabs)
+        assertFalse(SearchType.PHOTO in visibleTabs)
+        assertTrue(SearchType.entries.contains(SearchType.LIVE_USER))
+        assertTrue(SearchType.entries.contains(SearchType.TOPIC))
+        assertTrue(SearchType.entries.contains(SearchType.PHOTO))
     }
 
     @Test
@@ -239,107 +248,73 @@ class SearchScreenPolicyTest {
     }
 
     @Test
-    fun searchResultSwipe_switchesToAdjacentSearchType() {
+    fun searchResultPager_mapsPageAndTypeUsingVisibleTabs() {
         assertEquals(
-            SearchType.VIDEO,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.UP,
-                dragDistancePx = 120f
-            )
+            SearchType.MEDIA_FT,
+            resolveSearchTypeForPagerPage(2)
         )
         assertEquals(
-            SearchType.BANGUMI,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.UP,
-                dragDistancePx = -120f
-            )
-        )
-        assertEquals(
-            SearchType.UP,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.VIDEO,
-                dragDistancePx = -120f
-            )
-        )
-    }
-
-    @Test
-    fun searchResultSwipe_ignoresWeakDragAndClampsEdges() {
-        assertEquals(
-            null,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.UP,
-                dragDistancePx = -40f
-            )
-        )
-        assertEquals(
-            null,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.VIDEO,
-                dragDistancePx = 120f
-            )
-        )
-        assertEquals(
-            null,
-            resolveSearchSwipeTargetType(
-                currentType = SearchType.PHOTO,
-                dragDistancePx = -120f
-            )
-        )
-    }
-
-    @Test
-    fun searchResultContentSlideDirection_followsTabOrder() {
-        assertEquals(
-            1,
-            resolveSearchResultContentSlideDirection(
-                initialType = SearchType.VIDEO,
-                targetType = SearchType.UP
-            )
-        )
-        assertEquals(
-            -1,
-            resolveSearchResultContentSlideDirection(
-                initialType = SearchType.LIVE,
-                targetType = SearchType.MEDIA_FT
-            )
+            3,
+            resolveSearchPagerPageForType(SearchType.LIVE)
         )
         assertEquals(
             0,
-            resolveSearchResultContentSlideDirection(
-                initialType = SearchType.TOPIC,
-                targetType = SearchType.TOPIC
-            )
+            resolveSearchPagerPageForType(SearchType.PHOTO)
         )
     }
 
     @Test
-    fun searchResultContentMotion_usesPagerLikeFullMotionAndShortReducedMotion() {
-        val full = resolveSearchResultContentMotionSpec(reducedMotion = false)
-        val reduced = resolveSearchResultContentMotionSpec(reducedMotion = true)
+    fun searchResultPageState_usesCurrentMirrorForActiveType() {
+        val state = SearchUiState(
+            query = "动画",
+            showResults = true,
+            searchType = SearchType.LIVE,
+            isSearching = false,
+            currentPage = 2,
+            totalPages = 5,
+            hasMoreResults = true
+        )
 
-        assertTrue(full.slideDurationMillis >= 300)
-        assertEquals(4, full.slideDistanceDivisor)
-        assertTrue(full.fadeInDurationMillis > full.fadeOutDurationMillis)
-
-        assertTrue(reduced.slideDurationMillis < full.slideDurationMillis)
-        assertTrue(reduced.slideDistanceDivisor > full.slideDistanceDivisor)
-        assertTrue(reduced.fadeOutDurationMillis <= 80)
+        assertEquals(
+            2,
+            resolveSearchResultPageState(state, SearchType.LIVE).currentPage
+        )
+        assertTrue(resolveSearchResultPageState(state, SearchType.LIVE).hasMoreResults)
     }
 
     @Test
-    fun searchResultTransition_keepsFilterBarOutsideAnimatedContent() {
+    fun searchResultPageState_restoresCachedInactiveType() {
+        val cached = SearchResultPageUiState(
+            query = "动画",
+            currentPage = 1,
+            totalPages = 3,
+            hasMoreResults = true
+        )
+        val state = SearchUiState(
+            query = "动画",
+            showResults = true,
+            searchType = SearchType.VIDEO,
+            resultPages = mapOf(SearchType.UP to cached)
+        )
+
+        assertEquals(
+            cached,
+            resolveSearchResultPageState(state, SearchType.UP)
+        )
+    }
+
+    @Test
+    fun searchResultTransition_usesPagerAndKeepsFilterBarOutsidePager() {
         val searchSource = loadSource("app/src/main/java/com/android/purebilibili/feature/search/SearchScreen.kt")
-        val resultTransitionStart = searchSource.lastIndexOf(
-            "AnimatedContent(",
-            searchSource.indexOf("label = \"searchResultTypeTransition\"")
-        )
-        val filterBarBeforeTransition = searchSource.lastIndexOf("SearchFilterBar(", resultTransitionStart)
+        val resultPagerStart = searchSource.indexOf("HorizontalPager(")
+        val filterBarBeforePager = searchSource.lastIndexOf("SearchFilterBar(", resultPagerStart)
         val filterBarDeclaration = searchSource.indexOf("fun SearchFilterBar(")
-        val resultTransitionBody = searchSource.substring(resultTransitionStart, filterBarDeclaration)
+        val resultPagerBody = searchSource.substring(resultPagerStart, filterBarDeclaration)
 
-        assertTrue(filterBarBeforeTransition > 0)
-        assertFalse(resultTransitionBody.contains("SearchFilterBar("))
+        assertTrue(resultPagerStart > 0)
+        assertTrue(filterBarBeforePager > 0)
+        assertFalse(resultPagerBody.contains("SearchFilterBar("))
+        assertFalse(searchSource.contains("detectHorizontalDragGestures"))
     }
 
     @Test

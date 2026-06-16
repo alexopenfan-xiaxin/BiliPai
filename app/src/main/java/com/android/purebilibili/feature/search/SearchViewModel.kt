@@ -79,8 +79,104 @@ data class SearchUiState(
     val totalPages: Int = 1,
     val hasMoreResults: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val emptyStateReason: SearchEmptyStateReason = SearchEmptyStateReason.NONE
+    val emptyStateReason: SearchEmptyStateReason = SearchEmptyStateReason.NONE,
+    val resultPages: Map<SearchType, SearchResultPageUiState> = emptyMap()
 )
+
+data class SearchResultPageUiState(
+    val query: String = "",
+    val isSearching: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val error: String? = null,
+    val currentPage: Int = 0,
+    val totalPages: Int = 1,
+    val hasMoreResults: Boolean = false,
+    val totalCount: Int = 0,
+    val emptyStateReason: SearchEmptyStateReason = SearchEmptyStateReason.NONE,
+    val searchResults: List<VideoItem> = emptyList(),
+    val upResults: List<SearchUpItem> = emptyList(),
+    val bangumiResults: List<BangumiSearchItem> = emptyList(),
+    val liveResults: List<LiveRoomSearchItem> = emptyList(),
+    val liveUserResults: List<SearchLiveUserItem> = emptyList(),
+    val articleResults: List<SearchArticleItem> = emptyList(),
+    val topicResults: List<SearchTopicItem> = emptyList(),
+    val photoResults: List<SearchPhotoItem> = emptyList()
+) {
+    val hasLoaded: Boolean
+        get() = query.isNotBlank() && currentPage > 0 && !isSearching
+}
+
+internal fun SearchUiState.toCurrentSearchResultPage(): SearchResultPageUiState {
+    return SearchResultPageUiState(
+        query = query.trim(),
+        isSearching = isSearching,
+        isLoadingMore = isLoadingMore,
+        error = error,
+        currentPage = currentPage,
+        totalPages = totalPages,
+        hasMoreResults = hasMoreResults,
+        totalCount = when (searchType) {
+            SearchType.VIDEO -> searchResults.size
+            SearchType.UP -> upResults.size
+            SearchType.BANGUMI, SearchType.MEDIA_FT -> bangumiResults.size
+            SearchType.LIVE -> liveResults.size
+            SearchType.LIVE_USER -> liveUserResults.size
+            SearchType.ARTICLE -> articleResults.size
+            SearchType.TOPIC -> topicResults.size
+            SearchType.PHOTO -> photoResults.size
+        },
+        emptyStateReason = emptyStateReason,
+        searchResults = searchResults,
+        upResults = upResults,
+        bangumiResults = bangumiResults,
+        liveResults = liveResults,
+        liveUserResults = liveUserResults,
+        articleResults = articleResults,
+        topicResults = topicResults,
+        photoResults = photoResults
+    )
+}
+
+internal fun SearchUiState.withSearchResultPage(
+    type: SearchType,
+    pageState: SearchResultPageUiState
+): SearchUiState {
+    return copy(
+        resultPages = resultPages + (type to pageState)
+    )
+}
+
+internal fun SearchUiState.withCurrentSearchResultPageCached(): SearchUiState {
+    return withSearchResultPage(
+        type = searchType,
+        pageState = toCurrentSearchResultPage()
+    )
+}
+
+internal fun SearchUiState.withSearchResultPageMirrored(
+    type: SearchType,
+    pageState: SearchResultPageUiState
+): SearchUiState {
+    return copy(
+        searchType = type,
+        isSearching = pageState.isSearching,
+        isLoadingMore = pageState.isLoadingMore,
+        error = pageState.error,
+        currentPage = pageState.currentPage.coerceAtLeast(1),
+        totalPages = pageState.totalPages,
+        hasMoreResults = pageState.hasMoreResults,
+        emptyStateReason = pageState.emptyStateReason,
+        searchResults = pageState.searchResults,
+        upResults = pageState.upResults,
+        bangumiResults = pageState.bangumiResults,
+        liveResults = pageState.liveResults,
+        liveUserResults = pageState.liveUserResults,
+        articleResults = pageState.articleResults,
+        topicResults = pageState.topicResults,
+        photoResults = pageState.photoResults,
+        resultPages = resultPages + (type to pageState)
+    )
+}
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -185,7 +281,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     showResults = false,
                     suggestions = emptyList(),
                     error = null,
-                    emptyStateReason = SearchEmptyStateReason.NONE
+                    emptyStateReason = SearchEmptyStateReason.NONE,
+                    resultPages = emptyMap()
                 )
             }
         } else {
@@ -218,10 +315,46 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     
     //  切换搜索类型
     fun setSearchType(type: SearchType) {
-        _uiState.update { it.copy(searchType = type) }
-        // 如果有查询内容，重新搜索
-        if (_uiState.value.query.isNotBlank()) {
-            search(_uiState.value.query)
+        val beforeSwitch = _uiState.value
+        if (beforeSwitch.searchType == type) return
+
+        val normalizedQuery = beforeSwitch.query.trim()
+        val cachedState = beforeSwitch.resultPages[type]
+        if (
+            beforeSwitch.showResults &&
+            cachedState != null &&
+            cachedState.query == normalizedQuery &&
+            cachedState.hasLoaded
+        ) {
+            _uiState.value = beforeSwitch
+                .withCurrentSearchResultPageCached()
+                .withSearchResultPageMirrored(type, cachedState)
+            return
+        }
+
+        _uiState.value = beforeSwitch
+            .withCurrentSearchResultPageCached()
+            .copy(
+                searchType = type,
+                isSearching = beforeSwitch.showResults && normalizedQuery.isNotBlank(),
+                isLoadingMore = false,
+                error = null,
+                currentPage = 1,
+                totalPages = 1,
+                hasMoreResults = false,
+                emptyStateReason = SearchEmptyStateReason.NONE,
+                searchResults = emptyList(),
+                upResults = emptyList(),
+                bangumiResults = emptyList(),
+                liveResults = emptyList(),
+                liveUserResults = emptyList(),
+                articleResults = emptyList(),
+                topicResults = emptyList(),
+                photoResults = emptyList()
+            )
+
+        if (normalizedQuery.isNotBlank() && beforeSwitch.showResults) {
+            search(normalizedQuery)
         }
     }
     
@@ -289,6 +422,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             com.android.purebilibili.core.util.EasterEggs.checkSearchEasterEgg(normalizedKeyword)
         } else null
         val searchType = _uiState.value.searchType
+        val shouldClearCachedPages = !_uiState.value.showResults ||
+            _uiState.value.query.trim() != normalizedKeyword
         val searchSessionId = activeSearchSessionId + 1L
         activeSearchSessionId = searchSessionId
         activeSearchJob?.cancel()
@@ -306,7 +441,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 currentPage = 1,
                 hasMoreResults = false,
                 isLoadingMore = false,
-                emptyStateReason = SearchEmptyStateReason.NONE
+                emptyStateReason = SearchEmptyStateReason.NONE,
+                resultPages = if (shouldClearCachedPages) emptyMap() else it.resultPages
             )
         }
         saveHistory(normalizedKeyword)

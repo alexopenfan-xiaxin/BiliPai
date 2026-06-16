@@ -1,10 +1,8 @@
 // 文件路径: feature/search/SearchScreen.kt
 package com.android.purebilibili.feature.search
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedVisibility
@@ -18,15 +16,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,7 +61,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -332,68 +329,37 @@ internal enum class SearchFilterControl {
 internal fun resolveSearchFilterTabs(): List<SearchType> {
     return listOf(
         SearchType.VIDEO,
-        SearchType.UP,
         SearchType.BANGUMI,
         SearchType.MEDIA_FT,
         SearchType.LIVE,
-        SearchType.LIVE_USER,
-        SearchType.ARTICLE,
-        SearchType.TOPIC,
-        SearchType.PHOTO
+        SearchType.UP,
+        SearchType.ARTICLE
     )
 }
 
-internal fun resolveSearchSwipeTargetType(
+internal fun resolveSearchTypeForPagerPage(
+    page: Int,
+    tabs: List<SearchType> = resolveSearchFilterTabs()
+): SearchType {
+    return tabs.getOrNull(page) ?: SearchType.VIDEO
+}
+
+internal fun resolveSearchPagerPageForType(
     currentType: SearchType,
-    dragDistancePx: Float,
-    tabs: List<SearchType> = resolveSearchFilterTabs(),
-    thresholdPx: Float = 96f
-): SearchType? {
-    val currentIndex = tabs.indexOf(currentType)
-    if (tabs.isEmpty() || currentIndex !in tabs.indices) return null
-    if (kotlin.math.abs(dragDistancePx) < thresholdPx) return null
-    val targetIndex = if (dragDistancePx > 0f) currentIndex - 1 else currentIndex + 1
-    return tabs.getOrNull(targetIndex)?.takeIf { it != currentType }
-}
-
-internal data class SearchResultContentMotionSpec(
-    val slideDurationMillis: Int,
-    val fadeInDurationMillis: Int,
-    val fadeOutDurationMillis: Int,
-    val slideDistanceDivisor: Int
-)
-
-internal fun resolveSearchResultContentMotionSpec(
-    reducedMotion: Boolean
-): SearchResultContentMotionSpec {
-    return if (reducedMotion) {
-        SearchResultContentMotionSpec(
-            slideDurationMillis = 120,
-            fadeInDurationMillis = 90,
-            fadeOutDurationMillis = 80,
-            slideDistanceDivisor = 6
-        )
-    } else {
-        SearchResultContentMotionSpec(
-            slideDurationMillis = 320,
-            fadeInDurationMillis = 220,
-            fadeOutDurationMillis = 180,
-            slideDistanceDivisor = 4
-        )
-    }
-}
-
-internal fun resolveSearchResultContentSlideDirection(
-    initialType: SearchType,
-    targetType: SearchType,
     tabs: List<SearchType> = resolveSearchFilterTabs()
 ): Int {
-    val initialIndex = tabs.indexOf(initialType)
-    val targetIndex = tabs.indexOf(targetType)
-    if (initialIndex !in tabs.indices || targetIndex !in tabs.indices || initialIndex == targetIndex) {
-        return 0
+    return tabs.indexOf(currentType).takeIf { it >= 0 } ?: 0
+}
+
+internal fun resolveSearchResultPageState(
+    state: SearchUiState,
+    searchType: SearchType
+): SearchResultPageUiState {
+    return if (state.searchType == searchType) {
+        state.toCurrentSearchResultPage()
+    } else {
+        state.resultPages[searchType] ?: SearchResultPageUiState(query = state.query.trim())
     }
-    return if (targetIndex > initialIndex) 1 else -1
 }
 
 internal fun resolveSearchFilterControls(
@@ -569,6 +535,13 @@ fun SearchScreen(
     //  读取动画设置开关
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val searchTabs = remember { resolveSearchFilterTabs() }
+    val searchPagerState = rememberPagerState(
+        initialPage = resolveSearchPagerPageForType(state.searchType, searchTabs),
+        pageCount = { searchTabs.size }
+    )
+    var scrollToTopSearchType by remember { mutableStateOf<SearchType?>(null) }
+    var scrollToTopRequestId by remember { mutableIntStateOf(0) }
     val deviceUiProfile = remember(windowSizeClass.widthSizeClass) {
         resolveDeviceUiProfile(
             widthSizeClass = windowSizeClass.widthSizeClass
@@ -615,11 +588,12 @@ fun SearchScreen(
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
-    val isSearchResultsScrolling by remember(historyListState, resultGridState, resultListState) {
+    val isSearchResultsScrolling by remember(historyListState, resultGridState, resultListState, searchPagerState) {
         derivedStateOf {
             historyListState.isScrollInProgress ||
                 resultGridState.isScrollInProgress ||
-                resultListState.isScrollInProgress
+                resultListState.isScrollInProgress ||
+                searchPagerState.isScrollInProgress
         }
     }
     val searchMotionBudget by remember(state.query, state.isSearching, isSearchResultsScrolling) {
@@ -685,6 +659,22 @@ fun SearchScreen(
         startupSettled = true
     }
 
+    LaunchedEffect(state.searchType, searchTabs) {
+        val targetPage = resolveSearchPagerPageForType(state.searchType, searchTabs)
+        if (!searchPagerState.isScrollInProgress && searchPagerState.currentPage != targetPage) {
+            searchPagerState.scrollToPage(targetPage)
+        }
+    }
+
+    LaunchedEffect(searchPagerState, searchTabs, state.showResults) {
+        snapshotFlow { searchPagerState.settledPage }
+            .collect { page ->
+                if (state.showResults) {
+                    viewModel.setSearchType(resolveSearchTypeForPagerPage(page, searchTabs))
+                }
+            }
+    }
+
     LaunchedEffect(startupSettled, state.showResults, state.query) {
         if (shouldBootstrapSearchLandingData(
                 startupSettled = startupSettled,
@@ -735,10 +725,6 @@ fun SearchScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .searchTypeSwipe(
-                                currentType = state.searchType,
-                                onTypeChange = viewModel::setSearchType
-                            )
                         ) {
                             Spacer(modifier = Modifier.height(contentTopPadding + 8.dp))
                             //  搜索彩蛋消息横幅
@@ -767,6 +753,18 @@ fun SearchScreen(
                                     }
                                 }
                             }
+                            SearchResultTypeTabRow(
+                                tabs = searchTabs,
+                                selectedPage = searchPagerState.currentPage,
+                                onTabClick = { page, type ->
+                                    if (searchPagerState.currentPage == page && state.searchType == type) {
+                                        scrollToTopSearchType = type
+                                        scrollToTopRequestId += 1
+                                    } else {
+                                        scope.launch { searchPagerState.animateScrollToPage(page) }
+                                    }
+                                }
+                            )
                             SearchFilterBar(
                                 currentType = state.searchType,
                                 currentOrder = state.searchOrder,
@@ -776,7 +774,6 @@ fun SearchScreen(
                                 currentUpOrderSort = state.upOrderSort,
                                 currentUpUserType = state.upUserType,
                                 currentLiveOrder = state.liveOrder,
-                                onTypeChange = { viewModel.setSearchType(it) },
                                 onOrderChange = { viewModel.setSearchOrder(it) },
                                 onDurationToggle = { viewModel.toggleSearchDuration(it) },
                                 onVideoTidChange = { viewModel.setVideoTid(it) },
@@ -785,61 +782,50 @@ fun SearchScreen(
                                 onUpUserTypeChange = { viewModel.setUpUserType(it) },
                                 onLiveOrderChange = { viewModel.setLiveOrder(it) }
                             )
-                        //  根据搜索类型显示不同结果；切换方向按标签顺序计算，贴近横向分页手感。
-                        AnimatedContent(
-                            targetState = state.searchType,
+                        HorizontalPager(
+                            state = searchPagerState,
                             modifier = Modifier.weight(1f),
-                            transitionSpec = {
-                                val motionSpec = resolveSearchResultContentMotionSpec(
-                                    reducedMotion = effectiveSearchMotionBudget == SearchMotionBudget.REDUCED
+                            beyondViewportPageCount = 1
+                        ) { page ->
+                        val targetSearchType = resolveSearchTypeForPagerPage(page, searchTabs)
+                        val pageResultState = resolveSearchResultPageState(
+                            state = state,
+                            searchType = targetSearchType
+                        )
+                        val pageEmptyStateCopy = remember(pageResultState.emptyStateReason, targetSearchType) {
+                            if (pageResultState.emptyStateReason == SearchEmptyStateReason.NONE) {
+                                null
+                            } else {
+                                resolveSearchEmptyStateCopy(
+                                    reason = pageResultState.emptyStateReason,
+                                    searchType = targetSearchType
                                 )
-                                val direction = resolveSearchResultContentSlideDirection(
-                                    initialType = initialState,
-                                    targetType = targetState
-                                )
-                                if (direction == 0) {
-                                    fadeIn(
-                                        animationSpec = tween(motionSpec.fadeInDurationMillis)
-                                    ) togetherWith fadeOut(
-                                        animationSpec = tween(motionSpec.fadeOutDurationMillis)
-                                    )
+                            }
+                        }
+                        val pageGridState = rememberSaveable(
+                            pageResultState.query,
+                            targetSearchType.value,
+                            saver = LazyGridState.Saver
+                        ) {
+                            LazyGridState()
+                        }
+                        val pageListState = rememberSaveable(
+                            pageResultState.query,
+                            targetSearchType.value,
+                            saver = LazyListState.Saver
+                        ) {
+                            LazyListState()
+                        }
+                        LaunchedEffect(scrollToTopRequestId, scrollToTopSearchType, targetSearchType) {
+                            if (scrollToTopSearchType == targetSearchType && scrollToTopRequestId > 0) {
+                                if (targetSearchType == SearchType.VIDEO) {
+                                    pageGridState.animateScrollToItem(0)
                                 } else {
-                                    (
-                                        slideInHorizontally(
-                                            animationSpec = tween(
-                                                durationMillis = motionSpec.slideDurationMillis,
-                                                easing = AppMotionEasing.EmphasizedEnter
-                                            ),
-                                            initialOffsetX = { width ->
-                                                direction * width / motionSpec.slideDistanceDivisor
-                                            }
-                                        ) + fadeIn(
-                                            animationSpec = tween(
-                                                durationMillis = motionSpec.fadeInDurationMillis,
-                                                easing = AppMotionEasing.EmphasizedEnter
-                                            )
-                                        )
-                                    ) togetherWith (
-                                        slideOutHorizontally(
-                                            animationSpec = tween(
-                                                durationMillis = motionSpec.slideDurationMillis,
-                                                easing = AppMotionEasing.EmphasizedExit
-                                            ),
-                                            targetOffsetX = { width ->
-                                                -direction * width / motionSpec.slideDistanceDivisor
-                                            }
-                                        ) + fadeOut(
-                                            animationSpec = tween(
-                                                durationMillis = motionSpec.fadeOutDurationMillis,
-                                                easing = AppMotionEasing.EmphasizedExit
-                                            )
-                                        )
-                                    )
-                                }.using(SizeTransform(clip = false))
-                            },
-                            label = "searchResultTypeTransition"
-                        ) { targetSearchType ->
-                        if (state.isSearching) {
+                                    pageListState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                        if (pageResultState.isSearching) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -855,7 +841,7 @@ fun SearchScreen(
                                 // 视频搜索结果
                                 LazyVerticalGrid(
                                     columns = GridCells.Adaptive(minSize = searchLayoutPolicy.resultGridMinItemWidthDp.dp),
-                                    state = resultGridState,
+                                    state = pageGridState,
                                     contentPadding = PaddingValues(
                                         top = 0.dp,
                                         bottom = resultBottomPadding,
@@ -869,7 +855,7 @@ fun SearchScreen(
                                     .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                         ) {
                                 itemsIndexed(
-                                    state.searchResults,
+                                    pageResultState.searchResults,
                                     key = { index, video ->
                                         resolveSearchResultLazyItemKey(
                                             searchType = SearchType.VIDEO,
@@ -919,15 +905,15 @@ fun SearchScreen(
                                         )
                                         
                                         //  [新增] 无限滚动触发：当滚动到最后几个 item 时加载更多
-                                        if (index == state.searchResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.searchResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
                                     
                                     // [新增] 空状态提示 (提示可能被屏蔽)
-                                    if (!state.isSearching && state.searchResults.isEmpty() && state.error == null && emptyStateCopy != null) {
+                                    if (!pageResultState.isSearching && pageResultState.searchResults.isEmpty() && pageResultState.error == null && pageEmptyStateCopy != null) {
                                         item(span = { GridItemSpan(maxLineSpan) }) {
                                             Box(
                                                 modifier = Modifier
@@ -937,14 +923,14 @@ fun SearchScreen(
                                             ) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(
-                                                        text = emptyStateCopy.title,
+                                                        text = pageEmptyStateCopy.title,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         fontSize = 15.sp,
                                                         fontWeight = FontWeight.Medium
                                                     )
                                                     Spacer(modifier = Modifier.height(8.dp))
                                                     Text(
-                                                        text = emptyStateCopy.subtitle,
+                                                        text = pageEmptyStateCopy.subtitle,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                         fontSize = 13.sp
                                                     )
@@ -954,7 +940,7 @@ fun SearchScreen(
                                     }
                                     
                                     //  [新增] 加载更多指示器
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -971,10 +957,10 @@ fun SearchScreen(
                                     }
                                     
                                     //  [新增] 已加载全部提示
-                                    if (!state.hasMoreResults && state.searchResults.isNotEmpty() && !state.isLoadingMore) {
+                                    if (!pageResultState.hasMoreResults && pageResultState.searchResults.isNotEmpty() && !pageResultState.isLoadingMore) {
                                         item {
                                             Text(
-                                                text = "已加载全部 ${state.searchResults.size} 条结果",
+                                                text = "已加载全部 ${pageResultState.searchResults.size} 条结果",
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(16.dp),
@@ -991,13 +977,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.upResults,
+                                        pageResultState.upResults,
                                         key = { index, upItem ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.UP,
@@ -1011,15 +997,15 @@ fun SearchScreen(
                                             appearance = genericResultCardAppearance,
                                             onClick = { onUpClick(upItem.mid) }
                                         )
-                                        if (index == state.upResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.upResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
                                     
                                      // [新增] 空状态提示
-                                    if (!state.isSearching && state.upResults.isEmpty() && state.error == null && emptyStateCopy != null) {
+                                    if (!pageResultState.isSearching && pageResultState.upResults.isEmpty() && pageResultState.error == null && pageEmptyStateCopy != null) {
                                         item {
                                             Box(
                                                 modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
@@ -1027,14 +1013,14 @@ fun SearchScreen(
                                             ) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(
-                                                        text = emptyStateCopy.title,
+                                                        text = pageEmptyStateCopy.title,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         fontSize = 15.sp,
                                                         fontWeight = FontWeight.Medium
                                                     )
                                                     Spacer(modifier = Modifier.height(8.dp))
                                                     Text(
-                                                        text = emptyStateCopy.subtitle,
+                                                        text = pageEmptyStateCopy.subtitle,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                         fontSize = 13.sp,
                                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -1044,7 +1030,7 @@ fun SearchScreen(
                                         }
                                     }
                                     
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1067,13 +1053,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.bangumiResults,
+                                        pageResultState.bangumiResults,
                                         key = { index, bangumiItem ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = targetSearchType,
@@ -1092,14 +1078,14 @@ fun SearchScreen(
                                                 }
                                             }
                                         )
-                                        if (index == state.bangumiResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.bangumiResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1121,13 +1107,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.liveResults,
+                                        pageResultState.liveResults,
                                         key = { index, liveItem ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.LIVE,
@@ -1142,15 +1128,15 @@ fun SearchScreen(
                                             appearance = genericResultCardAppearance,
                                             onClick = { onLiveClick(liveItem.roomid, liveItem.title, liveItem.uname) }
                                         )
-                                        if (index == state.liveResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.liveResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
                                     
                                     // [新增] 空状态提示
-                                    if (!state.isSearching && state.liveResults.isEmpty() && state.error == null && emptyStateCopy != null) {
+                                    if (!pageResultState.isSearching && pageResultState.liveResults.isEmpty() && pageResultState.error == null && pageEmptyStateCopy != null) {
                                         item {
                                             Box(
                                                 modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
@@ -1158,14 +1144,14 @@ fun SearchScreen(
                                             ) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(
-                                                        text = emptyStateCopy.title,
+                                                        text = pageEmptyStateCopy.title,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         fontSize = 15.sp,
                                                         fontWeight = FontWeight.Medium
                                                     )
                                                     Spacer(modifier = Modifier.height(8.dp))
                                                     Text(
-                                                        text = emptyStateCopy.subtitle,
+                                                        text = pageEmptyStateCopy.subtitle,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                         fontSize = 13.sp,
                                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -1175,7 +1161,7 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1196,13 +1182,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.liveUserResults,
+                                        pageResultState.liveUserResults,
                                         key = { index, item ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.LIVE_USER,
@@ -1229,14 +1215,14 @@ fun SearchScreen(
                                                 }
                                             }
                                         )
-                                        if (index == state.liveUserResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.liveUserResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item { SearchLoadMoreIndicator() }
                                     }
                                 }
@@ -1245,13 +1231,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.articleResults,
+                                        pageResultState.articleResults,
                                         key = { index, articleItem ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.ARTICLE,
@@ -1265,14 +1251,14 @@ fun SearchScreen(
                                             appearance = genericResultCardAppearance,
                                             onClick = { onArticleClick(articleItem.id, articleItem.title) }
                                         )
-                                        if (index == state.articleResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.articleResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
 
-                                    if (!state.isSearching && state.articleResults.isEmpty() && state.error == null && emptyStateCopy != null) {
+                                    if (!pageResultState.isSearching && pageResultState.articleResults.isEmpty() && pageResultState.error == null && pageEmptyStateCopy != null) {
                                         item {
                                             Box(
                                                 modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
@@ -1280,14 +1266,14 @@ fun SearchScreen(
                                             ) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(
-                                                        text = emptyStateCopy.title,
+                                                        text = pageEmptyStateCopy.title,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         fontSize = 15.sp,
                                                         fontWeight = FontWeight.Medium
                                                     )
                                                     Spacer(modifier = Modifier.height(8.dp))
                                                     Text(
-                                                        text = emptyStateCopy.subtitle,
+                                                        text = pageEmptyStateCopy.subtitle,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                         fontSize = 13.sp,
                                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -1297,7 +1283,7 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1318,13 +1304,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.topicResults,
+                                        pageResultState.topicResults,
                                         key = { index, item ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.TOPIC,
@@ -1340,14 +1326,14 @@ fun SearchScreen(
                                                 if (item.topicId > 0L) onTopicClick(item.topicId)
                                             }
                                         )
-                                        if (index == state.topicResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.topicResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item { SearchLoadMoreIndicator() }
                                     }
                                 }
@@ -1356,13 +1342,13 @@ fun SearchScreen(
                                 LazyColumn(
                                     contentPadding = PaddingValues(top = 0.dp, bottom = resultBottomPadding, start = 16.dp, end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    state = resultListState,
+                                    state = pageListState,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(if (searchHazeEnabled) Modifier.hazeSourceCompat(state = hazeState) else Modifier)
                                 ) {
                                     itemsIndexed(
-                                        state.photoResults,
+                                        pageResultState.photoResults,
                                         key = { index, item ->
                                             resolveSearchResultLazyItemKey(
                                                 searchType = SearchType.PHOTO,
@@ -1376,14 +1362,14 @@ fun SearchScreen(
                                             item = item,
                                             appearance = genericResultCardAppearance
                                         )
-                                        if (index == state.photoResults.size - 3 && state.hasMoreResults && !state.isLoadingMore) {
-                                            LaunchedEffect(state.currentPage, state.searchType) {
+                                        if (targetSearchType == state.searchType && index == pageResultState.photoResults.size - 3 && pageResultState.hasMoreResults && !pageResultState.isLoadingMore) {
+                                            LaunchedEffect(pageResultState.currentPage, targetSearchType) {
                                                 viewModel.loadMoreResults()
                                             }
                                         }
                                     }
 
-                                    if (state.isLoadingMore) {
+                                    if (pageResultState.isLoadingMore) {
                                         item { SearchLoadMoreIndicator() }
                                     }
                                 }
@@ -1523,34 +1509,6 @@ fun SearchScreen(
                 )
             }
         }
-    }
-}
-
-private fun Modifier.searchTypeSwipe(
-    currentType: SearchType,
-    onTypeChange: (SearchType) -> Unit
-): Modifier {
-    return pointerInput(currentType) {
-        var dragDistancePx = 0f
-        detectHorizontalDragGestures(
-            onDragStart = {
-                dragDistancePx = 0f
-            },
-            onHorizontalDrag = { change, dragAmount ->
-                dragDistancePx += dragAmount
-                change.consume()
-            },
-            onDragCancel = {
-                dragDistancePx = 0f
-            },
-            onDragEnd = {
-                resolveSearchSwipeTargetType(
-                    currentType = currentType,
-                    dragDistancePx = dragDistancePx
-                )?.let(onTypeChange)
-                dragDistancePx = 0f
-            }
-        )
     }
 }
 
@@ -2148,8 +2106,61 @@ fun SearchHistorySection(
 }
 
 
+@Composable
+private fun SearchResultTypeTabRow(
+    tabs: List<SearchType>,
+    selectedPage: Int,
+    onTabClick: (Int, SearchType) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        tabs.forEachIndexed { index, type ->
+            val selected = selectedPage == index
+            val interactionSource = remember { MutableInteractionSource() }
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 40.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        if (selected) {
+                            MaterialTheme.colorScheme.secondaryContainer
+                        } else {
+                            Color.Transparent
+                        }
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) {
+                        onTabClick(index, type)
+                    }
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = type.displayName,
+                    fontSize = 13.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    },
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
 /**
- *  搜索筛选条件栏 (含类型切换)
+ *  搜索筛选条件栏
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -2162,7 +2173,6 @@ fun SearchFilterBar(
     currentUpOrderSort: SearchOrderSort,
     currentUpUserType: SearchUserType,
     currentLiveOrder: SearchLiveOrder,
-    onTypeChange: (SearchType) -> Unit,
     onOrderChange: (SearchOrder) -> Unit,
     onDurationToggle: (SearchDuration) -> Unit,
     onVideoTidChange: (Int) -> Unit,
@@ -2178,10 +2188,6 @@ fun SearchFilterBar(
     var showUpOrderSortMenu by remember { mutableStateOf(false) }
     var showUpUserTypeMenu by remember { mutableStateOf(false) }
     var showLiveOrderMenu by remember { mutableStateOf(false) }
-    val configuration = LocalConfiguration.current
-    val typeTabLayoutSpec = remember(configuration.screenWidthDp) {
-        resolveSearchTypeTabLayoutSpec(configuration.screenWidthDp)
-    }
 
     val videoTidOptions = remember {
         listOf(
@@ -2205,47 +2211,13 @@ fun SearchFilterBar(
             currentUpOrder = currentUpOrder
         )
     }
+    if (filterControls.isEmpty()) return
     
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        //  搜索类型切换 Tab
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(typeTabLayoutSpec.horizontalSpacingDp.dp),
-            verticalArrangement = Arrangement.spacedBy(typeTabLayoutSpec.verticalSpacingDp.dp)
-        ) {
-            resolveSearchFilterTabs().forEach { type ->
-                val isSelected = currentType == type
-                val chipColors = resolveSearchSelectionChipColors(
-                    isSelected = isSelected,
-                    colorScheme = MaterialTheme.colorScheme
-                )
-                Surface(
-                    onClick = { onTypeChange(type) },
-                    color = chipColors.backgroundColor,
-                    shape = RoundedCornerShape(typeTabLayoutSpec.minHeightDp.dp / 2)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .heightIn(min = typeTabLayoutSpec.minHeightDp.dp)
-                            .padding(horizontal = typeTabLayoutSpec.horizontalPaddingDp.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = type.displayName,
-                            fontSize = typeTabLayoutSpec.fontSizeSp.sp,
-                            color = chipColors.textColor,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
-        }
-        
-        if (filterControls.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(10.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -2427,7 +2399,6 @@ fun SearchFilterBar(
                         }
                     }
                 }
-            }
         }
     }
 }
