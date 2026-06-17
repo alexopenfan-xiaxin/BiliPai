@@ -500,6 +500,13 @@ internal fun resolveKernelSuExpandedHomeIconSize(): Dp = 28.dp
 
 internal fun resolveKernelSuExpandedHomeIconScale(): Float = 0.92f
 
+internal fun resolveKernelSuBottomBarSearchFieldExpanded(
+    searchExpanded: Boolean,
+    searchLayoutMode: BottomBarSearchLayoutMode
+): Boolean {
+    return searchExpanded && searchLayoutMode == BottomBarSearchLayoutMode.HOME_AND_SEARCH
+}
+
 internal fun resolveKernelSuBottomBarSearchLayout(
     containerWidth: Dp,
     itemCount: Int,
@@ -3213,6 +3220,10 @@ private fun KernelSuAlignedBottomBar(
             val shellHeight = searchLayoutState.shellHeight
             val compactSearchLayout =
                 bottomBarSearchLayoutMode == BottomBarSearchLayoutMode.HOME_AND_SEARCH
+            val visualSearchExpanded = resolveKernelSuBottomBarSearchFieldExpanded(
+                searchExpanded = effectiveSearchExpanded,
+                searchLayoutMode = bottomBarSearchLayoutMode
+            )
             val dockContentAlpha by animateFloatAsState(
                 targetValue = if (compactSearchLayout && effectiveSearchExpanded) 0f else 1f,
                 animationSpec = tween(
@@ -3802,7 +3813,7 @@ private fun KernelSuAlignedBottomBar(
                     launchAdjustedSearchGap = launchAdjustedSearchGap,
                     searchWidth = searchWidth,
                     searchHeight = searchHeight,
-                    expanded = effectiveSearchExpanded,
+                    expanded = visualSearchExpanded,
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
                     onCompactClick = {

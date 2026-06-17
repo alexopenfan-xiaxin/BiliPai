@@ -134,6 +134,28 @@ class BottomBarLayoutPolicyTest {
     }
 
     @Test
+    fun `full dock search layout keeps compact search visual when auto expanded`() {
+        assertEquals(
+            false,
+            resolveKernelSuBottomBarSearchFieldExpanded(
+                searchExpanded = true,
+                searchLayoutMode = BottomBarSearchLayoutMode.FULL_DOCK
+            )
+        )
+    }
+
+    @Test
+    fun `compact search layout renders expanded search field`() {
+        assertEquals(
+            true,
+            resolveKernelSuBottomBarSearchFieldExpanded(
+                searchExpanded = true,
+                searchLayoutMode = BottomBarSearchLayoutMode.HOME_AND_SEARCH
+            )
+        )
+    }
+
+    @Test
     fun `kernelsu expanded home dock copies search circle size`() {
         assertEquals(64.dp, resolveKernelSuBottomBarSearchCircleSize())
         assertEquals(64.dp, resolveKernelSuBottomBarDockHeight(searchExpanded = false))
