@@ -116,9 +116,9 @@ class HomeChromeLiquidSurfaceStructureTest {
             topBarSource.contains("private fun TopTabDockSurface(") ||
                 topBarSource.contains("private fun Md3CategoryTabRow(")
         )
-        assertTrue(
-            "top tab chrome should guard child indicator clip behind chrome surface gate",
-            topTabChrome.readText().contains("if (drawChromeSurface) Modifier.clip(tabShape) else Modifier")
+        assertFalse(
+            "top tab chrome should not clip the enlarged child indicator",
+            topTabChrome.readText().contains("Modifier.clip(tabShape)")
         )
         assertTrue(
             "top tab chrome should center the fixed-height tab row inside the taller shell",
@@ -155,13 +155,12 @@ class HomeChromeLiquidSurfaceStructureTest {
             "top tab indicator should reuse the bottom bar KSU indicator layer when chrome exists",
             topBarSource.contains("val shouldRenderTopTabLiquidGlassIndicator = shouldUseLiquidGlassIndicator") &&
                 topBarSource.contains("!hasOuterChromeSurface") &&
-                topBarSource.contains("if (shouldRenderTopTabLiquidGlassIndicator)") &&
                 topBarSource.contains("val shouldUseMd3DockBackedCapsule =") &&
                 topBarSource.contains("KernelSuBottomBarIndicatorLayer(") &&
                 topBarSource.contains("val shouldPrimeTopTabLiquidGlassCapture =") &&
-                topBarSource.contains("(isLiquidGlassEnabled || backdrop != null)") &&
                 topBarSource.contains("val topTabContentBackdrop = rememberLayerBackdrop()") &&
-                topBarSource.contains("rememberCombinedBackdrop(backdrop, topTabContentBackdrop)") &&
+                topBarSource.contains("val topTabIndicatorContentBackdrop = topTabContentBackdrop") &&
+                !topBarSource.contains("rememberCombinedBackdrop(backdrop, topTabContentBackdrop)") &&
                 topBarSource.contains("layerBackdrop(topTabContentBackdrop)") &&
                 topBarSource.contains("shouldRenderBottomBarIndicatorBackdrop(") &&
                 topBarSource.contains("allowIdleGlassEffect = false") &&

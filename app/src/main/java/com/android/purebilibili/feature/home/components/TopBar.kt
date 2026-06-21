@@ -91,7 +91,6 @@ import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.blur.currentUnifiedBlurIntensity
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import dev.chrisbanes.haze.HazeState
 import androidx.compose.ui.platform.LocalDensity
@@ -1060,14 +1059,14 @@ private fun LightweightHomeTopTabs(
             shouldUseLiquidGlassIndicator &&
             hasOuterChromeSurface
         val shouldPrimeTopTabLiquidGlassCapture =
-            (isLiquidGlassEnabled || backdrop != null) &&
+            isLiquidGlassEnabled &&
                 !skinPlainStyle &&
                 !hasSkinStickerIcons
         val isTopTabIndicatorInteractionActive =
             topTabDragActive || topTabShouldStretchIndicator || topTabPressProgress > 0.001f
         val shouldRenderTopTabIndicatorBackdrop = shouldRenderBottomBarIndicatorBackdrop(
             glassEnabled = shouldUseLiquidGlassIndicator,
-            hasContentBackdrop = backdrop != null,
+            hasContentBackdrop = true,
             indicatorProgress = topTabMotionProgress,
             isTransitionRunning = isTransitionRunning,
             isBottomBarInteractionActive = isTopTabIndicatorInteractionActive,
@@ -1075,18 +1074,9 @@ private fun LightweightHomeTopTabs(
             allowTransitionIndicatorPulse = topTabPressProgress > 0.001f
         )
         val topTabContentBackdrop = rememberLayerBackdrop()
-        val topTabIndicatorContentBackdrop = if (shouldPrimeTopTabLiquidGlassCapture && backdrop != null) {
-            rememberCombinedBackdrop(backdrop, topTabContentBackdrop)
-        } else {
-            topTabContentBackdrop
-        }
+        val topTabIndicatorContentBackdrop = topTabContentBackdrop
         val effectiveTopTabIndicatorContentBackdrop = if (shouldRenderTopTabIndicatorBackdrop) {
             topTabIndicatorContentBackdrop
-        } else {
-            null
-        }
-        val effectiveTopTabIndicatorBackdrop = if (shouldRenderTopTabIndicatorBackdrop) {
-            backdrop
         } else {
             null
         }
@@ -1188,7 +1178,7 @@ private fun LightweightHomeTopTabs(
                         shellShape = capsuleShape,
                         liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
                         contentBackdrop = effectiveTopTabIndicatorContentBackdrop,
-                        backdrop = effectiveTopTabIndicatorBackdrop,
+                        backdrop = null,
                         indicatorLensSpec = topTabIndicatorLensSpec,
                         effectivePressProgress = topTabPressProgress,
                         indicatorIdleSurfaceColor = resolveIosTopTabCapsuleContainerColor(
@@ -1201,7 +1191,11 @@ private fun LightweightHomeTopTabs(
                         velocityItemsPerSecond = topTabMotionVelocityItemsPerSecond,
                         isDragging = topTabShouldStretchIndicator,
                         indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
-                        indicatorLayerScaleTransform = topTabIndicatorLayerScaleTransform,
+                        indicatorLayerScaleTransform = if (topTabDragActive) {
+                            topTabIndicatorLayerScaleTransform
+                        } else {
+                            null
+                        },
                         bottomBarMotionSpec = topTabDragMotionSpec,
                         isDarkTheme = isDarkTheme
                     )
@@ -1218,7 +1212,7 @@ private fun LightweightHomeTopTabs(
                         shellShape = resolveSharedBottomBarCapsuleShape(),
                         liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
                         contentBackdrop = effectiveTopTabIndicatorContentBackdrop,
-                        backdrop = effectiveTopTabIndicatorBackdrop,
+                        backdrop = null,
                         indicatorLensSpec = topTabIndicatorLensSpec,
                         effectivePressProgress = topTabPressProgress,
                         indicatorIdleSurfaceColor = resolveAndroidNativeIdleIndicatorSurfaceColor(
@@ -1229,7 +1223,11 @@ private fun LightweightHomeTopTabs(
                         velocityItemsPerSecond = topTabMotionVelocityItemsPerSecond,
                         isDragging = topTabShouldStretchIndicator,
                         indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
-                        indicatorLayerScaleTransform = topTabIndicatorLayerScaleTransform,
+                        indicatorLayerScaleTransform = if (topTabDragActive) {
+                            topTabIndicatorLayerScaleTransform
+                        } else {
+                            null
+                        },
                         bottomBarMotionSpec = topTabDragMotionSpec,
                         isDarkTheme = isDarkTheme
                     )
@@ -1247,7 +1245,7 @@ private fun LightweightHomeTopTabs(
                         shellShape = capsuleShape,
                         liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
                         contentBackdrop = effectiveTopTabIndicatorContentBackdrop,
-                        backdrop = effectiveTopTabIndicatorBackdrop,
+                        backdrop = null,
                         indicatorLensSpec = topTabIndicatorLensSpec,
                         effectivePressProgress = topTabPressProgress,
                         indicatorIdleSurfaceColor = if (isDarkTheme) {
@@ -1260,7 +1258,11 @@ private fun LightweightHomeTopTabs(
                         velocityItemsPerSecond = topTabMotionVelocityItemsPerSecond,
                         isDragging = topTabShouldStretchIndicator,
                         indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
-                        indicatorLayerScaleTransform = topTabIndicatorLayerScaleTransform,
+                        indicatorLayerScaleTransform = if (topTabDragActive) {
+                            topTabIndicatorLayerScaleTransform
+                        } else {
+                            null
+                        },
                         bottomBarMotionSpec = topTabDragMotionSpec,
                         isDarkTheme = isDarkTheme
                     )
@@ -1376,7 +1378,7 @@ private fun LightweightHomeTopTabs(
                             shellShape = AppShapes.container(ContainerLevel.Pill),
                             liquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
                             contentBackdrop = effectiveTopTabIndicatorContentBackdrop,
-                            backdrop = effectiveTopTabIndicatorBackdrop,
+                            backdrop = null,
                             indicatorLensSpec = topTabIndicatorLensSpec,
                             effectivePressProgress = topTabPressProgress,
                             indicatorIdleSurfaceColor = indicatorColor.copy(alpha = 0.42f),
@@ -1385,7 +1387,11 @@ private fun LightweightHomeTopTabs(
                             velocityItemsPerSecond = topTabMotionVelocityItemsPerSecond,
                             isDragging = topTabShouldStretchIndicator,
                             indicatorLayerScaleProgress = topTabIndicatorLayerScaleProgress,
-                            indicatorLayerScaleTransform = topTabIndicatorLayerScaleTransform,
+                            indicatorLayerScaleTransform = if (topTabDragActive) {
+                                topTabIndicatorLayerScaleTransform
+                            } else {
+                                null
+                            },
                             bottomBarMotionSpec = topTabDragMotionSpec,
                             isDarkTheme = isDarkTheme,
                             indicatorAlignment = Alignment.BottomStart
