@@ -365,7 +365,7 @@ internal fun SettingsRootCategoryContent(
 ) {
     Column {
         when (category) {
-            SettingsRootCategory.INTERFACE_HOME -> {
+            SettingsRootCategory.APPEARANCE_INTERACTION -> {
                 SettingsDetailGroup(title = "界面") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -378,6 +378,7 @@ internal fun SettingsRootCategoryContent(
                         )
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 SettingsDetailGroup(title = "动效") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -390,8 +391,34 @@ internal fun SettingsRootCategoryContent(
                         )
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsDetailGroup(title = "导航") {
+                    SettingsDetailEntrySection(
+                        entries = listOf(
+                            SettingsDetailEntry(
+                                target = SettingsSearchTarget.NAVIGATION,
+                                title = "导航与标签",
+                                value = "底栏、顶部标签、平板侧边栏与底栏项目顺序",
+                                onClick = actions.onBottomBarClick
+                            )
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsDetailGroup(title = "全屏与手势") {
+                    SettingsDetailEntrySection(
+                        entries = listOf(
+                            SettingsDetailEntry(
+                                target = SettingsSearchTarget.FULLSCREEN_GESTURE,
+                                title = "全屏与手势",
+                                value = "全屏方向、截图按钮、应用内截图、亮度/音量/进度手势",
+                                onClick = actions.onPlaybackClick
+                            )
+                        )
+                    )
+                }
             }
-            SettingsRootCategory.DYNAMIC_RECOMMEND -> {
+            SettingsRootCategory.CONTENT_PLAYBACK -> {
                 SettingsDetailGroup(title = "首页展示") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -404,6 +431,7 @@ internal fun SettingsRootCategoryContent(
                         )
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 SettingsDetailGroup(title = "推荐流与动态") {
                     FeedApiSection(
                         feedApiType = state.feedApiType,
@@ -421,8 +449,7 @@ internal fun SettingsRootCategoryContent(
                         onHomeRefreshCountChange = actions.onHomeRefreshCountChange
                     )
                 }
-            }
-            SettingsRootCategory.PLAYBACK_INTERACTION -> {
+                Spacer(modifier = Modifier.height(12.dp))
                 SettingsDetailGroup(title = "播放") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -435,6 +462,7 @@ internal fun SettingsRootCategoryContent(
                         )
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 SettingsDetailGroup(title = "互动") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -448,33 +476,7 @@ internal fun SettingsRootCategoryContent(
                     )
                 }
             }
-            SettingsRootCategory.NAVIGATION_GESTURE -> {
-                SettingsDetailGroup(title = "导航") {
-                    SettingsDetailEntrySection(
-                        entries = listOf(
-                            SettingsDetailEntry(
-                                target = SettingsSearchTarget.NAVIGATION,
-                                title = "导航与标签",
-                                value = "底栏、顶部标签、平板侧边栏与底栏项目顺序",
-                                onClick = actions.onBottomBarClick
-                            )
-                        )
-                    )
-                }
-                SettingsDetailGroup(title = "全屏与手势") {
-                    SettingsDetailEntrySection(
-                        entries = listOf(
-                            SettingsDetailEntry(
-                                target = SettingsSearchTarget.FULLSCREEN_GESTURE,
-                                title = "全屏与手势",
-                                value = "全屏方向、截图按钮、应用内截图、亮度/音量/进度手势",
-                                onClick = actions.onPlaybackClick
-                            )
-                        )
-                    )
-                }
-            }
-            SettingsRootCategory.DATA_PRIVACY -> {
+            SettingsRootCategory.PRIVACY_STORAGE -> {
                 SettingsDetailGroup(title = "同步与存储") {
                     DataStorageSection(
                         customDownloadPath = state.customDownloadPath,
@@ -498,7 +500,7 @@ internal fun SettingsRootCategoryContent(
                     )
                 }
             }
-            SettingsRootCategory.EXTENSION_ABOUT -> {
+            SettingsRootCategory.SYSTEM_ABOUT -> {
                 SettingsDetailGroup(title = "诊断与插件") {
                     SettingsDetailEntrySection(
                         entries = listOf(
@@ -521,6 +523,7 @@ internal fun SettingsRootCategoryContent(
                         onExportLogsClick = actions.onExportLogsClick
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 SettingsDetailGroup(title = "关于与发布") {
                     AboutSection(
                         versionName = state.versionName,
