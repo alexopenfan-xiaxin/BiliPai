@@ -620,7 +620,7 @@ class iOSHomeHeaderVisualPolicyTest {
     @Test
     fun `home list top padding reserves full unified header height without underlapping md3 tabs`() {
         assertEquals(
-            169.dp,
+            164.dp,
             resolveHomeTopReservedListPadding(
                 statusBarHeight = 44.dp,
                 searchBarHeight = 48.dp,
@@ -629,12 +629,22 @@ class iOSHomeHeaderVisualPolicyTest {
             )
         )
         assertEquals(
-            171.dp,
+            166.dp,
             resolveHomeTopReservedListPadding(
                 statusBarHeight = 44.dp,
                 searchBarHeight = 52.dp,
                 tabRowHeight = 44.dp,
                 uiPreset = UiPreset.MD3
+            )
+        )
+        assertEquals(
+            168.dp,
+            resolveHomeTopReservedListPadding(
+                statusBarHeight = 44.dp,
+                searchBarHeight = 50.dp,
+                tabRowHeight = 48.dp,
+                uiPreset = UiPreset.MD3,
+                androidNativeVariant = AndroidNativeVariant.MIUIX
             )
         )
     }

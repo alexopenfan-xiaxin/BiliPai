@@ -1439,7 +1439,7 @@ internal fun Modifier.homeTopChromeSurface(
                     }
                 )
             } else {
-                this.background(surfaceColor)
+                this.background(surfaceColor, shape)
             }
         }
 
@@ -1457,7 +1457,7 @@ internal fun Modifier.homeTopChromeSurface(
                         ) {
                             blurredEdgeTreatment = resolveUnifiedBlurredEdgeTreatment(shape)
                         }
-                        .background(resolvedSurfaceColor)
+                        .background(resolvedSurfaceColor, shape)
                 } else {
                     this
                         .hazeEffect(
@@ -1488,7 +1488,7 @@ internal fun Modifier.homeTopChromeSurface(
                         )
                 }
             } else {
-                this.background(surfaceColor)
+                this.background(surfaceColor, shape)
             }
         }
 
@@ -1509,11 +1509,11 @@ internal fun Modifier.homeTopChromeSurface(
                         Modifier
                     }
                 )
-                .background(surfaceColor)
+                .background(surfaceColor, shape)
         }
 
         HomeTopChromeRenderMode.PLAIN -> {
-            this.background(surfaceColor)
+            this.background(surfaceColor, shape)
         }
     }
 }

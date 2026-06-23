@@ -367,7 +367,7 @@ internal fun HomeCategoryPageContent(
                         onSubCategoryChange = onPopularSubCategoryChange,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 8.dp, vertical = 0.dp)
                     )
                 }
             }
@@ -550,6 +550,8 @@ private fun PopularSubCategorySegmentedControl(
             subCategories.getOrNull(index)?.let(onSubCategoryChange)
         },
         modifier = modifier,
+        height = 48.dp,
+        indicatorHeight = 46.dp,
         labelFontSize = 14.sp,
         containerHorizontalPadding = 3.dp,
         containerVerticalPadding = 3.dp,

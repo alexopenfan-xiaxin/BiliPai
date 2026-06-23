@@ -139,6 +139,11 @@ class HomeChromeLiquidSurfaceStructureTest {
             "top tab dock should not switch sampling off during feed scroll",
             topBarSource.contains("shouldSampleTopTabDockBackdrop(")
         )
+        assertFalse(
+            "home top chrome fallback backgrounds must keep the provided shape so scrolling or low-budget material paths do not flash square corners",
+            topHeaderSource.contains(".background(surfaceColor)") ||
+                topHeaderSource.contains(".background(resolvedSurfaceColor)")
+        )
         assertTrue(
             "top tab row should continue to follow pager drag offset",
             topBarSource.contains("resolveTopTabIndicatorRenderPosition(") &&
