@@ -388,6 +388,10 @@ fun BottomBarLiquidSegmentedControl(
     forceLiquidChrome: Boolean = false,
     backdrop: Backdrop? = null,
     tapPressRefractionEnabled: Boolean = true,
+    containerColorOverride: Color? = null,
+    selectedTextColorOverride: Color? = null,
+    unselectedTextColorOverride: Color? = null,
+    indicatorIdleSurfaceColorOverride: Color? = null,
     onIndicatorPositionChanged: ((Float) -> Unit)? = null
 ) {
     if (items.isEmpty()) return
@@ -416,6 +420,8 @@ fun BottomBarLiquidSegmentedControl(
             itemWidth = itemWidth,
             height = height,
             labelFontSize = labelFontSize,
+            selectedTextColorOverride = selectedTextColorOverride,
+            unselectedTextColorOverride = unselectedTextColorOverride,
             onIndicatorPositionChanged = onIndicatorPositionChanged
         )
         return
@@ -453,7 +459,7 @@ fun BottomBarLiquidSegmentedControl(
         blurEnabled = liquidGlassEnabled,
         darkTheme = isDarkTheme
     )
-    val containerColor = resolveAndroidNativeFloatingBottomBarContainerColor(
+    val containerColor = containerColorOverride ?: resolveAndroidNativeFloatingBottomBarContainerColor(
         surfaceColor = surfaceColor,
         tuning = androidNativeTuning,
         glassEnabled = liquidGlassEnabled,
@@ -461,8 +467,9 @@ fun BottomBarLiquidSegmentedControl(
         blurIntensity = blurIntensity,
         liquidGlassPreset = homeSettings.bottomBarLiquidGlassPreset
     )
-    val selectedTextColor = MaterialTheme.colorScheme.primary
-    val unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 0.78f else 0.42f)
+    val selectedTextColor = selectedTextColorOverride ?: MaterialTheme.colorScheme.primary
+    val unselectedTextColor = unselectedTextColorOverride
+        ?: MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 0.78f else 0.42f)
     val exportTintColor = resolveAndroidNativeExportTintColor(
         themeColor = selectedTextColor,
         darkTheme = isDarkTheme
@@ -676,7 +683,8 @@ fun BottomBarLiquidSegmentedControl(
             backdrop = backdrop,
             indicatorLensSpec = indicatorLensSpec,
             effectivePressProgress = tapPressProgress,
-            indicatorIdleSurfaceColor = if (isDarkTheme) Color.White.copy(0.1f) else Color.Black.copy(0.1f),
+            indicatorIdleSurfaceColor = indicatorIdleSurfaceColorOverride
+                ?: if (isDarkTheme) Color.White.copy(0.1f) else Color.Black.copy(0.1f),
             glassEnabled = liquidGlassEnabled,
             motionProgress = motionProgress,
             velocityItemsPerSecond = dragState.deformationVelocityItemsPerSecond,
@@ -740,12 +748,15 @@ private fun AndroidNativeUnderlinedSegmentedControl(
     itemWidth: Dp? = null,
     height: Dp,
     labelFontSize: TextUnit,
+    selectedTextColorOverride: Color? = null,
+    unselectedTextColorOverride: Color? = null,
     onIndicatorPositionChanged: ((Float) -> Unit)? = null
 ) {
     val itemCount = items.size
     val safeSelectedIndex = selectedIndex.coerceIn(0, itemCount - 1)
-    val selectedTextColor = MaterialTheme.colorScheme.primary
-    val unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 0.78f else 0.42f)
+    val selectedTextColor = selectedTextColorOverride ?: MaterialTheme.colorScheme.primary
+    val unselectedTextColor = unselectedTextColorOverride
+        ?: MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 0.78f else 0.42f)
     val underlineShape = CircleShape
 
     SideEffect {

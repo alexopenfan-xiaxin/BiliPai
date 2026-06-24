@@ -26,6 +26,14 @@ data class ProfileSpaceTabItem(
     val title: String
 )
 
+data class ProfileSpaceTabChromeSpec(
+    val rowContainerAlpha: Float,
+    val controlContainerAlpha: Float,
+    val selectedIndicatorAlpha: Float,
+    val selectedTextAlpha: Float,
+    val unselectedTextAlpha: Float
+)
+
 enum class ProfileSpaceHomeSection {
     FAVORITES,
     BANGUMI,
@@ -84,6 +92,16 @@ fun defaultProfileSpaceTabs(): List<ProfileSpaceTabItem> {
     return ProfileSpaceMainTab.entries.map { tab ->
         ProfileSpaceTabItem(tab = tab, title = tab.title)
     }
+}
+
+fun resolveProfileSpaceTabChromeSpec(): ProfileSpaceTabChromeSpec {
+    return ProfileSpaceTabChromeSpec(
+        rowContainerAlpha = 0.98f,
+        controlContainerAlpha = 0.96f,
+        selectedIndicatorAlpha = 0.14f,
+        selectedTextAlpha = 1f,
+        unselectedTextAlpha = 0.72f
+    )
 }
 
 fun resolveProfileSpaceHomeSections(

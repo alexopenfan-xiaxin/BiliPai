@@ -1472,6 +1472,11 @@ private fun ProfileSpaceTabs(selectedTab: ProfileSpaceMainTab, onTabSelected: (P
         .getBottomBarLiquidGlassEnabled(context)
         .collectAsStateWithLifecycle(initialValue = true)
     val selectedIndex = tabs.indexOfFirst { it.tab == selectedTab }.coerceAtLeast(0)
+    val chromeSpec = remember { resolveProfileSpaceTabChromeSpec() }
+    val tabRowContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = chromeSpec.rowContainerAlpha)
+    val tabControlContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = chromeSpec.controlContainerAlpha)
+    val selectedColor = MaterialTheme.colorScheme.primary.copy(alpha = chromeSpec.selectedTextAlpha)
+    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = chromeSpec.unselectedTextAlpha)
     if (bottomBarLiquidGlassEnabled) {
         BottomBarLiquidSegmentedControl(
             items = tabs.map { it.title },
@@ -1479,12 +1484,16 @@ private fun ProfileSpaceTabs(selectedTab: ProfileSpaceMainTab, onTabSelected: (P
             onSelected = { index -> tabs.getOrNull(index)?.let { onTabSelected(it.tab) } },
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
+                .background(tabRowContainerColor)
                 .padding(horizontal = 18.dp, vertical = 8.dp),
             height = 46.dp,
             indicatorHeight = 40.dp,
             labelFontSize = 16.sp,
-            forceLiquidChrome = true
+            forceLiquidChrome = true,
+            containerColorOverride = tabControlContainerColor,
+            selectedTextColorOverride = selectedColor,
+            unselectedTextColorOverride = unselectedColor,
+            indicatorIdleSurfaceColorOverride = MaterialTheme.colorScheme.primary.copy(alpha = chromeSpec.selectedIndicatorAlpha)
         )
         return
     }
@@ -1492,7 +1501,7 @@ private fun ProfileSpaceTabs(selectedTab: ProfileSpaceMainTab, onTabSelected: (P
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
+            .background(tabRowContainerColor)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 18.dp),
         horizontalArrangement = Arrangement.spacedBy(28.dp)
@@ -1509,7 +1518,7 @@ private fun ProfileSpaceTabs(selectedTab: ProfileSpaceMainTab, onTabSelected: (P
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (selected) selectedColor else unselectedColor,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1518,7 +1527,7 @@ private fun ProfileSpaceTabs(selectedTab: ProfileSpaceMainTab, onTabSelected: (P
                         .width(28.dp)
                         .height(3.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .background(if (selected) selectedColor else Color.Transparent)
                 )
             }
         }

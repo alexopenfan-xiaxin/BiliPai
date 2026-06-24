@@ -441,4 +441,15 @@ class ProfileSpacePolicyTest {
         assertEquals("确认删除", action?.confirmText)
         assertEquals("再想想", action?.cancelText)
     }
+
+    @Test
+    fun `tab chrome stays readable over custom wallpaper`() {
+        val spec = resolveProfileSpaceTabChromeSpec()
+
+        assertTrue(spec.rowContainerAlpha >= 0.95f)
+        assertTrue(spec.controlContainerAlpha >= 0.9f)
+        assertTrue(spec.selectedTextAlpha >= 0.95f)
+        assertTrue(spec.unselectedTextAlpha >= 0.65f)
+        assertTrue(spec.selectedIndicatorAlpha in 0.1f..0.2f)
+    }
 }
