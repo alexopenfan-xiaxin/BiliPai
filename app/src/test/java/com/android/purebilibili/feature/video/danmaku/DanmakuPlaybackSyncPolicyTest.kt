@@ -48,6 +48,37 @@ class DanmakuPlaybackSyncPolicyTest {
     }
 
     @Test
+    fun `force resync should be less frequent at high playback speed`() {
+        assertFalse(shouldForceDanmakuDataResync(2.0f, 3))
+        assertFalse(shouldForceDanmakuDataResync(2.0f, 6))
+        assertTrue(shouldForceDanmakuDataResync(2.0f, 9))
+    }
+
+    @Test
+    fun `guard action should prefer soft resync at high playback speed`() {
+        assertEquals(
+            DanmakuSyncAction.SoftResync,
+            resolveDanmakuGuardAction(
+                videoSpeed = 2.0f,
+                tickCount = 9,
+                danmakuEnabled = true,
+                isPlaying = true,
+                hasData = true
+            )
+        )
+        assertEquals(
+            DanmakuSyncAction.HardResync,
+            resolveDanmakuGuardAction(
+                videoSpeed = 1.3f,
+                tickCount = 3,
+                danmakuEnabled = true,
+                isPlaying = true,
+                hasData = true
+            )
+        )
+    }
+
+    @Test
     fun `explicit resync should pause before setData and start`() {
         val calls = mutableListOf<String>()
 

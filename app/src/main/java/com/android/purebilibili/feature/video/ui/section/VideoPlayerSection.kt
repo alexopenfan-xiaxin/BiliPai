@@ -702,10 +702,12 @@ fun VideoPlayerSection(
                 lockedLongPressSpeed = lockedLongPressSpeed
             )
         ) {
-            playerState.player.playbackParameters = resolveSpeedSafePlaybackParameters(
-                requestedSpeed = lockedLongPressSpeed,
-                currentAudioQuality = currentAudioQuality
-            )
+            if (!onPlaybackSpeedChange(lockedLongPressSpeed)) {
+                playerState.player.playbackParameters = resolveSpeedSafePlaybackParameters(
+                    requestedSpeed = lockedLongPressSpeed,
+                    currentAudioQuality = currentAudioQuality
+                )
+            }
         }
     }
 
@@ -1050,7 +1052,9 @@ fun VideoPlayerSection(
             longPressSpeedLocked = false
         }
         effectiveLongPressSpeed = startDecision.targetPlaybackParameters.speed
-        player.playbackParameters = startDecision.targetPlaybackParameters
+        if (!onPlaybackSpeedChange(effectiveLongPressSpeed)) {
+            player.playbackParameters = startDecision.targetPlaybackParameters
+        }
         if (!longPressSpeedLockEnabled && !hasShownLongPressSpeedLockHint) {
             hasShownLongPressSpeedLockHintLocally = true
             showLongPressSpeedLockHint = true
@@ -1101,7 +1105,9 @@ fun VideoPlayerSection(
         if (!longPressSpeedLocked) return
         longPressSpeedLocked = false
         lockedLongPressSpeed = originalPlaybackParameters.speed
-        playerState.player.playbackParameters = originalPlaybackParameters
+        if (!onPlaybackSpeedChange(originalPlaybackParameters.speed)) {
+            playerState.player.playbackParameters = originalPlaybackParameters
+        }
         isLongPressing = false
         longPressSpeedFeedbackVisible = false
         longPressSpeedEndedAtMs = android.os.SystemClock.elapsedRealtime()
@@ -1130,7 +1136,9 @@ fun VideoPlayerSection(
                 gestureEnded = gestureEnded
             )
         ) {
-            playerState.player.playbackParameters = originalPlaybackParameters
+            if (!onPlaybackSpeedChange(originalPlaybackParameters.speed)) {
+                playerState.player.playbackParameters = originalPlaybackParameters
+            }
         }
         isLongPressing = false
         longPressSpeedFeedbackVisible = false

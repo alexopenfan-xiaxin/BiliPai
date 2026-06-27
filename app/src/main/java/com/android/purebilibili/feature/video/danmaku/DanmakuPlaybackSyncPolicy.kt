@@ -7,6 +7,8 @@ import kotlin.math.roundToLong
 private const val NORMAL_SYNC_INTERVAL_MS = 3200L
 private const val NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS = 6
 private const val NON_NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS = 3
+private const val HIGH_SPEED_FORCE_RESYNC_INTERVAL_TICKS = 9
+private const val HIGH_SPEED_SOFT_RESYNC_THRESHOLD = 1.75f
 private const val EXPLICIT_SEEK_RESYNC_TOLERANCE_MS = 500L
 private const val EXPLICIT_SEEK_RESYNC_WINDOW_MS = 1500L
 private const val MIN_ENGINE_PLAYBACK_SPEED = 0.1f
@@ -15,6 +17,7 @@ private const val MAX_ENGINE_PLAYBACK_SPEED = 4.0f
 internal enum class DanmakuSyncAction {
     None,
     PauseOnly,
+    SoftResync,
     HardResync
 }
 
@@ -53,11 +56,12 @@ internal fun resolveDanmakuDriftSyncIntervalMs(videoSpeed: Float): Long {
 
 internal fun shouldForceDanmakuDataResync(videoSpeed: Float, tickCount: Int): Boolean {
     if (tickCount <= 0) return false
-    val isNearNormalSpeed = abs(normalizeDanmakuPlaybackSpeed(videoSpeed) - 1.0f) <= 0.02f
-    val interval = if (isNearNormalSpeed) {
-        NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS
-    } else {
-        NON_NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS
+    val normalizedSpeed = normalizeDanmakuPlaybackSpeed(videoSpeed)
+    val isNearNormalSpeed = abs(normalizedSpeed - 1.0f) <= 0.02f
+    val interval = when {
+        isNearNormalSpeed -> NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS
+        normalizedSpeed >= HIGH_SPEED_SOFT_RESYNC_THRESHOLD -> HIGH_SPEED_FORCE_RESYNC_INTERVAL_TICKS
+        else -> NON_NORMAL_SPEED_FORCE_RESYNC_INTERVAL_TICKS
     }
     return tickCount % interval == 0
 }
@@ -121,7 +125,11 @@ internal fun resolveDanmakuActionForPlaybackSpeedChange(
     hasData: Boolean
 ): DanmakuSyncAction {
     if (!isPlayerPlaying || !hasData) return DanmakuSyncAction.None
-    return if (abs(previousSpeed - newSpeed) > 0.01f) DanmakuSyncAction.HardResync else DanmakuSyncAction.None
+    return if (abs(previousSpeed - newSpeed) > 0.01f) {
+        DanmakuSyncAction.SoftResync
+    } else {
+        DanmakuSyncAction.None
+    }
 }
 
 internal fun resolveDanmakuActionForForegroundRecovery(
@@ -150,10 +158,11 @@ internal fun resolveDanmakuGuardAction(
     hasData: Boolean
 ): DanmakuSyncAction {
     if (!danmakuEnabled || !isPlaying || !hasData) return DanmakuSyncAction.None
-    return if (shouldForceDanmakuDataResync(videoSpeed, tickCount)) {
-        DanmakuSyncAction.HardResync
+    if (!shouldForceDanmakuDataResync(videoSpeed, tickCount)) return DanmakuSyncAction.None
+    return if (normalizeDanmakuPlaybackSpeed(videoSpeed) >= HIGH_SPEED_SOFT_RESYNC_THRESHOLD) {
+        DanmakuSyncAction.SoftResync
     } else {
-        DanmakuSyncAction.None
+        DanmakuSyncAction.HardResync
     }
 }
 

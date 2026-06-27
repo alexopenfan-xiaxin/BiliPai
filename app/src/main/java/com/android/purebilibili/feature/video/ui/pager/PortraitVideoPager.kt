@@ -1393,7 +1393,11 @@ private fun VideoPageItem(
 
     LaunchedEffect(isCurrentPage, isLongPressing, longPressOriginPlaybackParameters) {
         if (shouldRestorePortraitLongPressSpeed(isLongPressing = isLongPressing, isCurrentPage = isCurrentPage)) {
-            exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+            val restoreSpeed = longPressOriginPlaybackParameters.speed
+            val handledByViewModel = viewModel.applyPlaybackSpeedFromUi(restoreSpeed)
+            if (!handledByViewModel || exoPlayer.playbackParameters.speed != restoreSpeed) {
+                exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+            }
             isLongPressing = false
             showLongPressSpeedFeedback = false
         }
@@ -1404,7 +1408,11 @@ private fun VideoPageItem(
     DisposableEffect(exoPlayer) {
         onDispose {
             if (latestIsLongPressing) {
-                exoPlayer.playbackParameters = latestLongPressOriginPlaybackParameters
+                val restoreSpeed = latestLongPressOriginPlaybackParameters.speed
+                val handledByViewModel = viewModel.applyPlaybackSpeedFromUi(restoreSpeed)
+                if (!handledByViewModel || exoPlayer.playbackParameters.speed != restoreSpeed) {
+                    exoPlayer.playbackParameters = latestLongPressOriginPlaybackParameters
+                }
             }
         }
     }
@@ -1442,7 +1450,11 @@ private fun VideoPageItem(
                         observedMultiTouch = true
 
                         if (isLongPressing) {
-                            exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+                            val restoreSpeed = longPressOriginPlaybackParameters.speed
+                            val handledByViewModel = viewModel.applyPlaybackSpeedFromUi(restoreSpeed)
+                            if (!handledByViewModel || exoPlayer.playbackParameters.speed != restoreSpeed) {
+                                exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+                            }
                             isLongPressing = false
                             showLongPressSpeedFeedback = false
                         }
@@ -1518,14 +1530,21 @@ private fun VideoPageItem(
                             currentAudioQuality = currentAudioQuality
                         )
                         effectiveLongPressSpeed = longPressPlaybackParameters.speed
-                        exoPlayer.playbackParameters = longPressPlaybackParameters
+                        val handledByViewModel = viewModel.applyPlaybackSpeedFromUi(effectiveLongPressSpeed)
+                        if (!handledByViewModel || exoPlayer.playbackParameters.speed != effectiveLongPressSpeed) {
+                            exoPlayer.playbackParameters = longPressPlaybackParameters
+                        }
                         isLongPressing = true
                         showLongPressSpeedFeedback = true
                     },
                     onPress = {
                         tryAwaitRelease()
                         if (isLongPressing) {
-                            exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+                            val restoreSpeed = longPressOriginPlaybackParameters.speed
+                            val handledByViewModel = viewModel.applyPlaybackSpeedFromUi(restoreSpeed)
+                            if (!handledByViewModel || exoPlayer.playbackParameters.speed != restoreSpeed) {
+                                exoPlayer.playbackParameters = longPressOriginPlaybackParameters
+                            }
                             isLongPressing = false
                             showLongPressSpeedFeedback = false
                         }

@@ -476,6 +476,27 @@ class DanmakuManager private constructor(
         Log.w(TAG, " Resynced danmaku timeline ($reason) at ${positionMs}ms, play=$shouldPlay")
     }
 
+    private fun softResyncDanmakuTimeline(
+        positionMs: Long,
+        shouldPlay: Boolean,
+        invalidateView: Boolean = true,
+        reason: String
+    ) {
+        val ctrl = controller ?: return
+        val safePositionMs = positionMs.coerceAtLeast(0L)
+        ctrl.start(safePositionMs)
+        if (shouldPlay && config.isEnabled) {
+            isPlaying = true
+        } else {
+            ctrl.pause()
+            isPlaying = false
+        }
+        if (invalidateView) {
+            ctrl.invalidateView()
+        }
+        Log.w(TAG, " Soft-resynced danmaku timeline ($reason) at ${safePositionMs}ms, play=$shouldPlay")
+    }
+
     private fun markExplicitSeekResync(positionMs: Long, startedPlayback: Boolean) {
         lastExplicitSeekPositionMs = positionMs
         lastExplicitSeekElapsedRealtimeMs = SystemClock.elapsedRealtime()
@@ -1140,6 +1161,13 @@ class DanmakuManager private constructor(
                                 hasData = cachedDanmakuList != null
                             )
                         ) {
+                            DanmakuSyncAction.SoftResync -> {
+                                softResyncDanmakuTimeline(
+                                    positionMs = playerPos,
+                                    shouldPlay = true,
+                                    reason = "drift_sync_soft"
+                                )
+                            }
                             DanmakuSyncAction.HardResync -> {
                                 cachedDanmakuList?.let { list ->
                                     resyncDanmakuTimeline(
@@ -1251,6 +1279,7 @@ class DanmakuManager private constructor(
                             Log.w(TAG, " Player playing but danmaku data not loaded/enabled yet, will sync after load")
                         }
                     }
+                    DanmakuSyncAction.SoftResync -> Unit
                 }
             }
             
@@ -1311,6 +1340,7 @@ class DanmakuManager private constructor(
                             wasBufferingWhilePlaying = false
                         }
                     }
+                    DanmakuSyncAction.SoftResync -> Unit
                 }
             }
             
@@ -1361,24 +1391,37 @@ class DanmakuManager private constructor(
                     controller?.let { ctrl ->
                         applyPlaybackSpeedToController(ctrl)
                         
-                        if (
+                        when (
                             resolveDanmakuActionForPlaybackSpeedChange(
                                 previousSpeed = previousSpeed,
                                 newSpeed = videoSpeed,
                                 isPlayerPlaying = exoPlayer.isPlaying,
                                 hasData = cachedDanmakuList != null
-                            ) == DanmakuSyncAction.HardResync
+                            )
                         ) {
-                            val currentPos = exoPlayer.currentPosition
-                            Log.w(TAG, "⏩ Speed changed, resyncing danmaku at ${currentPos}ms")
-                            cachedDanmakuList?.let { list ->
-                                resyncDanmakuTimeline(
-                                    list = list,
+                            DanmakuSyncAction.SoftResync -> {
+                                val currentPos = exoPlayer.currentPosition
+                                Log.w(TAG, "⏩ Speed changed, soft-resyncing danmaku at ${currentPos}ms")
+                                softResyncDanmakuTimeline(
                                     positionMs = currentPos,
                                     shouldPlay = exoPlayer.isPlaying,
                                     reason = "speed_change"
                                 )
                             }
+                            DanmakuSyncAction.HardResync -> {
+                                val currentPos = exoPlayer.currentPosition
+                                Log.w(TAG, "⏩ Speed changed, resyncing danmaku at ${currentPos}ms")
+                                cachedDanmakuList?.let { list ->
+                                    resyncDanmakuTimeline(
+                                        list = list,
+                                        positionMs = currentPos,
+                                        shouldPlay = exoPlayer.isPlaying,
+                                        reason = "speed_change"
+                                    )
+                                }
+                            }
+                            DanmakuSyncAction.None,
+                            DanmakuSyncAction.PauseOnly -> Unit
                         }
                         
                         ctrl.invalidateView()
@@ -1803,7 +1846,8 @@ class DanmakuManager private constructor(
                 stopDriftSync()
                 Log.w(TAG, "🌅 Danmaku foreground recovery kept paused at end state")
             }
-            DanmakuSyncAction.None -> Unit
+            DanmakuSyncAction.None,
+            DanmakuSyncAction.SoftResync -> Unit
         }
     }
     
