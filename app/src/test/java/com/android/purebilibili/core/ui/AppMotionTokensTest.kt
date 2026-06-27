@@ -112,7 +112,7 @@ class AppMotionTokensTest {
     fun pullRefreshReleaseSpring_usesTightDampingForSmallRebound() {
         val spring = pullRefreshReleaseSpring()
 
-        assertTrue(spring.dampingRatio >= 0.86f, "pull refresh release should not visibly bounce")
-        assertTrue(spring.stiffness >= 500f, "pull refresh release should settle quickly")
+        assertTrue(spring.dampingRatio >= 0.94f, "pull refresh release should not visibly bounce")
+        assertTrue(spring.stiffness >= 480f, "pull refresh release should settle quickly")
     }
 }

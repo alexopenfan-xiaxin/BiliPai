@@ -1856,7 +1856,15 @@ fun VideoPlayerSection(
             )
         val danmakuBlockRulesRaw = danmakuSettings.blockRulesRaw
         val danmakuBlockRules = danmakuSettings.blockRules
-        val canSyncDanmakuCloud = (uiState as? PlayerUiState.Success)?.isLoggedIn == true
+        val isLoggedIn = (uiState as? PlayerUiState.Success)?.isLoggedIn == true
+        val danmakuCloudSyncEnabled by com.android.purebilibili.core.store.SettingsManager
+            .getDanmakuCloudSyncEnabled(context)
+            .collectAsStateWithLifecycle(initialValue = true)
+        val canSyncDanmakuCloud = com.android.purebilibili.feature.video.danmaku
+            .shouldSyncDanmakuSettingsToCloud(
+                isLoggedIn = isLoggedIn,
+                cloudSyncEnabled = danmakuCloudSyncEnabled
+            )
         var pendingDanmakuCloudSync by remember {
             mutableStateOf<com.android.purebilibili.data.repository.DanmakuCloudSyncSettings?>(null)
         }
@@ -1908,6 +1916,7 @@ fun VideoPlayerSection(
             speed: Float = danmakuSpeed,
             fontScale: Float = danmakuFontScale
         ) {
+            if (!canSyncDanmakuCloud) return
             pendingDanmakuCloudSync = buildDanmakuCloudSyncSettings(
                 enabled = enabled,
                 allowScroll = allowScroll,
@@ -1924,6 +1933,7 @@ fun VideoPlayerSection(
         }
 
         fun requestDanmakuCloudSyncNow() {
+            if (!canSyncDanmakuCloud) return
             pendingDanmakuCloudSync = buildDanmakuCloudSyncSettings()
             danmakuManualSyncRequestVersion = android.os.SystemClock.elapsedRealtime()
             danmakuCloudSyncUiState = resolveDanmakuCloudSyncStateAfterQueued(danmakuCloudSyncUiState)
@@ -2128,7 +2138,7 @@ fun VideoPlayerSection(
             )
         }
 
-        LaunchedEffect(canSyncDanmakuCloud) {
+        LaunchedEffect(canSyncDanmakuCloud, danmakuCloudSyncEnabled) {
             if (canSyncDanmakuCloud) return@LaunchedEffect
             pendingDanmakuCloudSync = null
             danmakuCloudSyncUiState = DanmakuCloudSyncUiState()
@@ -3814,7 +3824,8 @@ fun VideoPlayerSection(
                 danmakuBlockRulesRaw = danmakuBlockRulesRaw,
                 danmakuSmartOcclusion = danmakuSmartOcclusion,
                 danmakuFullscreenPanelWidthMode = danmakuFullscreenPanelWidthMode,
-                showDanmakuSyncSection = canSyncDanmakuCloud,
+                showDanmakuSyncSection = isLoggedIn,
+                danmakuCloudSyncEnabled = danmakuCloudSyncEnabled,
                 danmakuSyncUiState = danmakuCloudSyncUiState,
                 onDanmakuOpacityChange = { value ->
                     danmakuManager.opacity = value
@@ -4035,6 +4046,16 @@ fun VideoPlayerSection(
                 onDanmakuFullscreenPanelWidthModeChange = { value ->
                     scope.launch {
                         com.android.purebilibili.core.store.SettingsManager.setDanmakuFullscreenPanelWidthMode(context, value)
+                    }
+                },
+                onDanmakuCloudSyncEnabledChange = { enabled ->
+                    scope.launch {
+                        com.android.purebilibili.core.store.SettingsManager
+                            .setDanmakuCloudSyncEnabled(context, enabled)
+                    }
+                    if (!enabled) {
+                        pendingDanmakuCloudSync = null
+                        danmakuCloudSyncUiState = DanmakuCloudSyncUiState()
                     }
                 },
                 onDanmakuSyncNowClick = {

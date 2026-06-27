@@ -5,7 +5,7 @@ import com.android.purebilibili.core.theme.UiPreset
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun resolvePullRefreshThresholdDp(): Float = 56f
+internal fun resolvePullRefreshThresholdDp(): Float = 44f
 
 enum class HomePullRefreshMotionStyle {
     IOS,
@@ -127,9 +127,15 @@ internal fun resolvePullContentMaxOffsetDp(
     indicatorStyle: HomePullRefreshIndicatorStyle
 ): Float {
     return when (indicatorStyle) {
-        HomePullRefreshIndicatorStyle.MD3_SCREENSHOT_HANDLE -> 196f
+        HomePullRefreshIndicatorStyle.MD3_SCREENSHOT_HANDLE -> 172f
         else -> 140f
     }
+}
+
+internal fun resolveMd3ScreenshotPullOffsetFraction(distanceFraction: Float): Float {
+    val clamped = distanceFraction.coerceIn(0f, 1.12f)
+    val resistance = 1f + 0.35f * clamped
+    return clamped / resistance
 }
 
 internal fun resolvePullContentOffsetFraction(
@@ -140,8 +146,7 @@ internal fun resolvePullContentOffsetFraction(
 ): Float {
     if (isRefreshing) return 0f
     if (indicatorStyle == HomePullRefreshIndicatorStyle.MD3_SCREENSHOT_HANDLE) {
-        val clampedDistance = distanceFraction.coerceIn(0f, 1.12f)
-        return clampedDistance
+        return resolveMd3ScreenshotPullOffsetFraction(distanceFraction)
     }
     val clampedDistance = distanceFraction.coerceAtMost(2f).coerceAtLeast(0f)
     return clampedDistance * 0.5f
@@ -185,7 +190,7 @@ internal fun resolveMd3ScreenshotRefreshIndicatorHeightDp(
 ): Float {
     if (isRefreshing) return 42f
     val clampedProgress = progress.coerceIn(0f, 1.35f)
-    return 44f + (clampedProgress * 42f)
+    return 44f + (clampedProgress * 26f)
 }
 
 internal fun resolveMd3ScreenshotRefreshIndicatorTotalHeightDp(

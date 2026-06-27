@@ -463,6 +463,7 @@ fun VideoPlayerOverlay(
     danmakuSmartOcclusion: Boolean = true,
     danmakuFullscreenPanelWidthMode: DanmakuPanelWidthMode = DanmakuPanelWidthMode.THIRD,
     showDanmakuSyncSection: Boolean = false,
+    danmakuCloudSyncEnabled: Boolean = true,
     danmakuSyncUiState: DanmakuCloudSyncUiState = DanmakuCloudSyncUiState(),
     onDanmakuOpacityChange: (Float) -> Unit = {},
     onDanmakuFontScaleChange: (Float) -> Unit = {},
@@ -488,6 +489,7 @@ fun VideoPlayerOverlay(
     onDanmakuBlockRulesRawChange: (String) -> Unit = {},
     onDanmakuSmartOcclusionChange: (Boolean) -> Unit = {},
     onDanmakuFullscreenPanelWidthModeChange: (DanmakuPanelWidthMode) -> Unit = {},
+    onDanmakuCloudSyncEnabledChange: (Boolean) -> Unit = {},
     onDanmakuSyncNowClick: () -> Unit = {},
     subtitleControlState: SubtitleControlUiState = SubtitleControlUiState(),
     subtitleControlCallbacks: SubtitleControlCallbacks = SubtitleControlCallbacks(),
@@ -1733,6 +1735,7 @@ fun VideoPlayerOverlay(
                 smartOcclusion = danmakuSmartOcclusion,
                 fullscreenWidthMode = danmakuFullscreenPanelWidthMode,
                 showSyncSection = showDanmakuSyncSection,
+                cloudSyncEnabled = danmakuCloudSyncEnabled,
                 syncUiState = danmakuSyncUiState,
                 onOpacityChange = onDanmakuOpacityChange,
                 onFontScaleChange = onDanmakuFontScaleChange,
@@ -1758,6 +1761,7 @@ fun VideoPlayerOverlay(
                 onBlockRulesRawChange = onDanmakuBlockRulesRawChange,
                 onSmartOcclusionChange = onDanmakuSmartOcclusionChange,
                 onFullscreenWidthModeChange = onDanmakuFullscreenPanelWidthModeChange,
+                onCloudSyncEnabledChange = onDanmakuCloudSyncEnabledChange,
                 onSyncNowClick = onDanmakuSyncNowClick,
                 onDismiss = { showDanmakuSettings = false }
             )

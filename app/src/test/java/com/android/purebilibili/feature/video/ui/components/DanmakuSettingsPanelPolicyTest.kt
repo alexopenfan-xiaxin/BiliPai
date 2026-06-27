@@ -5,6 +5,7 @@ import androidx.compose.material3.lightColorScheme
 import com.android.purebilibili.core.store.DanmakuPanelWidthMode
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncStatus
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncUiState
+import com.android.purebilibili.feature.video.danmaku.resolveDanmakuCloudSyncToggleSubtitle
 import com.android.purebilibili.feature.video.danmaku.DanmakuBlockRuleSections
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -173,6 +174,12 @@ class DanmakuSettingsPanelPolicyTest {
                 DanmakuCloudSyncUiState(status = DanmakuCloudSyncStatus.FAILURE)
             )
         )
+    }
+
+    @Test
+    fun cloudSyncToggleSubtitle_mentionsWebImpactWhenEnabled() {
+        assertTrue(resolveDanmakuCloudSyncToggleSubtitle(enabled = true).contains("网页版"))
+        assertTrue(resolveDanmakuCloudSyncToggleSubtitle(enabled = false).contains("本机"))
     }
 
     @Test

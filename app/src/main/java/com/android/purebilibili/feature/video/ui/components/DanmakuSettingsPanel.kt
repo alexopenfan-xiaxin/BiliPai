@@ -6,6 +6,7 @@ import com.android.purebilibili.core.store.DanmakuSettingsScope
 import com.android.purebilibili.feature.video.danmaku.DanmakuBlockRuleSections
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncStatus
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncUiState
+import com.android.purebilibili.feature.video.danmaku.resolveDanmakuCloudSyncToggleSubtitle
 import com.android.purebilibili.feature.video.danmaku.mergeDanmakuBlockRuleSections
 import com.android.purebilibili.feature.video.danmaku.parseDanmakuBlockRules
 import com.android.purebilibili.feature.video.danmaku.partitionDanmakuBlockRules
@@ -275,6 +276,7 @@ fun DanmakuSettingsPanel(
     showBlockRuleEditor: Boolean = false,
     showSmartOcclusionSection: Boolean = false,
     showSyncSection: Boolean = false,
+    cloudSyncEnabled: Boolean = true,
     blockRulesRaw: String = "",
     smartOcclusion: Boolean = true,
     fullscreenWidthMode: DanmakuPanelWidthMode = DanmakuPanelWidthMode.THIRD,
@@ -303,6 +305,7 @@ fun DanmakuSettingsPanel(
     onBlockRulesRawChange: (String) -> Unit = {},
     onSmartOcclusionChange: (Boolean) -> Unit = {},
     onFullscreenWidthModeChange: (DanmakuPanelWidthMode) -> Unit = {},
+    onCloudSyncEnabledChange: (Boolean) -> Unit = {},
     onSyncNowClick: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
@@ -480,69 +483,100 @@ fun DanmakuSettingsPanel(
                             color = panelColors.itemColor,
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = "账号同步",
-                                        color = panelColors.titleColor,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = syncUiState.message
-                                            ?: when (syncUiState.status) {
-                                                DanmakuCloudSyncStatus.SUCCESS -> "当前基础弹幕设置已同步到账号"
-                                                DanmakuCloudSyncStatus.SYNCING -> "正在同步当前弹幕设置"
-                                                DanmakuCloudSyncStatus.PENDING -> "检测到设置变更，等待同步"
-                                                DanmakuCloudSyncStatus.FAILURE -> "最近一次同步失败，可立即重试"
-                                                DanmakuCloudSyncStatus.IDLE -> "当前设备本地设置尚未触发同步"
-                                            },
-                                        color = panelColors.supportingColor,
-                                        fontSize = 11.sp
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(
-                                    horizontalAlignment = Alignment.End,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(999.dp))
-                                            .background(panelColors.badgeBackgroundColor)
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                                    ) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = resolveDanmakuSyncStatusBadgeText(syncUiState),
-                                            color = panelColors.badgeContentColor,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                    OutlinedButton(
-                                        onClick = onSyncNowClick,
-                                        enabled = syncUiState.status != DanmakuCloudSyncStatus.SYNCING,
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                        shape = RoundedCornerShape(10.dp)
-                                    ) {
-                                        Text(
-                                            text = if (shouldShowDanmakuSyncRetry(syncUiState.status)) {
-                                                "重试同步"
-                                            } else {
-                                                "立即同步"
-                                            },
-                                            fontSize = 12.sp,
+                                            text = "同步弹幕设置到账号",
+                                            color = panelColors.titleColor,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.Medium
                                         )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = resolveDanmakuCloudSyncToggleSubtitle(cloudSyncEnabled),
+                                            color = panelColors.supportingColor,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Switch(
+                                        checked = cloudSyncEnabled,
+                                        onCheckedChange = onCloudSyncEnabledChange
+                                    )
+                                }
+
+                                if (cloudSyncEnabled) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "账号同步状态",
+                                                color = panelColors.titleColor,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = syncUiState.message
+                                                    ?: when (syncUiState.status) {
+                                                        DanmakuCloudSyncStatus.SUCCESS -> "当前基础弹幕设置已同步到账号"
+                                                        DanmakuCloudSyncStatus.SYNCING -> "正在同步当前弹幕设置"
+                                                        DanmakuCloudSyncStatus.PENDING -> "检测到设置变更，等待同步"
+                                                        DanmakuCloudSyncStatus.FAILURE -> "最近一次同步失败，可立即重试"
+                                                        DanmakuCloudSyncStatus.IDLE -> "当前设备本地设置尚未触发同步"
+                                                    },
+                                                color = panelColors.supportingColor,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(
+                                            horizontalAlignment = Alignment.End,
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(999.dp))
+                                                    .background(panelColors.badgeBackgroundColor)
+                                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                                            ) {
+                                                Text(
+                                                    text = resolveDanmakuSyncStatusBadgeText(syncUiState),
+                                                    color = panelColors.badgeContentColor,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                            OutlinedButton(
+                                                onClick = onSyncNowClick,
+                                                enabled = syncUiState.status != DanmakuCloudSyncStatus.SYNCING,
+                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                                shape = RoundedCornerShape(10.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (shouldShowDanmakuSyncRetry(syncUiState.status)) {
+                                                        "重试同步"
+                                                    } else {
+                                                        "立即同步"
+                                                    },
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

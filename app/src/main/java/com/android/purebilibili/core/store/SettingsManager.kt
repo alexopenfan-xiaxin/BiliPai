@@ -972,6 +972,7 @@ object SettingsManager {
     private val KEY_SLIDE_VOLUME_BRIGHTNESS_ENABLED = booleanPreferencesKey("slide_volume_brightness_enabled")
     private val KEY_SET_SYSTEM_BRIGHTNESS = booleanPreferencesKey("set_system_brightness")
     private val KEY_PIP_NO_DANMAKU = booleanPreferencesKey("pip_no_danmaku")
+    private val KEY_DANMAKU_CLOUD_SYNC_ENABLED = booleanPreferencesKey("danmaku_cloud_sync_enabled")
     private val KEY_SHOW_PLAYER_CAST_BUTTON = booleanPreferencesKey("show_player_cast_button")
     private val KEY_SHOW_VIDEO_FOLLOW_BUTTON = booleanPreferencesKey("show_video_follow_button")
     private val KEY_PLAYER_PROGRESS_PLACEMENT = intPreferencesKey("player_progress_placement")
@@ -1966,6 +1967,15 @@ object SettingsManager {
     suspend fun setPipNoDanmakuEnabled(context: Context, value: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[KEY_PIP_NO_DANMAKU] = value
+        }
+    }
+
+    fun getDanmakuCloudSyncEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
+        .map { preferences -> preferences[KEY_DANMAKU_CLOUD_SYNC_ENABLED] ?: true }
+
+    suspend fun setDanmakuCloudSyncEnabled(context: Context, value: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_DANMAKU_CLOUD_SYNC_ENABLED] = value
         }
     }
 

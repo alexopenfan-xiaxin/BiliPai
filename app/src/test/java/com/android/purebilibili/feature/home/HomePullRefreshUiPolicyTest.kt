@@ -65,7 +65,7 @@ class HomePullRefreshUiPolicyTest {
 
     @Test
     fun `resolvePullRefreshThresholdDp returns comfortable trigger distance`() {
-        assertEquals(56f, resolvePullRefreshThresholdDp(), 0.001f)
+        assertEquals(44f, resolvePullRefreshThresholdDp(), 0.001f)
     }
 
     @Test
@@ -75,7 +75,7 @@ class HomePullRefreshUiPolicyTest {
             dragMultiplier = 0.5f
         )
 
-        assertEquals(112f, requiredFingerTravelDp, 0.001f)
+        assertEquals(88f, requiredFingerTravelDp, 0.001f)
         assertTrue(requiredFingerTravelDp < 160f)
     }
 
@@ -257,9 +257,19 @@ class HomePullRefreshUiPolicyTest {
 
         assertTrue(lightPull > 0f)
         assertTrue(heavyPull > lightPull)
-        assertEquals(0.4f, lightPull, 0.001f)
-        assertEquals(1.12f, heavyPull, 0.001f)
-        assertTrue(heavyPull <= 1.12f)
+        assertEquals(0.351f, lightPull, 0.001f)
+        assertEquals(0.805f, heavyPull, 0.001f)
+        assertTrue(heavyPull < 1.12f)
+    }
+
+    @Test
+    fun `md3 screenshot pull offset applies progressive drag resistance`() {
+        assertEquals(0f, resolveMd3ScreenshotPullOffsetFraction(0f), 0.001f)
+        assertEquals(0.741f, resolveMd3ScreenshotPullOffsetFraction(1f), 0.001f)
+        assertTrue(
+            resolveMd3ScreenshotPullOffsetFraction(0.5f) <
+                resolveMd3ScreenshotPullOffsetFraction(1f)
+        )
     }
 
     @Test
@@ -310,7 +320,7 @@ class HomePullRefreshUiPolicyTest {
     @Test
     fun `md3 screenshot pull content max offset reserves indicator distance`() {
         assertEquals(
-            196f,
+            172f,
             resolvePullContentMaxOffsetDp(HomePullRefreshIndicatorStyle.MD3_SCREENSHOT_HANDLE),
             0.001f
         )
@@ -335,7 +345,7 @@ class HomePullRefreshUiPolicyTest {
     @Test
     fun `stable md3 screenshot pull offset follows finger back toward top`() {
         assertEquals(
-            0.5f,
+            0.426f,
             resolveStablePullContentOffsetFraction(
                 distanceFraction = 0.5f,
                 isRefreshing = false,
@@ -361,6 +371,7 @@ class HomePullRefreshUiPolicyTest {
 
         assertEquals(44f, initialHeight, 0.001f)
         assertTrue(releaseHeight > initialHeight)
+        assertEquals(70f, releaseHeight, 0.001f)
         assertEquals(42f, resolveMd3ScreenshotRefreshIndicatorHeightDp(progress = 1f, isRefreshing = true), 0.001f)
     }
 

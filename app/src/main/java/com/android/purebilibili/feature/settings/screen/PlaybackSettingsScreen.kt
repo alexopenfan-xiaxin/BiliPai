@@ -1324,6 +1324,9 @@ private fun PlaybackFullscreenGestureSettingsSection(
     val hideInteractiveCommandDanmaku by com.android.purebilibili.core.store.SettingsManager
         .getDanmakuHideInteractiveCommands(context)
         .collectAsStateWithLifecycle(initialValue = false)
+    val danmakuCloudSyncEnabled by com.android.purebilibili.core.store.SettingsManager
+        .getDanmakuCloudSyncEnabled(context)
+        .collectAsStateWithLifecycle(initialValue = true)
     IOSGroup {
         Column(
             modifier = Modifier
@@ -1413,6 +1416,21 @@ private fun PlaybackFullscreenGestureSettingsSection(
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPink
+        )
+        IOSDivider()
+	        IOSSwitchItem(
+	            icon = rememberSettingsSemanticIcon(SettingsIconRole.PIP_DANMAKU),
+            title = "同步弹幕设置到账号",
+            subtitle = com.android.purebilibili.feature.video.danmaku
+                .resolveDanmakuCloudSyncToggleSubtitle(danmakuCloudSyncEnabled),
+            checked = danmakuCloudSyncEnabled,
+            onCheckedChange = {
+                scope.launch {
+                    com.android.purebilibili.core.store.SettingsManager
+                        .setDanmakuCloudSyncEnabled(context, it)
+                }
+            },
+            iconTint = com.android.purebilibili.core.theme.iOSPurple
         )
         IOSDivider()
         Column(
