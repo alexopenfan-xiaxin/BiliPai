@@ -20,6 +20,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -322,9 +324,25 @@ private fun HomeHeroCarouselCard(
                         )
                     )
             )
+            // 时长标签
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = FormatUtils.formatDuration(video.duration),
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
+                    .fillMaxWidth()
                     .padding(start = 28.dp, end = 28.dp, bottom = 44.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -343,8 +361,29 @@ private fun HomeHeroCarouselCard(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+                if (video.stat.view > 0 || video.stat.danmaku > 0) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = buildString {
+                            if (video.stat.view > 0) {
+                                append(FormatUtils.formatStat(video.stat.view.toLong()))
+                                append("播放")
+                            }
+                            if (video.stat.danmaku > 0) {
+                                if (isNotEmpty()) append(" · ")
+                                append(FormatUtils.formatStat(video.stat.danmaku.toLong()))
+                                append("弹幕")
+                            }
+                        },
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
