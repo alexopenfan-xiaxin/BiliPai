@@ -43,7 +43,6 @@ internal fun BiliPaiNavDisplayHost(
     cardTransitionEnabled: Boolean = true,
     predictiveBackEnabled: Boolean = true,
     predictiveBackAnimationStyle: BiliPaiPredictiveBackAnimationStyle = BiliPaiPredictiveBackAnimationStyle.SCALE,
-    predictiveBackExitDirection: BiliPaiPredictiveBackExitDirection = BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT,
     sourceMetadata: BiliPaiNavSourceMetadata,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -65,6 +64,13 @@ internal fun BiliPaiNavDisplayHost(
             fromKey = safeBackStack.lastOrNull(),
             toKey = safeBackStack.getOrNull(safeBackStack.lastIndex - 1)
         )
+    }
+    val predictiveBackExitDirection = remember(sourceMetadata.cardSourceDirection) {
+        when (sourceMetadata.cardSourceDirection) {
+            BiliPaiNavCardSourceDirection.SOURCE_LEFT -> BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT
+            BiliPaiNavCardSourceDirection.SOURCE_RIGHT -> BiliPaiPredictiveBackExitDirection.ALWAYS_LEFT
+            BiliPaiNavCardSourceDirection.NONE -> BiliPaiPredictiveBackExitDirection.FOLLOW_GESTURE
+        }
     }
     val predictiveBackHandler: BiliPaiPredictiveBackAnimationHandler = remember(
         popRouteTransition,

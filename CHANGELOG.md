@@ -18,6 +18,7 @@
 - **预测返回策略层**：`BiliPaiPredictiveBackAnimationPolicy` 逻辑完善。
 - **缩放预测返回**：`BiliPaiScalePredictiveBackAnimation` 实现补充。
 - **共享元素预测返回**：`BiliPaiSharedElementPredictiveBackAnimation` 动画改进。
+- **预测返回退出方向跟随卡片位置**：`BiliPaiNavDisplayHost` 根据 `sourceMetadata.cardSourceDirection` 自动推导退出方向——卡片在左侧时向右滑出、右侧时向左滑出、居中或无卡片上下文时跟随手势方向，返回动画朝向卡片实际所在位置。
 
 #### 导航架构调整
 - **`BiliPaiNavDisplayHost`**：显示宿主逻辑重构。

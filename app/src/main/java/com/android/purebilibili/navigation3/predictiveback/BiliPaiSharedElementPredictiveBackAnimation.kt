@@ -16,7 +16,9 @@ import androidx.navigation3.ui.defaultTransitionSpec
 import androidx.navigationevent.NavigationEventTransitionState
 import com.android.purebilibili.navigation3.BiliPaiNavKey
 
-internal class BiliPaiSharedElementPredictiveBackAnimation : BiliPaiPredictiveBackAnimationHandler {
+internal class BiliPaiSharedElementPredictiveBackAnimation(
+    private val exitDirection: BiliPaiPredictiveBackExitDirection = BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT,
+) : BiliPaiPredictiveBackAnimationHandler {
     override suspend fun onBackPressed(
         transitionState: NavigationEventTransitionState?,
         currentPageKey: BiliPaiNavKey?,
@@ -31,17 +33,29 @@ internal class BiliPaiSharedElementPredictiveBackAnimation : BiliPaiPredictiveBa
 
     override fun AnimatedContentTransitionScope<Scene<BiliPaiNavKey>>.onPredictivePopTransitionSpec(
         swipeEdge: Int,
-    ): ContentTransform = ContentTransform(
-        targetContentEnter = slideInHorizontally(
-            initialOffsetX = { -it / 4 },
-            animationSpec = tween(durationMillis = 550, easing = LinearEasing),
-        ),
-        initialContentExit = slideOutHorizontally(
-            targetOffsetX = { it },
-            animationSpec = tween(durationMillis = 550, easing = LinearEasing),
-        ),
-        sizeTransform = null,
-    )
+    ): ContentTransform {
+        val slideOut = when (exitDirection) {
+            BiliPaiPredictiveBackExitDirection.FOLLOW_GESTURE -> {
+                if (swipeEdge == 0) slideOutHorizontally(targetOffsetX = { it })
+                else slideOutHorizontally(targetOffsetX = { -it })
+            }
+            BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT -> slideOutHorizontally(targetOffsetX = { it })
+            BiliPaiPredictiveBackExitDirection.ALWAYS_LEFT -> slideOutHorizontally(targetOffsetX = { -it })
+        }
+        val slideIn = when (exitDirection) {
+            BiliPaiPredictiveBackExitDirection.FOLLOW_GESTURE -> {
+                if (swipeEdge == 0) slideInHorizontally(initialOffsetX = { -it / 4 })
+                else slideInHorizontally(initialOffsetX = { it / 4 })
+            }
+            BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT -> slideInHorizontally(initialOffsetX = { -it / 4 })
+            BiliPaiPredictiveBackExitDirection.ALWAYS_LEFT -> slideInHorizontally(initialOffsetX = { it / 4 })
+        }
+        return ContentTransform(
+            targetContentEnter = slideIn,
+            initialContentExit = slideOut,
+            sizeTransform = null,
+        )
+    }
 
     override fun AnimatedContentTransitionScope<Scene<BiliPaiNavKey>>.onPopTransitionSpec(): ContentTransform =
         ContentTransform(

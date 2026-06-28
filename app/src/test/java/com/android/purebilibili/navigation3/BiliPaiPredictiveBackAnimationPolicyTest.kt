@@ -28,8 +28,8 @@ class BiliPaiPredictiveBackAnimationPolicyTest {
     fun sharedElementPredictivePop_slidesBothScenesInsteadOfFadingDetail() {
         val function = sharedElementPredictivePopFunction()
 
-        assertTrue(function.contains("targetContentEnter = slideInHorizontally("))
-        assertTrue(function.contains("initialContentExit = slideOutHorizontally("))
+        assertTrue(function.contains("slideOutHorizontally"))
+        assertTrue(function.contains("slideInHorizontally"))
         assertFalse(function.contains("initialContentExit = fadeOut("))
     }
 
