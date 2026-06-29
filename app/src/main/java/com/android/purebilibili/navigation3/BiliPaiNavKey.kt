@@ -351,7 +351,8 @@ internal sealed interface BiliPaiNavKey : NavKey {
 
     @Serializable
     data class Live(
-        val roomId: Long,
+        val siteId: String = "bilibili",
+        val roomId: String,
         val title: String = "",
         val uname: String = ""
     ) : BiliPaiNavKey {

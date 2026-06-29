@@ -115,13 +115,15 @@ private const val TAG = "LivePlayerScreen"
 @OptIn(UnstableApi::class, ExperimentalHazeMaterialsApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun LivePlayerScreen(
-    roomId: Long,
+    roomId: String,
     title: String,
     uname: String,
     onBack: () -> Unit,
     onUserClick: (Long) -> Unit,
-    viewModel: LivePlayerViewModel = viewModel()
+    viewModel: LivePlayerViewModel = viewModel(),
+    siteId: String = "bilibili"
 ) {
+    val bilibiliRoomId = roomId.toLongOrNull() ?: 0L
     val context = LocalContext.current
     val activity = context as? Activity
     // 📺 [新增] 获取小窗管理器
@@ -379,7 +381,7 @@ fun LivePlayerScreen(
     DisposableEffect(roomId) {
         miniPlayerManager.resetNavigationFlag()
         CrashReporter.setLastScreen("live_player")
-        CrashReporter.markLiveSessionStart(roomId = roomId, title = title, uname = uname)
+        CrashReporter.markLiveSessionStart(roomId = bilibiliRoomId, title = title, uname = uname)
         CrashReporter.markLivePlaybackStage("screen_enter")
         onDispose {
             CrashReporter.markLiveSessionEnd("screen_dispose")
@@ -447,7 +449,7 @@ fun LivePlayerScreen(
     val liveTitle = liveRoomTitle
     LaunchedEffect(exoPlayer, liveCover, liveTitle, uname) {
         miniPlayerManager.setLiveInfo(
-            roomId = roomId,
+            roomId = bilibiliRoomId,
             title = liveTitle,
             cover = liveCover,
             uname = uname,
@@ -464,7 +466,7 @@ fun LivePlayerScreen(
                 Logger.e(TAG, "ExoPlayer Error: ${error.message}")
                 CrashReporter.markLivePlaybackStage("player_error")
                 CrashReporter.reportLiveError(
-                    roomId = roomId,
+                    roomId = bilibiliRoomId,
                     errorType = "exo_player_error",
                     errorMessage = error.message ?: "unknown",
                     exception = error
@@ -510,7 +512,7 @@ fun LivePlayerScreen(
     }
     
     // 播放 URL 管理
-    LaunchedEffect(roomId) { viewModel.loadLiveStream(roomId) }
+    LaunchedEffect(siteId, roomId) { viewModel.loadLiveStream(bilibiliRoomId) }
     // 播放 URL 管理 - 只在 playUrl 变化时重新加载
     val playUrl = (uiState as? LivePlayerState.Success)?.playUrl
     LaunchedEffect(playUrl) {
@@ -536,14 +538,14 @@ fun LivePlayerScreen(
                 Logger.e(TAG, "Play failed", e)
                 CrashReporter.markLivePlaybackStage("prepare_media_source_failed")
                 CrashReporter.reportLiveError(
-                    roomId = roomId,
+                    roomId = bilibiliRoomId,
                     errorType = "media_prepare_failed",
                     errorMessage = e.message ?: "play failed",
                     exception = e
                 )
             }
             // 埋点
-            AnalyticsHelper.logLivePlay(roomId, title, uname)
+            AnalyticsHelper.logLivePlay(bilibiliRoomId, title, uname)
         }
     }
     
@@ -690,7 +692,7 @@ fun LivePlayerScreen(
                     if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                         with(sharedTransitionScope) {
                             Modifier.sharedElement(
-                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(roomId)),
+                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(bilibiliRoomId)),
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
                         }
@@ -1213,7 +1215,7 @@ fun LivePlayerScreen(
 
     if (showPlayerInfoDialog) {
         LivePlayerInfoDialog(
-            roomId = roomId,
+            roomId = bilibiliRoomId,
             roomTitle = liveRoomTitle,
             currentQuality = currentQualityDesc,
             videoFit = videoAspectRatio.displayName,

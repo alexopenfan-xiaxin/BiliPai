@@ -87,7 +87,7 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
         )
         is BiliPaiNavKey.Space -> ScreenRoutes.Space.createRoute(mid)
         is BiliPaiNavKey.Category -> ScreenRoutes.Category.createRoute(tid, name)
-        is BiliPaiNavKey.Live -> ScreenRoutes.Live.createRoute(roomId, title, uname)
+        is BiliPaiNavKey.Live -> ScreenRoutes.Live.createRoute(roomId, title, uname, siteId)
         is BiliPaiNavKey.BangumiDetail -> ScreenRoutes.BangumiDetail.createRoute(seasonId, epId)
         is BiliPaiNavKey.Web -> ScreenRoutes.Web.createRoute(url, title)
         is BiliPaiNavKey.Unknown -> route
@@ -242,7 +242,8 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
         }
         segments.firstOrNull() == "live" && segments.size >= 2 -> {
             BiliPaiNavKey.Live(
-                roomId = segments[1].toLongOrNull() ?: 0L,
+                siteId = query["site"] ?: "bilibili",
+                roomId = segments[1],
                 title = query["title"].orEmpty(),
                 uname = query["uname"].orEmpty()
             )

@@ -151,11 +151,11 @@ sealed class ScreenRoutes(val route: String) {
     }
     
     //  [新增] 直播播放页面
-    object Live : ScreenRoutes("live/{roomId}?title={title}&uname={uname}") {
-        fun createRoute(roomId: Long, title: String, uname: String): String {
+    object Live : ScreenRoutes("live/{roomId}?title={title}&uname={uname}&site={site}") {
+        fun createRoute(roomId: Any, title: String, uname: String, siteId: String = "bilibili"): String {
             val encodedTitle = android.net.Uri.encode(title).orEmpty()
             val encodedUname = android.net.Uri.encode(uname).orEmpty()
-            return "live/$roomId?title=$encodedTitle&uname=$encodedUname"
+            return "live/$roomId?title=$encodedTitle&uname=$encodedUname&site=$siteId"
         }
     }
     

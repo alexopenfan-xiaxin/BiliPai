@@ -159,7 +159,7 @@ internal fun shouldInterceptSystemBackForNavigation3(
     return appBackActionRequiresInterception
 }
 
-private fun resolveCardDisabledReturnTransition(
+internal fun resolveCardDisabledReturnTransition(
     sourceDirection: BiliPaiNavCardSourceDirection
 ): BiliPaiNavRouteTransition {
     return when (sourceDirection) {

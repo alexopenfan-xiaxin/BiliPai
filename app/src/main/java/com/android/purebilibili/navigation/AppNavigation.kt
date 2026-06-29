@@ -1003,7 +1003,7 @@ fun AppNavigation(
                     pushNavigation3Key(BiliPaiNavKey.Space(target.mid))
                 }
                 is BilibiliNavigationTarget.Live -> {
-                    pushNavigation3Key(BiliPaiNavKey.Live(target.roomId))
+                    pushNavigation3Key(BiliPaiNavKey.Live(roomId = target.roomId.toString()))
                 }
                 is BilibiliNavigationTarget.BangumiSeason -> {
                     pushNavigation3Key(BiliPaiNavKey.BangumiDetail(seasonId = target.seasonId))
@@ -1087,7 +1087,7 @@ fun AppNavigation(
                     pushNavigation3Key(BiliPaiNavKey.Space(action.mid))
                 }
                 is MessageLinkNavigationAction.Live -> {
-                    pushNavigation3Key(BiliPaiNavKey.Live(action.roomId))
+                    pushNavigation3Key(BiliPaiNavKey.Live(roomId = action.roomId.toString()))
                 }
                 is MessageLinkNavigationAction.BangumiSeason -> {
                     pushNavigation3Key(BiliPaiNavKey.BangumiDetail(seasonId = action.seasonId))
@@ -1580,7 +1580,7 @@ fun AppNavigation(
                                     },
                                     onUserClick = { mid -> pushNavigation3Key(BiliPaiNavKey.Space(mid)) },
                                     onLiveClick = { roomId, title, uname ->
-                                        pushNavigation3Key(BiliPaiNavKey.Live(roomId, title, uname))
+                                        pushNavigation3Key(BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname))
                                     },
                                     onDynamicDetailClick = { dynamicId ->
                                         pushNavigation3Key(BiliPaiNavKey.DynamicDetail(dynamicId))
@@ -1920,7 +1920,7 @@ fun AppNavigation(
                             com.android.purebilibili.feature.live.LiveListScreen(
                                 onBack = { performSystemBackAction() },
                                 onLiveClick = { roomId, title, uname ->
-                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId, title, uname))
+                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname))
                                 },
                                 onSearchClick = { pushNavigation3Key(BiliPaiNavKey.LiveSearch) },
                                 onAreaListClick = { pushNavigation3Key(BiliPaiNavKey.LiveArea) },
@@ -1940,7 +1940,7 @@ fun AppNavigation(
                             com.android.purebilibili.feature.live.LiveSearchScreen(
                                 onBack = { performSystemBackAction() },
                                 onLiveClick = { roomId, title, uname ->
-                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId, title, uname))
+                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname))
                                 },
                                 onUserClick = { mid -> pushNavigation3Key(BiliPaiNavKey.Space(mid)) }
                             )
@@ -1974,7 +1974,7 @@ fun AppNavigation(
                                         )
                                     },
                                     onLiveClick = { roomId, title, uname ->
-                                        pushNavigation3Key(BiliPaiNavKey.Live(roomId, title, uname))
+                                        pushNavigation3Key(BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname))
                                     }
                                 )
                             }
@@ -1982,7 +1982,7 @@ fun AppNavigation(
                             com.android.purebilibili.feature.live.LiveFollowingScreen(
                                 onBack = { performSystemBackAction() },
                                 onLiveClick = { roomId, title, uname ->
-                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId, title, uname))
+                                    pushNavigation3Key(BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname))
                                 }
                             )
                         BiliPaiNavEntryContentRole.INBOX ->
@@ -2357,7 +2357,7 @@ fun AppNavigation(
                                         replaceNavigation3TopWithKey(BiliPaiNavKey.Space(mid))
                                     },
                                     onLiveClick = { roomId ->
-                                        replaceNavigation3TopWithKey(BiliPaiNavKey.Live(roomId))
+                                        replaceNavigation3TopWithKey(BiliPaiNavKey.Live(roomId = roomId.toString()))
                                     },
                                     onDynamicClick = { dynamicId ->
                                         replaceNavigation3TopWithKey(BiliPaiNavKey.DynamicDetail(dynamicId))
@@ -2403,7 +2403,7 @@ fun AppNavigation(
                                         },
                                         onLiveClick = { roomId, title, uname ->
                                             pushNavigation3Key(
-                                                BiliPaiNavKey.Live(roomId = roomId, title = title, uname = uname)
+                                                BiliPaiNavKey.Live(roomId = roomId.toString(), title = title, uname = uname)
                                             )
                                         }
                                     )
@@ -2446,6 +2446,7 @@ fun AppNavigation(
                                     roomId = liveKey.roomId,
                                     title = liveKey.title,
                                     uname = liveKey.uname,
+                                    siteId = liveKey.siteId,
                                     onBack = {
                                         miniPlayerManager?.markLeavingByNavigation(forceStop = true)
                                         performSystemBackAction()

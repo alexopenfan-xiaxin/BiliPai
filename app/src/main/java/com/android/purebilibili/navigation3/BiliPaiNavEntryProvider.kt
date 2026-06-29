@@ -261,7 +261,7 @@ internal fun resolveBiliPaiNavEntryPopRouteTransition(
         }
     } else if (videoToCardReturnTarget) {
         // 关闭共享元素时：VideoDetail → 任意 card-return-target 一律走方向化横向过渡。
-        return resolveCardDisabledVideoReturnTransition(sourceMetadata.cardSourceDirection)
+        return resolveCardDisabledReturnTransition(sourceMetadata.cardSourceDirection)
     }
 
     if (
@@ -422,14 +422,3 @@ private fun resolveCardDisabledVideoForwardTransition(
     }
 }
 
-private fun resolveCardDisabledVideoReturnTransition(
-    sourceDirection: BiliPaiNavCardSourceDirection
-): BiliPaiNavRouteTransition {
-    return when (sourceDirection) {
-        BiliPaiNavCardSourceDirection.SOURCE_LEFT ->
-            BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT
-        BiliPaiNavCardSourceDirection.SOURCE_RIGHT,
-        BiliPaiNavCardSourceDirection.NONE ->
-            BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT
-    }
-}

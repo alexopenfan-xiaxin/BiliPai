@@ -23,7 +23,7 @@ class BiliPaiNavEntryContentPolicyTest {
         assertEquals(BiliPaiNavEntryContentRole.WEB, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Web("https://example.com")))
         assertEquals(BiliPaiNavEntryContentRole.DYNAMIC_DETAIL, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.DynamicDetail("1")))
         assertEquals(BiliPaiNavEntryContentRole.ARTICLE_DETAIL, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.ArticleDetail(1L)))
-        assertEquals(BiliPaiNavEntryContentRole.LIVE, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Live(1L)))
+        assertEquals(BiliPaiNavEntryContentRole.LIVE, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Live(roomId = "1")))
         assertEquals(BiliPaiNavEntryContentRole.BANGUMI_DETAIL, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.BangumiDetail(1L)))
         assertEquals(BiliPaiNavEntryContentRole.LIVE_LIST, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.LiveList))
         assertEquals(BiliPaiNavEntryContentRole.LIVE_SEARCH, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.LiveSearch))
