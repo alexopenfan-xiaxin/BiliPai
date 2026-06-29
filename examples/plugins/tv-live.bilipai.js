@@ -4,9 +4,9 @@ var DEFAULT_LOGO_BASE_URL = "https://live.fanmingming.com/tv/";
 window.BiliPaiPlugin = {
   id: "tv.live",
   title: "电视直播",
-  version: "1.0.0",
+  version: "1.1.0",
   author: "BiliPai",
-  description: "解析 M3U/TXT/JSON 电视直播源，返回可播放频道和备用线路。",
+  description: "解析 M3U/M3U Plus/TXT/JSON 电视直播源，对齐 pure_live_TV 风格的 group-title/tvg-id/tvg-logo/EPG 字段，返回可播放频道和备用线路。",
   permissions: ["NETWORK", "PLUGIN_STORAGE", "EXTERNAL_MEDIA_PLAYBACK"],
   modules: [
     {
@@ -68,6 +68,16 @@ window.BiliPaiPlugin = {
             { title: "否", value: "false" },
             { title: "是", value: "true" }
           ]
+        },
+        {
+          name: "preferGroupCategory",
+          title: "优先源分类(group-title)",
+          type: "enum",
+          defaultValue: "true",
+          options: [
+            { title: "是", value: "true" },
+            { title: "否", value: "false" }
+          ]
         }
       ]
     }
@@ -93,15 +103,16 @@ async function loadChannels(params) {
   var iconLibrary = loadIconLibrary(iconLibraryUrl);
   var iconProxyTemplate = stringParam(params, "iconProxyTemplate", "").trim();
   var useGeneratedLogoFallback = stringParam(params, "useGeneratedLogoFallback", "false") === "true";
+  var preferGroupCategory = stringParam(params, "preferGroupCategory", "true") === "true";
   var format = detectFormat(content);
   var items;
 
   if (format === "m3u") {
-    items = parseM3uSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback);
+    items = parseM3uSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback, sourceUrl, preferGroupCategory);
   } else if (format === "txt") {
-    items = parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback);
+    items = parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback, preferGroupCategory);
   } else if (format === "json") {
-    items = parseJsonSource(content, iconLibrary, iconProxyTemplate);
+    items = parseJsonSource(content, iconLibrary, iconProxyTemplate, preferGroupCategory);
   } else {
     throw new Error("无法识别内容格式，请确认源返回的是 M3U/TXT/JSON");
   }
@@ -115,22 +126,38 @@ async function loadChannels(params) {
   return items;
 }
 
-function parseM3uSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback) {
+function parseM3uSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback, sourceUrl, preferGroupCategory) {
   var lines = String(content).split(/\r?\n/);
   var channels = {};
   var currentName = "";
   var currentLogo = "";
+  var currentGroup = "";
+  var currentTvgId = "";
 
   lines.forEach(function(rawLine) {
     var line = rawLine.trim();
+    if (line.indexOf("#EXTM3U") === 0) {
+      var epgUrl = matchAttribute(line, "url-epg") || matchAttribute(line, "x-tvg-url");
+      if (epgUrl && sourceUrl) {
+        try { BiliPai.storage.set("epgUrl:" + sourceUrl, epgUrl); } catch (e) {}
+      }
+      return;
+    }
     if (line.indexOf("#EXTINF:") === 0) {
+      var attrs = parseExtInfAttributes(line);
       var nameMatch = line.match(/#EXTINF:.*?,(.+)$/);
-      var logoMatch = line.match(/tvg-logo="([^"]+)"/) || line.match(/logo="([^"]+)"/);
-      currentName = cleanLeadingDash(nameMatch ? nameMatch[1].trim() : "未知频道");
-      currentLogo = logoMatch ? logoMatch[1] : "";
+      currentName = cleanLeadingDash(attrs["tvg-name"] || (nameMatch ? nameMatch[1].trim() : "") || "未知频道");
+      currentLogo = attrs["tvg-logo"] || attrs["logo"] || "";
+      currentGroup = attrs["group-title"] || "";
+      currentTvgId = attrs["tvg-id"] || "";
+      return;
+    }
+    if (line.indexOf("#EXTGRP:") === 0) {
+      if (!currentGroup) currentGroup = line.substring("#EXTGRP:".length).trim();
       return;
     }
     if (!line || line.indexOf("#") === 0) return;
+    if (!isValidStreamUrl(line)) return;
     addChannel(
       channels,
       currentName || "频道",
@@ -139,16 +166,21 @@ function parseM3uSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, us
       logoBaseUrl,
       iconLibrary,
       iconProxyTemplate,
-      useGeneratedLogoFallback
+      useGeneratedLogoFallback,
+      currentGroup,
+      currentTvgId,
+      preferGroupCategory
     );
     currentName = "";
     currentLogo = "";
+    currentGroup = "";
+    currentTvgId = "";
   });
 
   return channelMapToItems(channels);
 }
 
-function parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback) {
+function parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, useGeneratedLogoFallback, preferGroupCategory) {
   var channels = {};
   String(content).split(/\r?\n/).forEach(function(rawLine) {
     var line = rawLine.trim();
@@ -157,7 +189,7 @@ function parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, us
     if (splitIndex < 0) splitIndex = line.indexOf(" ");
     var name = splitIndex > 0 ? line.substring(0, splitIndex).trim() : "频道";
     var url = splitIndex > 0 ? line.substring(splitIndex + 1).trim() : line;
-    if (/^https?:\/\//i.test(url) || /^rtmps?:\/\//i.test(url) || /^rtsp:\/\//i.test(url)) {
+    if (isValidStreamUrl(url)) {
       addChannel(
         channels,
         cleanLeadingDash(name),
@@ -166,14 +198,17 @@ function parseTxtSource(content, logoBaseUrl, iconLibrary, iconProxyTemplate, us
         logoBaseUrl,
         iconLibrary,
         iconProxyTemplate,
-        useGeneratedLogoFallback
+        useGeneratedLogoFallback,
+        "",
+        "",
+        preferGroupCategory
       );
     }
   });
   return channelMapToItems(channels);
 }
 
-function parseJsonSource(content, iconLibrary, iconProxyTemplate) {
+function parseJsonSource(content, iconLibrary, iconProxyTemplate, preferGroupCategory) {
   var parsed = JSON.parse(String(content));
   var arrays = Array.isArray(parsed) ? { all: parsed } : parsed;
   var items = [];
@@ -183,14 +218,16 @@ function parseJsonSource(content, iconLibrary, iconProxyTemplate) {
     channels.forEach(function(channel) {
       var url = channel.videoUrl || channel.url || channel.id;
       if (!url) return;
+      var group = channel.groupTitle || channel.group || channel.category || categoryKey;
       var streams = normalizeStreams(channel.streams || channel.childItems || []);
       items.push({
-        id: String(channel.id || url),
+        id: String(channel.tvgId || channel.id || url),
         title: cleanLeadingDash(channel.title || channel.name || "频道"),
         description: cleanLeadingDash(channel.description || channel.name || ""),
         coverUrls: buildIconCandidates(
           channel.coverUrl ||
             channel.logo ||
+            channel.tvgLogo ||
             channel.backdrop_path ||
             resolveIconUrl(iconLibrary, channel.title || channel.name || ""),
           iconProxyTemplate
@@ -199,7 +236,7 @@ function parseJsonSource(content, iconLibrary, iconProxyTemplate) {
         type: "video",
         videoUrl: url,
         streams: streams,
-        _category: guessCategory(channel.title || channel.name || categoryKey)
+        _category: guessCategory(channel.title || channel.name || categoryKey, group, preferGroupCategory)
       });
     });
   });
@@ -214,30 +251,36 @@ function addChannel(
   logoBaseUrl,
   iconLibrary,
   iconProxyTemplate,
-  useGeneratedLogoFallback
+  useGeneratedLogoFallback,
+  group,
+  tvgId,
+  preferGroupCategory
 ) {
   var title = cleanLeadingDash(name || "频道");
-  if (!channels[title]) {
+  var key = tvgId ? tvgId : title;
+  if (!channels[key]) {
     var cleanName = cleanChannelNameForLogo(title);
     var matchedIcon = logoUrl || resolveIconUrl(iconLibrary, title) || resolveIconUrl(iconLibrary, cleanName);
     var generatedIcon = useGeneratedLogoFallback && cleanName ? logoBaseUrl + cleanName + ".png" : "";
-    channels[title] = {
+    channels[key] = {
       title: cleanName || title,
+      tvgId: tvgId,
       description: title,
       logoUrl: matchedIcon || generatedIcon,
       iconProxyTemplate: iconProxyTemplate,
-      category: guessCategory(title),
+      group: group,
+      category: guessCategory(title, group, preferGroupCategory),
       urls: []
     };
   }
-  channels[title].urls.push(url);
+  channels[key].urls.push(url);
 }
 
 function channelMapToItems(channels) {
   return Object.keys(channels).map(function(key) {
     var channel = channels[key];
     return {
-      id: channel.urls[0],
+      id: channel.tvgId || channel.title || channel.urls[0],
       title: channel.title,
       description: channel.description,
       coverUrls: buildIconCandidates(channel.logoUrl, channel.iconProxyTemplate),
@@ -276,6 +319,26 @@ function detectFormat(content) {
   if (trimmed.indexOf("{") === 0 || trimmed.indexOf("[") === 0) return "json";
   if (/https?:\/\//i.test(trimmed)) return "txt";
   return "";
+}
+
+function parseExtInfAttributes(extInf) {
+  var attrs = {};
+  var regex = /(\S+?)=["']?([^"'\s,]+)["']?/g;
+  var match;
+  while ((match = regex.exec(extInf)) !== null) {
+    attrs[match[1].toLowerCase()] = match[2];
+  }
+  return attrs;
+}
+
+function matchAttribute(line, key) {
+  var regex = new RegExp(key + "=\"([^\"]+)\"", "i");
+  var match = line.match(regex);
+  return match ? match[1] : "";
+}
+
+function isValidStreamUrl(url) {
+  return /^(https?|rtmps?|rtsp|udp|mms):\/\//i.test(url);
 }
 
 function stringParam(params, name, fallback) {
@@ -355,7 +418,11 @@ function cleanChannelNameForLogo(rawName) {
     .trim();
 }
 
-function guessCategory(channelName) {
+function guessCategory(channelName, group, preferGroupCategory) {
+  if (preferGroupCategory) {
+    var fromGroup = guessCategoryFromGroup(group);
+    if (fromGroup) return fromGroup;
+  }
   var name = String(channelName || "").toLowerCase();
   if (name.indexOf("cctv") >= 0 || name.indexOf("央视") >= 0) return "cctv";
   if (name.indexOf("卫视") >= 0 && name.indexOf("地方") < 0) return "stv";
@@ -368,4 +435,20 @@ function guessCategory(channelName) {
   if (name.indexOf("港") >= 0 || name.indexOf("澳") >= 0 || name.indexOf("台") >= 0) return "hk";
   if (name.indexOf("海外") >= 0 || name.indexOf("国际") >= 0 || name.indexOf("foreign") >= 0) return "overseas";
   return "ltv";
+}
+
+function guessCategoryFromGroup(group) {
+  var g = String(group || "").toLowerCase();
+  if (!g) return "";
+  if (g.indexOf("cctv") >= 0 || g.indexOf("央视") >= 0) return "cctv";
+  if (g.indexOf("卫视") >= 0) return "stv";
+  if (g.indexOf("体育") >= 0 || g.indexOf("sport") >= 0) return "sports";
+  if (g.indexOf("电影") >= 0 || g.indexOf("影") >= 0 || g.indexOf("movie") >= 0 || g.indexOf("剧场") >= 0) return "movie";
+  if (g.indexOf("纪录") >= 0 || g.indexOf("纪实") >= 0 || g.indexOf("document") >= 0) return "doc";
+  if (g.indexOf("少儿") >= 0 || g.indexOf("卡通") >= 0 || g.indexOf("动画") >= 0 || g.indexOf("kid") >= 0) return "kids";
+  if (g.indexOf("音乐") >= 0 || g.indexOf("music") >= 0) return "music";
+  if (g.indexOf("新闻") >= 0 || g.indexOf("资讯") >= 0 || g.indexOf("news") >= 0) return "news";
+  if (g.indexOf("港") >= 0 || g.indexOf("澳") >= 0 || g.indexOf("台") >= 0) return "hk";
+  if (g.indexOf("海外") >= 0 || g.indexOf("国际") >= 0) return "overseas";
+  return "";
 }
