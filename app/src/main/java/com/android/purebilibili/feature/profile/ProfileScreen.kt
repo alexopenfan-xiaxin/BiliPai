@@ -38,6 +38,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.geometry.Rect
@@ -149,6 +150,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -875,7 +877,6 @@ private fun ProfileSpaceContent(
             onSurfaceVariantColor = colorScheme.onSurfaceVariant
         )
     }
-    val topBarIconColor = heroChrome.textColor
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (isTablet) {
@@ -1008,26 +1009,16 @@ private fun ProfileSpaceContent(
                     }
                 }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = statusBarTopPadding)
-                    .height(56.dp)
-                    .padding(horizontal = 8.dp)
-                    .align(Alignment.TopCenter),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(rememberAppBackIcon(), contentDescription = "返回", tint = topBarIconColor)
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { showWallpaperActionSheet = true }) {
-                    Icon(rememberAppPhotoIcon(), contentDescription = "换壁纸", tint = topBarIconColor)
-                }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(rememberAppSettingsIcon(), contentDescription = "设置", tint = topBarIconColor)
-                }
-            }
+            ProfileHeroTopActionBar(
+                onBack = onBack,
+                onWallpaperActionClick = { showWallpaperActionSheet = true },
+                onSettingsClick = onSettingsClick,
+                baseIconColor = heroChrome.textColor,
+                onSurfaceColor = colorScheme.onSurface,
+                pullInvertFractionProvider = { heroPullState.fraction() },
+                statusBarTopPadding = statusBarTopPadding,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
@@ -1166,6 +1157,47 @@ private fun rememberProfileHeroPullState(
     val scope = rememberCoroutineScope()
     return remember(listState, scope, fullInvertPullPx, enabled) {
         ProfileHeroPullState(listState, pullPx, scope, fullInvertPullPx, enabled)
+    }
+}
+
+/**
+ * 顶部常驻操作栏（返回 / 换壁纸 / 设置）。
+ * 返回与换壁纸图标随下拉反色（白 → onSurface），与英雄区文字保持一致；
+ * 设置图标常驻反色为 onSurface，因为背景图可能从一开始就影响其可读性。
+ * 在此读取下拉比例以隔离重组，避免波及 LazyColumn 及其父级。
+ */
+@Composable
+private fun ProfileHeroTopActionBar(
+    onBack: () -> Unit,
+    onWallpaperActionClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    baseIconColor: Color,
+    onSurfaceColor: Color,
+    pullInvertFractionProvider: () -> Float,
+    statusBarTopPadding: Dp,
+    modifier: Modifier = Modifier
+) {
+    val pullFraction = pullInvertFractionProvider()
+    val backAndWallpaperTint = lerp(baseIconColor, onSurfaceColor, pullFraction)
+    val settingsTint = onSurfaceColor
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = statusBarTopPadding)
+            .height(56.dp)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(rememberAppBackIcon(), contentDescription = "返回", tint = backAndWallpaperTint)
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = onWallpaperActionClick) {
+            Icon(rememberAppPhotoIcon(), contentDescription = "换壁纸", tint = backAndWallpaperTint)
+        }
+        IconButton(onClick = onSettingsClick) {
+            Icon(rememberAppSettingsIcon(), contentDescription = "设置", tint = settingsTint)
+        }
     }
 }
 
