@@ -1162,8 +1162,7 @@ private fun rememberProfileHeroPullState(
 
 /**
  * 顶部常驻操作栏（返回 / 换壁纸 / 设置）。
- * 返回与换壁纸图标随下拉反色（白 → onSurface），与英雄区文字保持一致；
- * 设置图标常驻反色为 onSurface，因为背景图可能从一开始就影响其可读性。
+ * 所有图标均随下拉反色（白 → onSurface），与英雄区文字保持一致的壁纸可读性。
  * 在此读取下拉比例以隔离重组，避免波及 LazyColumn 及其父级。
  */
 @Composable
@@ -1178,8 +1177,7 @@ private fun ProfileHeroTopActionBar(
     modifier: Modifier = Modifier
 ) {
     val pullFraction = pullInvertFractionProvider()
-    val backAndWallpaperTint = lerp(baseIconColor, onSurfaceColor, pullFraction)
-    val settingsTint = onSurfaceColor
+    val iconTint = lerp(baseIconColor, onSurfaceColor, pullFraction)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -1189,14 +1187,14 @@ private fun ProfileHeroTopActionBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
-            Icon(rememberAppBackIcon(), contentDescription = "返回", tint = backAndWallpaperTint)
+            Icon(rememberAppBackIcon(), contentDescription = "返回", tint = iconTint)
         }
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = onWallpaperActionClick) {
-            Icon(rememberAppPhotoIcon(), contentDescription = "换壁纸", tint = backAndWallpaperTint)
+            Icon(rememberAppPhotoIcon(), contentDescription = "换壁纸", tint = iconTint)
         }
         IconButton(onClick = onSettingsClick) {
-            Icon(rememberAppSettingsIcon(), contentDescription = "设置", tint = settingsTint)
+            Icon(rememberAppSettingsIcon(), contentDescription = "设置", tint = iconTint)
         }
     }
 }
