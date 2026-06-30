@@ -1014,8 +1014,6 @@ private fun ProfileSpaceContent(
                 onWallpaperActionClick = { showWallpaperActionSheet = true },
                 onSettingsClick = onSettingsClick,
                 baseIconColor = heroChrome.textColor,
-                onSurfaceColor = colorScheme.onSurface,
-                pullInvertFractionProvider = { heroPullState.fraction() },
                 statusBarTopPadding = statusBarTopPadding,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
@@ -1162,8 +1160,7 @@ private fun rememberProfileHeroPullState(
 
 /**
  * 顶部常驻操作栏（返回 / 换壁纸 / 设置）。
- * 所有图标均随下拉反色（白 → onSurface），与英雄区文字保持一致的壁纸可读性。
- * 在此读取下拉比例以隔离重组，避免波及 LazyColumn 及其父级。
+ * 固定覆盖在壁纸上，图标始终保持英雄区 chrome 颜色以保证深色壁纸可读性。
  */
 @Composable
 private fun ProfileHeroTopActionBar(
@@ -1171,13 +1168,10 @@ private fun ProfileHeroTopActionBar(
     onWallpaperActionClick: () -> Unit,
     onSettingsClick: () -> Unit,
     baseIconColor: Color,
-    onSurfaceColor: Color,
-    pullInvertFractionProvider: () -> Float,
     statusBarTopPadding: Dp,
     modifier: Modifier = Modifier
 ) {
-    val pullFraction = pullInvertFractionProvider()
-    val iconTint = lerp(baseIconColor, onSurfaceColor, pullFraction)
+    val iconTint = baseIconColor
     Row(
         modifier = modifier
             .fillMaxWidth()
